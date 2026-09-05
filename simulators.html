@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Engineering · Class 1 — Interactive Simulators</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#fdf7f0;--paper-2:#f7eee2;--card:#ffffff;
+  --ink:#1c1714;--ink-soft:#5a4f47;--ink-faint:#8a7d72;
+  --orange:#ff5b35;--orange-deep:#d83c18;--orange-tint:#ffe9e1;
+  --teal:#10806f;--teal-tint:#d8f0eb;
+  --blue:#2b4a8b;--blue-tint:#dde6f7;
+  --gold:#e0972a;--gold-tint:#fbeecd;
+  --purple:#7a4ca0;--purple-tint:#ece0f6;
+  --pink:#c23a78;--pink-tint:#fbe0ec;
+  --line:#e9ddcf;--code-bg:#211c18;--code-ink:#f2e9df;
+  --shadow:0 2px 0 rgba(28,23,20,.05),0 18px 40px -22px rgba(28,23,20,.45);
+  --shadow-lift:0 4px 0 rgba(28,23,20,.06),0 30px 60px -28px rgba(28,23,20,.5);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at 12% 6%,#fff4ea 0,transparent 38%),radial-gradient(circle at 88% 3%,#ffe6dd 0,transparent 30%),var(--paper);color:var(--ink);font-family:'Manrope',sans-serif;font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:860px;margin:0 auto;padding:0 26px}
+
+h2{font-family:'Fraunces';font-weight:700;font-size:clamp(22px,3.5vw,32px);line-height:1.1;letter-spacing:-.015em;margin:0 0 4px}
+h2 em{font-style:italic;color:var(--orange)}
+p{margin:0 0 14px}
+code{font-family:'JetBrains Mono';font-size:.88em;background:rgba(0,0,0,.06);padding:2px 6px;border-radius:5px}
+strong{color:var(--ink);font-weight:700}
+
+/* page header */
+.page-header{padding:52px 0 36px;border-bottom:2px solid var(--line)}
+.kicker{display:inline-flex;align-items:center;gap:9px;font-family:'JetBrains Mono';font-size:12px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--orange-deep);background:var(--orange-tint);border:1px solid #ffd2c5;padding:7px 14px;border-radius:100px;margin-bottom:16px}
+.kicker .dot{width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 4px #ffd2c5}
+.page-header p{font-size:16px;color:var(--ink-soft);margin:10px 0 0;max-width:600px}
+
+/* nav pills */
+.sim-nav{display:flex;flex-wrap:wrap;gap:8px;padding:20px 0}
+.sim-nav a{font-size:13px;font-weight:700;color:var(--ink-soft);text-decoration:none;background:var(--card);border:1px solid var(--line);padding:7px 14px;border-radius:100px;transition:.15s}
+.sim-nav a:hover{background:var(--orange-tint);color:var(--orange-deep);border-color:#ffd2c5}
+
+/* simulator cards */
+.sim-card{background:var(--card);border:1px solid var(--line);border-radius:20px;margin:32px 0;overflow:hidden;box-shadow:var(--shadow-lift)}
+.sim-card-head{padding:20px 24px 0}
+.sim-label{display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono';font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--orange-deep);background:var(--orange-tint);padding:4px 10px;border-radius:6px;margin-bottom:10px}
+.sim-card-head p{font-size:15px;color:var(--ink-soft);margin:6px 0 18px}
+
+/* inner sim shell */
+.sim{background:var(--card);border:2px solid var(--ink);border-radius:18px;margin:0 24px 24px;overflow:hidden;box-shadow:var(--shadow-lift)}
+.sim .sim-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;background:var(--ink);color:var(--paper);flex-wrap:wrap}
+.sim .sim-head .t{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+.sim .sim-head .t .live{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.12em;background:var(--orange);color:#fff;padding:3px 8px;border-radius:6px;text-transform:uppercase}
+.sim .sim-head .hint{font-size:12.5px;color:#bcae9f}
+.sim .sim-body{padding:22px}
+
+/* buttons / inputs */
+.btn{font-family:'Manrope';font-weight:700;font-size:14px;border:none;border-radius:10px;padding:11px 18px;cursor:pointer;background:var(--orange);color:#fff;box-shadow:0 2px 0 var(--orange-deep);transition:transform .06s}
+.btn:hover{filter:brightness(1.04)}.btn:active{transform:translateY(2px);box-shadow:0 0 0 var(--orange-deep)}
+.btn.ghost{background:var(--paper-2);color:var(--ink);box-shadow:0 2px 0 var(--line)}
+.btn.small{padding:8px 13px;font-size:13px}
+input.text,textarea.text{width:100%;font-family:'Manrope';font-size:15px;border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--paper);color:var(--ink);resize:vertical}
+input.text:focus,textarea.text:focus{outline:none;border-color:var(--orange)}
+label.lbl{display:block;font-weight:700;font-size:13px;margin-bottom:6px;color:var(--ink-soft)}
+
+/* token chips */
+.tok{display:inline-block;padding:3px 7px;margin:2px;border-radius:6px;font-family:'JetBrains Mono';font-size:13px;line-height:1.4}
+.tokstats{display:flex;gap:16px;margin-top:16px;flex-wrap:wrap}
+.tokstats .s{background:var(--paper-2);border-radius:12px;padding:12px 18px;border:1px solid var(--line)}
+.tokstats .s b{font-family:'Fraunces';font-size:28px;display:block;color:var(--orange-deep);line-height:1}
+.tokstats .s span{font-size:12px;color:var(--ink-faint);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+
+/* prob bars */
+.bar-row{display:flex;align-items:center;gap:12px;margin:8px 0}
+.bar-row .word{width:130px;font-family:'JetBrains Mono';font-size:13px;text-align:right;flex:none}
+.bar-row .track{flex:1;background:var(--paper-2);border-radius:8px;height:26px;overflow:hidden;position:relative;border:1px solid var(--line)}
+.bar-row .fill{height:100%;background:linear-gradient(90deg,var(--orange),var(--gold));border-radius:8px;transition:width .4s cubic-bezier(.2,.8,.2,1);min-width:2px}
+.bar-row .pct{width:54px;font-family:'JetBrains Mono';font-size:13px;font-weight:700;flex:none}
+.slider{width:100%;-webkit-appearance:none;height:8px;border-radius:8px;background:linear-gradient(90deg,var(--teal),var(--orange),var(--pink));outline:none}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--ink);cursor:pointer;box-shadow:var(--shadow)}
+.slider::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--ink);cursor:pointer}
+
+/* mask / fill-in-blank */
+.mask-demo{background:var(--paper-2);border:1px solid var(--line);border-radius:16px;padding:22px;text-align:center}
+.mask-sent{font-family:'Fraunces';font-size:clamp(18px,3vw,26px);line-height:1.5;margin-bottom:18px}
+.mask-blank{display:inline-block;min-width:100px;border-bottom:3px solid var(--orange);color:var(--orange-deep);font-weight:700;transition:.3s}
+.mask-guesses{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.mask-guess{padding:8px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font-weight:600;cursor:pointer;font-size:14px;transition:.15s}
+.mask-guess:hover{border-color:var(--orange)}
+.mask-guess.right{background:var(--teal-tint);border-color:var(--teal);color:var(--teal)}
+.mask-guess.wrong{background:var(--pink-tint);border-color:var(--pink);color:var(--pink)}
+
+/* key sim */
+.keysim{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lift)}
+.keysim .kbar{background:#10a37f;color:#fff;padding:10px 16px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px}
+.keysim .kbar .url{margin-left:auto;font-family:'JetBrains Mono';font-size:11px;background:rgba(255,255,255,.2);padding:3px 9px;border-radius:6px}
+.keysim .kbody{padding:20px}
+.keysim .krow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.keyout{font-family:'JetBrains Mono';font-size:13px;background:var(--paper-2);border:1px dashed var(--line);border-radius:8px;padding:10px 14px;flex:1;min-width:220px;color:var(--ink-faint);word-break:break-all}
+.keyout.live{color:var(--teal);border-color:var(--teal);border-style:solid;background:var(--teal-tint)}
+.warn-key{font-size:12.5px;color:var(--pink);margin-top:10px;font-weight:600}
+
+/* gradio mock */
+.gradio{border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lift);background:var(--card)}
+.gradio .gbar{background:linear-gradient(90deg,#ff7c00,#ff5b35);padding:14px 20px;color:#fff;display:flex;align-items:center;gap:10px}
+.gradio .gbar b{font-size:17px;font-weight:800}
+.gradio .gbar .pill{margin-left:auto;font-size:11px;font-family:'JetBrains Mono';background:rgba(255,255,255,.2);padding:4px 9px;border-radius:6px}
+.gradio .gbody{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.gradio .gcol{padding:22px}
+.gradio .gcol.in{border-right:1px solid var(--line);background:var(--paper)}
+.gradio .out-box{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:16px;min-height:200px;font-size:14px;line-height:1.6}
+.gradio .out-box .placeholder{color:var(--ink-faint);font-style:italic}
+.gradio .out-box h5{font-family:'Fraunces';font-size:17px;margin:0 0 8px}
+.gradio .out-box ul{margin:6px 0;padding-left:20px}.gradio .out-box li{margin:3px 0}
+
+/* note box */
+.note{background:var(--purple-tint);border:1px solid #d4bce8;border-radius:14px;padding:14px 18px;margin:16px 0 0;display:flex;gap:12px}
+.note .ico{flex:none;font-size:18px}.note b{color:var(--purple)}.note p{margin:0;font-size:14px;color:#5a4566}
+
+/* split chip */
+.split-chip{display:inline-flex;gap:3px;flex-wrap:wrap;font-family:'JetBrains Mono';font-size:13px;margin:2px 0}
+.split-chip span{background:var(--orange-tint);color:var(--orange-deep);padding:2px 7px;border-radius:6px}
+
+footer{background:var(--ink);color:#d8ccbf;padding:36px 0;margin-top:40px;text-align:center;font-family:'JetBrains Mono';font-size:13px}
+footer span{color:#9a8a78}
+
+@media(max-width:640px){
+  .gradio .gbody{grid-template-columns:1fr}
+  .gradio .gcol.in{border-right:none;border-bottom:1px solid var(--line)}
+  .bar-row .word{width:90px}
+}
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="wrap">
+  <div class="page-header">
+    <div class="kicker"><span class="dot"></span> Class 1 · Interactive Simulators</div>
+    <h2>Try the concepts <em>live</em></h2>
+    <p>Five hands-on tools — one for each core idea from today's class. Click, drag, type, and see exactly what's happening under the hood.</p>
+  </div>
+
+  <!-- quick nav -->
+  <div class="sim-nav">
+    <a href="#tokenizer">🔤 Tokenizer</a>
+    <a href="#temperature">🌡️ Temperature</a>
+    <a href="#apikey">🔑 API Key</a>
+    <a href="#apiroundtrip">📤 API Round-trip</a>
+    <a href="#selfsup">🪄 Self-Supervision</a>
+    <a href="#summarizer">🔎 Summarizer</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SIM 1 — TOKENIZER
+════════════════════════════════════════════════ -->
+<div class="wrap" id="tokenizer">
+  <div class="sim-card">
+    <div class="sim-card-head">
+      <div class="sim-label">🔤 Simulator 1 of 6</div>
+      <h2>Tokenizer playground</h2>
+      <p>LLMs don't read words — they read <strong>tokens</strong> (chunks roughly ¾ of a word). Type anything and watch it split. This is also how your API bill is calculated.</p>
+    </div>
+    <div class="sim" style="margin:0 24px 24px">
+      <div class="sim-head">
+        <div class="t"><span class="live">Live</span> Tokenizer</div>
+        <div class="hint">type → watch it split into tokens</div>
+      </div>
+      <div class="sim-body">
+        <label class="lbl">Your text</label>
+        <textarea class="text" id="tokInput" rows="2">AI Engineering is surprisingly approachable!</textarea>
+        <div id="tokOut" style="margin-top:16px;line-height:2.4"></div>
+        <div class="tokstats">
+          <div class="s"><b id="tokCount">0</b><span>Tokens</span></div>
+          <div class="s"><b id="charCount">0</b><span>Characters</span></div>
+          <div class="s"><b id="costEst">$0</b><span>Cost @ $5/1M tok</span></div>
+        </div>
+        <p style="font-size:13.5px;color:var(--ink-faint);margin:14px 0 0">
+          Tip: common words = 1 token; rare or long words get chopped. <strong>Rough rule: 1 token ≈ ¾ word ≈ 4 characters.</strong>
+          Try "unbelievableness" to see it split — then try "cat".
+        </p>
+        <div style="margin-top:16px;background:var(--paper-2);border-radius:12px;padding:14px 16px;font-size:14px">
+          <strong>Why tokens and not words?</strong> A fixed vocabulary of ~100k sub-word chunks handles every word in every language — even ones invented tomorrow. A model trained on tokens can spell out <code>"ChatGPT"</code> even if it never saw that exact string in training.
+          <br><br>Example: &nbsp;<code>"unbelievableness"</code> → <span class="split-chip"><span>un</span><span>believ</span><span>able</span><span>ness</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SIM 2 — TEMPERATURE
+════════════════════════════════════════════════ -->
+<div class="wrap" id="temperature">
+  <div class="sim-card">
+    <div class="sim-card-head">
+      <div class="sim-label">🌡️ Simulator 2 of 6</div>
+      <h2>Next-token &amp; <em>temperature</em></h2>
+      <p>Given a prompt, the model scores every possible next token with a probability. <strong>Temperature</strong> reshapes those scores — low = focused and safe, high = creative and surprising. Drag the slider and see the probabilities shift.</p>
+    </div>
+    <div class="sim" style="margin:0 24px 24px">
+      <div class="sim-head">
+        <div class="t"><span class="live">Live</span> Next-token probabilities</div>
+        <div class="hint">prompt: "I love building things in ___"</div>
+      </div>
+      <div class="sim-body">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px">
+          <label class="lbl" style="margin:0">Temperature</label>
+          <b id="tempVal" style="font-family:'JetBrains Mono';color:var(--orange-deep);font-size:20px">0.7</b>
+          <span style="font-size:13px;color:var(--ink-faint)" id="tempLabel">balanced</span>
+        </div>
+        <input type="range" min="0" max="150" value="70" class="slider" id="tempSlider">
+        <div id="probBars" style="margin-top:20px"></div>
+        <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center">
+          <button class="btn" id="sampleBtn">🎲 Sample a token</button>
+          <div id="sampleOut" style="font-family:'JetBrains Mono';font-size:14px"></div>
+        </div>
+        <div class="note" style="margin-top:18px">
+          <div class="ico">💡</div>
+          <div><b>This is a real engineering choice</b><p>A support chatbot → temperature ≈ 0.2 (consistent). A creative writing tool → temperature ≈ 1.0 (varied). You set this on day one of any real project.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SIM 3 — API KEY
+════════════════════════════════════════════════ -->
+<div class="wrap" id="apikey">
+  <div class="sim-card">
+    <div class="sim-card-head">
+      <div class="sim-label">🔑 Simulator 3 of 6</div>
+      <h2>Getting your <em>API key</em></h2>
+      <p>An API key is a secret password that lets your code use OpenAI's models. You pay only for what you use — cents for this class. Click through the flow:</p>
+    </div>
+    <div style="padding:0 24px 24px">
+      <div class="keysim">
+        <div class="kbar">🔑 OpenAI Platform <span class="url">platform.openai.com/api-keys</span></div>
+        <div class="kbody">
+          <p style="margin:0 0 14px;font-size:14px;color:var(--ink-soft)">Sign in, add a little credit under <em>Billing</em>, then create a key:</p>
+          <div class="krow">
+            <button class="btn" id="keyBtn">+ Create new secret key</button>
+            <div class="keyout" id="keyOut">your key will appear here…</div>
+          </div>
+          <div class="warn-key" id="keyWarn" style="display:none">⚠️ Copy it now — OpenAI shows a secret key only once. Never share it or commit it to GitHub.</div>
+          <p style="margin:16px 0 0;font-size:13.5px;color:var(--ink-soft)">
+            Then create a <code>.env</code> file in your project folder:<br>
+            <code style="display:inline-block;margin-top:6px;background:#f0e8dc;padding:6px 10px;border-radius:6px">OPENAI_API_KEY=sk-proj-xxxxxxxx…</code>
+          </p>
+          <div class="note" style="margin-top:14px">
+            <div class="ico">🔐</div>
+            <div><b>The one habit that saves careers</b><p>Add <code>.env</code> to your <code>.gitignore</code>. Leaked keys are found by bots in minutes and can rack up real bills.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SIM 4 — API ROUND-TRIP
+════════════════════════════════════════════════ -->
+<div class="wrap" id="apiroundtrip">
+  <div class="sim-card">
+    <div class="sim-card-head">
+      <div class="sim-label">📤 Simulator 4 of 6</div>
+      <h2>Anatomy of one <em>API round-trip</em></h2>
+      <p>When your code calls an LLM, it sends a request to a server and waits for a response — just like fetching the weather, except the reply is intelligence. Press send and watch the journey:</p>
+    </div>
+    <div class="sim" style="margin:0 24px 24px">
+      <div class="sim-head">
+        <div class="t"><span class="live">Live</span> Anatomy of one API round-trip</div>
+        <div class="hint">press send → watch it travel</div>
+      </div>
+      <div class="sim-body">
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;text-align:center">
+          <div style="background:var(--blue-tint);border:1px solid #b8c8ee;border-radius:12px;padding:24px 16px">
+            <div style="font-size:32px">🧑‍💻</div>
+            <b style="font-size:13px">Your app</b>
+            <div id="apiReq" style="font-family:'JetBrains Mono';font-size:11px;color:var(--blue);margin-top:8px;min-height:30px"></div>
+          </div>
+          <div id="apiArrow" style="font-size:28px;color:var(--orange);transition:.3s;padding:0 8px">➜</div>
+          <div style="background:var(--orange-tint);border:1px solid #ffd2c5;border-radius:12px;padding:24px 16px">
+            <div style="font-size:32px" id="apiBrain">🧠</div>
+            <b style="font-size:13px">LLM model</b>
+            <div id="apiResp" style="font-family:'JetBrains Mono';font-size:11px;color:var(--orange-deep);margin-top:8px;min-height:30px"></div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:20px">
+          <button class="btn" id="apiBtn">📤 Send the request</button>
+        </div>
+        <div id="apiResult" style="margin-top:16px;background:var(--paper-2);border:1px solid var(--line);border-radius:10px;padding:14px;font-size:14px;display:none"></div>
+        <div class="note" style="margin-top:18px">
+          <div class="ico">💡</div>
+          <div><b>The golden rule</b><p>Never paste your API key into code — it's a password to your wallet. Keep it in a <code>.env</code> file on the server side only.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SIM 5 — SELF-SUPERVISION (fill in the blank)
+════════════════════════════════════════════════ -->
+<div class="wrap" id="selfsup">
+  <div class="sim-card">
+    <div class="sim-card-head">
+      <div class="sim-label">🪄 Simulator 5 of 6</div>
+      <h2>Self-supervision: <em>fill in the blank</em></h2>
+      <p>This is how GPT learned — billions of times. A word is hidden; the model guesses. The answer is already in the text, so the internet becomes its own teacher. Try being the model:</p>
+    </div>
+    <div style="padding:0 24px 24px">
+      <div class="mask-demo">
+        <div class="mask-sent" id="maskSent">
+          The barista handed me a hot cup of <span class="mask-blank" id="maskBlank">______</span>.
+        </div>
+        <div class="mask-guesses" id="maskGuesses"></div>
+        <p style="font-size:13.5px;color:var(--ink-faint);margin:16px 0 0" id="maskMsg">Pick the word you think fills the blank.</p>
+      </div>
+      <div class="note" style="margin-top:16px">
+        <div class="ico">🤯</div>
+        <div><b>Why this is the whole secret</b><p>To guess "coffee", the model quietly learned grammar, context, what baristas do, and what fits in a cup. <em>Understanding emerges as a side-effect of getting very good at fill-in-the-blank.</em></p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SIM 5 — WEBSITE SUMMARIZER
+════════════════════════════════════════════════ -->
+<div class="wrap" id="summarizer">
+  <div class="sim-card">
+    <div class="sim-card-head">
+      <div class="sim-label">🔎 Simulator 6 of 6</div>
+      <h2>AI Website Summarizer — <em>live demo</em></h2>
+      <p>This is the app you built today. Pick a sample site (or paste your own text), choose a personality, and hit Summarize. Notice how changing the personality prompt completely changes the output — that's prompt engineering.</p>
+    </div>
+    <div style="padding:0 24px 24px">
+      <div class="gradio">
+        <div class="gbar">🔎 <b>AI Website Summarizer</b> <span class="pill">live demo</span></div>
+        <div class="gbody">
+          <div class="gcol in">
+            <label class="lbl">Pick a sample "website"</label>
+            <div id="siteExamples" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+            <label class="lbl">…or paste any article text</label>
+            <textarea class="text" id="sumIn" rows="5" placeholder="Paste a paragraph or article here and hit Summarize…"></textarea>
+            <label class="lbl" style="margin-top:14px">Personality (the system prompt)</label>
+            <div id="toneBtns" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+            <button class="btn" id="sumBtn" style="margin-top:16px;width:100%">✨ Summarize</button>
+          </div>
+          <div class="gcol">
+            <label class="lbl">Summary</label>
+            <div class="out-box" id="sumOut"><span class="placeholder">Your summary will appear here…</span></div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--ink-faint);margin-top:10px">⚙️ This demo summarizes <em>in your browser</em> so it runs with no API key. Your real <code>app.py</code> sends the text to GPT for a smarter, full-sentence summary — but the shape and the personality switch are exactly what you see here.</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>AI Engineering · Class 1 — Interactive Simulators &nbsp;·&nbsp; Scaler Academy</span>
+</footer>
+
+<script>
+/* ── 1. TOKENIZER ──────────────────────────────────────── */
+(function(){
+  const inp=document.getElementById('tokInput'),out=document.getElementById('tokOut');
+  const bg=['#ffe9e1','#d8f0eb','#dde6f7','#fbeecd','#ece0f6'];
+  const fg=['#d83c18','#10806f','#2b4a8b','#a8761a','#7a4ca0'];
+  function tok(t){
+    const raw=t.match(/\s+|[^\s]+/g)||[];
+    let o=[];
+    raw.forEach(c=>{
+      if(/^\s+$/.test(c)){o.push(c);return;}
+      (c.match(/[A-Za-z]+|[0-9]+|[^\sA-Za-z0-9]/g)||[c]).forEach(p=>{
+        if(p.length<=5)o.push(p);
+        else for(let i=0;i<p.length;i+=4)o.push(p.slice(i,i+4));
+      });
+    });
+    return o;
+  }
+  function render(){
+    const ts=tok(inp.value);
+    out.innerHTML='';
+    let c=0;
+    ts.forEach(t=>{
+      if(/^\s+$/.test(t)){out.appendChild(document.createTextNode(' '));return;}
+      const s=document.createElement('span');
+      s.className='tok';
+      s.style.background=bg[c%5];
+      s.style.color=fg[c%5];
+      s.textContent=t;
+      out.appendChild(s);
+      c++;
+    });
+    document.getElementById('tokCount').textContent=c;
+    document.getElementById('charCount').textContent=inp.value.length;
+    document.getElementById('costEst').textContent='$'+(c/1e6*5).toFixed(6);
+  }
+  inp.addEventListener('input',render);
+  render();
+})();
+
+/* ── 2. TEMPERATURE ────────────────────────────────────── */
+(function(){
+  const base=[
+    {w:'Python',l:3.2},{w:'JavaScript',l:2.4},{w:'Rust',l:1.6},
+    {w:'public',l:0.9},{w:'spreadsheets',l:0.3},{w:'bananas',l:-1.2}
+  ];
+  const sl=document.getElementById('tempSlider'),bars=document.getElementById('probBars');
+  const tv=document.getElementById('tempVal'),tl=document.getElementById('tempLabel');
+  function soft(a,T){
+    T=Math.max(0.01,T);
+    const z=a.map(x=>x.l/T),m=Math.max(...z),e=z.map(v=>Math.exp(v-m));
+    const s=e.reduce((p,c)=>p+c,0);
+    return a.map((x,i)=>({w:x.w,p:e[i]/s}));
+  }
+  function render(){
+    const T=sl.value/100;
+    tv.textContent=T.toFixed(2);
+    tl.textContent=T<0.3?'❄️ focused':T<0.9?'⚖️ balanced':'🔥 creative';
+    const p=soft(base,T).sort((a,b)=>b.p-a.p);
+    bars.innerHTML=p.map(x=>`<div class="bar-row">
+      <div class="word">${x.w}</div>
+      <div class="track"><div class="fill" style="width:${(x.p*100).toFixed(1)}%"></div></div>
+      <div class="pct">${(x.p*100).toFixed(1)}%</div>
+    </div>`).join('');
+  }
+  sl.addEventListener('input',render);
+  render();
+  document.getElementById('sampleBtn').addEventListener('click',()=>{
+    const T=sl.value/100,p=soft(base,T);
+    let r=Math.random(),a=0,pick=p[0].w;
+    for(const x of p){a+=x.p;if(r<=a){pick=x.w;break;}}
+    document.getElementById('sampleOut').innerHTML=`→ picked: <b style="color:var(--orange-deep)">"${pick}"</b>`;
+  });
+})();
+
+/* ── 3. API KEY SIM ────────────────────────────────────── */
+(function(){
+  const btn=document.getElementById('keyBtn'),out=document.getElementById('keyOut'),warn=document.getElementById('keyWarn');
+  btn.addEventListener('click',()=>{
+    out.textContent='generating…';out.classList.remove('live');
+    const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let k='sk-proj-';for(let i=0;i<32;i++)k+=chars[Math.floor(Math.random()*chars.length)];
+    setTimeout(()=>{out.textContent=k;out.classList.add('live');warn.style.display='block';btn.textContent='+ Create another key';},500);
+  });
+})();
+
+/* ── 4. API ROUND-TRIP ─────────────────────────────────── */
+(function(){
+  const btn=document.getElementById('apiBtn'),ar=document.getElementById('apiArrow');
+  const rq=document.getElementById('apiReq'),rs=document.getElementById('apiResp');
+  const br=document.getElementById('apiBrain'),res=document.getElementById('apiResult');
+  btn.addEventListener('click',()=>{
+    btn.disabled=true;rq.textContent='';rs.textContent='';res.style.display='none';
+    rq.textContent='{ "Bangalore?" }';ar.style.transform='translateX(6px)';
+    setTimeout(()=>{ar.style.transform='';br.textContent='🤔';rs.textContent='thinking…';},600);
+    setTimeout(()=>{
+      br.textContent='🧠';rs.textContent='200 OK';ar.textContent='⬅';
+      res.style.display='block';
+      res.innerHTML='<b>Response:</b> "Sip filter coffee on an MTR rooftop and watch the city wake up — Bangalore\'s best 10-minute holiday. ☕"';
+      btn.disabled=false;ar.textContent='➜';
+    },1500);
+  });
+})();
+
+/* ── 5. SELF-SUPERVISION (fill in the blank) ───────────── */
+(function(){
+  const blank=document.getElementById('maskBlank'),box=document.getElementById('maskGuesses'),msg=document.getElementById('maskMsg');
+  const opts=[{w:'coffee',ok:true},{w:'bicycle',ok:false},{w:'tea',ok:'close'},{w:'sadness',ok:false}];
+  opts.forEach(o=>{
+    const b=document.createElement('button');
+    b.className='mask-guess';
+    b.textContent=o.w;
+    b.onclick=()=>{
+      document.querySelectorAll('.mask-guess').forEach(x=>x.classList.remove('right','wrong'));
+      if(o.ok===true){
+        b.classList.add('right');blank.textContent=o.w;blank.style.color='var(--teal)';blank.style.borderColor='var(--teal)';
+        msg.innerHTML='✅ Exactly! And to "know" that, the model quietly learned context, grammar & the world. <b>That\'s self-supervision.</b>';
+      } else if(o.ok==='close'){
+        b.classList.add('right');blank.textContent=o.w;
+        msg.innerHTML='☕ Reasonable! "tea" works too — the model learns there are <em>several</em> plausible answers, each with a probability (remember temperature?).';
+      } else {
+        b.classList.add('wrong');
+        msg.innerHTML='😅 Not quite — but every wrong guess is how the model <em>learns</em>. Billions of these corrections and it gets surprisingly good.';
+      }
+    };
+    box.appendChild(b);
+  });
+})();
+
+/* ── 5. WEBSITE SUMMARIZER ─────────────────────────────── */
+(function(){
+  const samples=[
+    {label:'🚀 Startup site',text:"NimbusPay — Payments that just work. NimbusPay is a payments platform built for small Indian businesses who are tired of clunky tools and hidden fees. Accept UPI, cards, and wallets with a single integration that takes ten minutes to set up. Our flat 1% fee means no surprises at the end of the month. NimbusPay also gives you a real-time dashboard so you can see every transaction as it happens. Over 12,000 shops already use NimbusPay to get paid faster. We just launched instant settlements, so your money reaches your bank account the same day instead of waiting three days. Sign up today and your first month is completely free."},
+    {label:'📰 News article',text:"Governments race to regulate AI as adoption surges. Lawmakers around the world are scrambling to write rules for artificial intelligence as the technology spreads into hospitals, banks, and classrooms. Supporters say clear regulation will build public trust and prevent harm. Critics worry that heavy rules could slow innovation and hand an advantage to larger companies who can afford compliance. A new draft framework focuses on transparency, requiring companies to disclose when content is AI-generated. It also demands that high-risk systems, such as those used in hiring or medicine, be tested for bias before launch. Industry groups have asked for more time to adapt."},
+    {label:'✍️ Personal blog',text:"My journey from teacher to AI engineer. Three years ago I had never written a line of Python. I was a high-school teacher who felt stuck and curious about the AI everyone kept talking about. I started small: one tiny project every weekend, even when they barely worked. The first thing I built was a tool that summarized news articles for my students. It was ugly, but it worked, and that little win changed everything. I kept shipping projects and sharing them online, and slowly people started noticing. Last month I started my first job as an AI engineer at a startup. The lesson: you do not need permission or a perfect plan — just build small things often and share them."}
+  ];
+  const tones=[
+    {id:'friend',label:'🙂 Friendly',    intro:"Here's the gist, in plain English:",  tldr:"In short:"},
+    {id:'snark', label:'😏 Snarky',      intro:"Fine, I read it so you don't have to:", tldr:"The honest TL;DR:"},
+    {id:'eli5',  label:"🧒 Like I'm 5",  intro:"Okay, imagine I'm explaining this to a 10-year-old:", tldr:"So basically:"},
+    {id:'pro',   label:'💼 Professional',intro:"Executive summary:",                    tldr:"Bottom line:"}
+  ];
+  let tone=tones[0];
+  const exBox=document.getElementById('siteExamples'),tBox=document.getElementById('toneBtns');
+  const inp=document.getElementById('sumIn'),out=document.getElementById('sumOut');
+
+  samples.forEach(s=>{
+    const b=document.createElement('button');b.className='btn ghost small';b.textContent=s.label;
+    b.onclick=()=>{inp.value=s.text;run();};exBox.appendChild(b);
+  });
+
+  function paintTones(){
+    tBox.innerHTML='';
+    tones.forEach(t=>{
+      const b=document.createElement('button');b.className='btn small'+(t.id===tone.id?'':' ghost');
+      b.textContent=t.label;b.onclick=()=>{tone=t;paintTones();if(inp.value.trim())run();};tBox.appendChild(b);
+    });
+  }
+  paintTones();
+
+  const stop=new Set("a an the and or but if then so of to in on at for with from by is are was were be been being this that these those it its as we you they he she i our your their my his her have has had do does did not no will would can could should may might about into over under more most very just also".split(' '));
+
+  function summarize(text){
+    text=text.replace(/\s+/g,' ').trim();
+    let sents=text.match(/[^.!?]+[.!?]+/g)||[text];
+    sents=sents.map(s=>s.trim()).filter(s=>s.split(' ').length>=4);
+    if(sents.length===0)return null;
+    const freq={};
+    text.toLowerCase().match(/[a-z']+/g).forEach(w=>{if(!stop.has(w)&&w.length>2)freq[w]=(freq[w]||0)+1;});
+    const scored=sents.map((s,i)=>{
+      const ws=s.toLowerCase().match(/[a-z']+/g)||[];
+      let sc=0;ws.forEach(w=>{if(freq[w])sc+=freq[w];});
+      return{s,i,sc:sc/Math.sqrt(ws.length||1)};
+    });
+    const top=[...scored].sort((a,b)=>b.sc-a.sc).slice(0,Math.min(3,sents.length)).sort((a,b)=>a.i-b.i);
+    const tldr=[...scored].sort((a,b)=>b.sc-a.sc)[0].s;
+    return{points:top.map(t=>t.s.replace(/\s+/g,' ').trim()),tldr:tldr.replace(/\s+/g,' ').trim()};
+  }
+
+  function run(){
+    const text=inp.value.trim();
+    if(!text){out.innerHTML='<span class="placeholder">Paste some text or pick a sample first.</span>';return;}
+    out.innerHTML='<span class="placeholder">🧠 Reading &amp; summarizing…</span>';
+    setTimeout(()=>{
+      const r=summarize(text);
+      if(!r){out.innerHTML='<span class="placeholder">Hmm, that text was too short to summarize.</span>';return;}
+      out.innerHTML=`<h5>${tone.intro}</h5><ul>${r.points.map(p=>`<li>${p}</li>`).join('')}</ul><p style="margin:10px 0 0"><b>${tone.tldr}</b> ${r.tldr}</p><div style="margin-top:12px;font-family:'JetBrains Mono';font-size:10.5px;color:var(--ink-faint)">↳ in your real app, GPT writes this — richer &amp; in full sentences</div>`;
+    },650);
+  }
+  document.getElementById('sumBtn').addEventListener('click',run);
+})();
+</script>
+</body>
+</html>

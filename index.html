@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Engineering · Class 1 — Build & Ship Your First AI App | Scaler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#fdf7f0;--paper-2:#f7eee2;--card:#ffffff;
+  --ink:#1c1714;--ink-soft:#5a4f47;--ink-faint:#8a7d72;
+  --orange:#ff5b35;--orange-deep:#d83c18;--orange-tint:#ffe9e1;
+  --teal:#10806f;--teal-tint:#d8f0eb;
+  --blue:#2b4a8b;--blue-tint:#dde6f7;
+  --gold:#e0972a;--gold-tint:#fbeecd;
+  --purple:#7a4ca0;--purple-tint:#ece0f6;
+  --pink:#c23a78;--pink-tint:#fbe0ec;
+  --line:#e9ddcf;--code-bg:#211c18;--code-ink:#f2e9df;
+  --shadow:0 2px 0 rgba(28,23,20,.05),0 18px 40px -22px rgba(28,23,20,.45);
+  --shadow-lift:0 4px 0 rgba(28,23,20,.06),0 30px 60px -28px rgba(28,23,20,.5);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at 12% 6%,#fff4ea 0,transparent 38%),radial-gradient(circle at 88% 3%,#ffe6dd 0,transparent 30%),var(--paper);color:var(--ink);font-family:'Manrope',sans-serif;font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 26px}
+
+/* progress + nav */
+#progress{position:fixed;top:0;left:0;height:4px;width:0;background:linear-gradient(90deg,var(--orange),var(--gold));z-index:200;transition:width .1s linear}
+#topnav{position:fixed;top:0;left:0;right:0;z-index:150;backdrop-filter:blur(10px);background:rgba(253,247,240,.82);border-bottom:1px solid var(--line);transform:translateY(-110%);transition:transform .35s}
+#topnav.show{transform:translateY(0)}
+#topnav .wrap{display:flex;align-items:center;justify-content:space-between;height:54px;gap:14px}
+#topnav .brand{font-family:'Fraunces';font-weight:600;font-size:16px}#topnav .brand b{color:var(--orange)}
+#topnav nav{display:flex;gap:4px;flex-wrap:wrap;overflow:auto}
+#topnav nav a{font-size:12.5px;font-weight:600;color:var(--ink-soft);text-decoration:none;padding:5px 9px;border-radius:8px;white-space:nowrap}
+#topnav nav a:hover{background:var(--orange-tint);color:var(--orange-deep)}
+
+/* hero */
+.hero{position:relative;overflow:hidden;padding:92px 0 56px}
+.hero:before{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--line) 1.1px,transparent 1.1px);background-size:22px 22px;opacity:.5;mask-image:linear-gradient(180deg,#000 30%,transparent)}
+.hero .wrap{position:relative}
+.kicker{display:inline-flex;align-items:center;gap:9px;font-family:'JetBrains Mono';font-size:12px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--orange-deep);background:var(--orange-tint);border:1px solid #ffd2c5;padding:7px 14px;border-radius:100px}
+.kicker .dot{width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 4px #ffd2c5}
+h1.title{font-family:'Fraunces';font-weight:900;font-size:clamp(40px,7vw,76px);line-height:1.02;letter-spacing:-.02em;margin:22px 0 0}
+h1.title em{font-style:italic;color:var(--orange)}
+.lede{font-size:20px;color:var(--ink-soft);max-width:680px;margin:20px 0 0;line-height:1.55}
+.hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:100px;padding:9px 16px;font-weight:600;font-size:14px;box-shadow:var(--shadow)}
+.signature{margin-top:32px;font-family:'JetBrains Mono';font-size:13px;color:var(--ink-faint);border-top:1px dashed var(--line);padding-top:18px}
+.signature b{color:var(--ink)}
+.promise{margin-top:26px;background:linear-gradient(135deg,#211c18,#2e2620);color:#f4ece2;border-radius:16px;padding:22px 26px;box-shadow:var(--shadow-lift);position:relative;overflow:hidden}
+.promise:before{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,var(--orange),transparent 70%);opacity:.4}
+.promise b{font-family:'Fraunces';font-size:20px;color:#fff;display:block;margin-bottom:6px}
+.promise p{margin:0;color:#d8ccbf;font-size:15.5px}
+
+/* sections */
+section.block{padding:60px 0;border-top:1px solid var(--line)}
+.sec-head{display:flex;align-items:flex-start;gap:18px;margin-bottom:14px}
+.sec-num{flex:none;width:54px;height:54px;border-radius:14px;background:var(--ink);color:var(--paper);font-family:'Fraunces';font-weight:700;font-size:22px;display:grid;place-items:center;box-shadow:var(--shadow)}
+.sec-head.accent .sec-num{background:var(--orange)}
+.sec-time{font-family:'JetBrains Mono';font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--orange-deep)}
+h2{font-family:'Fraunces';font-weight:700;font-size:clamp(28px,4.4vw,42px);line-height:1.08;letter-spacing:-.015em;margin:4px 0 0}
+h2 em{font-style:italic;color:var(--orange)}
+h3{font-family:'Fraunces';font-weight:600;font-size:25px;letter-spacing:-.01em;margin:34px 0 10px}
+h3 em{font-style:italic;color:var(--orange)}
+h4{font-family:'Manrope';font-weight:800;font-size:16px;letter-spacing:.01em;margin:22px 0 6px;text-transform:uppercase;color:var(--ink-soft)}
+p{margin:0 0 16px}
+.big-p{font-size:19px;color:var(--ink-soft);max-width:730px}
+strong{color:var(--ink);font-weight:700}
+code{font-family:'JetBrains Mono';font-size:.88em;background:rgba(0,0,0,.06);padding:2px 6px;border-radius:5px}
+
+/* definition / wow callouts */
+.def{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--orange);border-radius:14px;padding:20px 24px;margin:22px 0;box-shadow:var(--shadow)}
+.def .lab{font-family:'JetBrains Mono';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--orange-deep);font-weight:500;margin-bottom:6px}
+.def p:last-child{margin-bottom:0}
+.wow{background:linear-gradient(135deg,#fff3ec,#ffe9e1);border:1px solid #ffd2c5;border-radius:16px;padding:20px 24px;margin:24px 0;display:flex;gap:14px;align-items:flex-start;box-shadow:var(--shadow)}
+.wow .star{flex:none;font-size:26px;filter:drop-shadow(0 2px 4px rgba(216,60,24,.3))}
+.wow b{color:var(--orange-deep)}
+.wow p{margin:0;font-size:16px}
+
+/* analogy boxes */
+.analogy{border-radius:14px;padding:18px 22px;margin:20px 0;border:1px solid;display:flex;gap:14px;align-items:flex-start}
+.analogy .ico{flex:none;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:20px}
+.analogy.teal{background:var(--teal-tint);border-color:#a9ddd2}.analogy.teal .ico{background:var(--teal);color:#fff}
+.analogy.blue{background:var(--blue-tint);border-color:#b8c8ee}.analogy.blue .ico{background:var(--blue);color:#fff}
+.analogy.gold{background:var(--gold-tint);border-color:#ecd49b}.analogy.gold .ico{background:var(--gold);color:#fff}
+.analogy.purple{background:var(--purple-tint);border-color:#d4bce8}.analogy.purple .ico{background:var(--purple);color:#fff}
+.analogy.pink{background:var(--pink-tint);border-color:#f2bcd4}.analogy.pink .ico{background:var(--pink);color:#fff}
+.analogy b{display:block;font-size:15px;margin-bottom:2px}
+.analogy p{margin:0;font-size:15.5px;color:var(--ink-soft)}
+.analogy em{color:var(--ink);font-style:italic}
+
+/* industry spotlight */
+.industry{position:relative;background:linear-gradient(135deg,#211c18,#2e2620);color:#f4ece2;border-radius:18px;padding:26px 28px;margin:26px 0;overflow:hidden;box-shadow:var(--shadow-lift)}
+.industry:before{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,var(--orange),transparent 70%);opacity:.4}
+.industry .tag{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#ffb39e;font-weight:500;margin-bottom:10px}
+.industry h4{color:#fff;text-transform:none;font-family:'Fraunces';font-weight:600;font-size:20px;margin:0 0 8px;letter-spacing:0}
+.industry p{color:#d8ccbf;margin:0;font-size:15.5px;position:relative}
+.industry .cos{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;position:relative}
+.industry .cos span{font-size:12px;font-weight:600;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);padding:5px 11px;border-radius:7px}
+
+/* code */
+.code{background:var(--code-bg);border-radius:14px;margin:18px 0;overflow:hidden;box-shadow:var(--shadow-lift);border:1px solid #34291f}
+.code .bar{display:flex;align-items:center;gap:8px;padding:11px 16px;background:#1a1511;border-bottom:1px solid #34291f}
+.code .bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
+.code .bar .r{background:#ff5f56}.code .bar .y{background:#ffbd2e}.code .bar .g{background:#27c93f}
+.code .bar span{margin-left:8px;font-family:'JetBrains Mono';font-size:12px;color:#9a8a78}
+.code pre{margin:0;padding:18px 20px;overflow-x:auto;font-family:'JetBrains Mono';font-size:13.5px;line-height:1.7;color:var(--code-ink)}
+.cm{color:#7f9c6a;font-style:italic}.kw{color:#ff9d7a}.st{color:#f2c97d}.fn{color:#7fc7e8}.nm{color:#c8a8e8}.op{color:#9a8a78}
+
+/* flow steps */
+.flow{display:grid;gap:14px;margin:24px 0}
+.flow .step{display:flex;gap:16px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+.flow .n{flex:none;width:34px;height:34px;border-radius:9px;background:var(--orange-tint);color:var(--orange-deep);font-weight:800;display:grid;place-items:center;font-size:15px}
+.flow .step b{display:block;margin-bottom:2px}.flow .step p{margin:0;font-size:15px;color:var(--ink-soft)}
+
+/* timeline (history) */
+.timeline{position:relative;margin:28px 0;padding-left:34px}
+.timeline:before{content:"";position:absolute;left:9px;top:6px;bottom:6px;width:3px;background:linear-gradient(180deg,var(--blue),var(--teal),var(--gold),var(--orange))}
+.tl-item{position:relative;margin-bottom:18px}
+.tl-item .dot{position:absolute;left:-30px;top:3px;width:18px;height:18px;border-radius:50%;background:var(--card);border:3px solid var(--orange);box-shadow:var(--shadow)}
+.tl-item .yr{font-family:'JetBrains Mono';font-weight:700;font-size:13px;color:var(--orange-deep)}
+.tl-item b{font-size:15.5px}
+.tl-item p{margin:1px 0 0;font-size:14.5px;color:var(--ink-soft)}
+
+/* use case grid */
+.usecases{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin:22px 0}
+.uc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s;cursor:default}
+.uc:hover{transform:translateY(-3px);box-shadow:var(--shadow-lift)}
+.uc .e{font-size:26px}
+.uc b{display:block;margin:8px 0 3px;font-size:15px}
+.uc p{margin:0;font-size:13px;color:var(--ink-soft)}
+.uc .tag{display:inline-block;margin-top:8px;font-size:10.5px;font-family:'JetBrains Mono';color:var(--orange-deep);background:var(--orange-tint);padding:2px 7px;border-radius:6px}
+
+/* simulator shell */
+.sim{background:var(--card);border:2px solid var(--ink);border-radius:18px;margin:28px 0;overflow:hidden;box-shadow:var(--shadow-lift)}
+.sim .sim-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;background:var(--ink);color:var(--paper);flex-wrap:wrap}
+.sim .sim-head .t{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+.sim .sim-head .t .live{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.12em;background:var(--orange);color:#fff;padding:3px 8px;border-radius:6px;text-transform:uppercase}
+.sim .sim-head .hint{font-size:12.5px;color:#bcae9f}
+.sim .sim-body{padding:22px}
+.btn{font-family:'Manrope';font-weight:700;font-size:14px;border:none;border-radius:10px;padding:11px 18px;cursor:pointer;background:var(--orange);color:#fff;box-shadow:0 2px 0 var(--orange-deep);transition:transform .06s}
+.btn:hover{filter:brightness(1.04)}.btn:active{transform:translateY(2px);box-shadow:0 0 0 var(--orange-deep)}
+.btn.ghost{background:var(--paper-2);color:var(--ink);box-shadow:0 2px 0 var(--line)}
+.btn.small{padding:8px 13px;font-size:13px}
+input.text,textarea.text{width:100%;font-family:'Manrope';font-size:15px;border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--paper);color:var(--ink);resize:vertical}
+input.text:focus,textarea.text:focus{outline:none;border-color:var(--orange)}
+label.lbl{display:block;font-weight:700;font-size:13px;margin-bottom:6px;color:var(--ink-soft)}
+
+/* token chips */
+.tok{display:inline-block;padding:3px 7px;margin:2px;border-radius:6px;font-family:'JetBrains Mono';font-size:13px;line-height:1.4}
+.tokstats{display:flex;gap:22px;margin-top:16px;flex-wrap:wrap}
+.tokstats .s{background:var(--paper-2);border-radius:12px;padding:12px 18px;border:1px solid var(--line)}
+.tokstats .s b{font-family:'Fraunces';font-size:28px;display:block;color:var(--orange-deep);line-height:1}
+.tokstats .s span{font-size:12px;color:var(--ink-faint);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+
+/* prob bars */
+.bar-row{display:flex;align-items:center;gap:12px;margin:8px 0}
+.bar-row .word{width:120px;font-family:'JetBrains Mono';font-size:13px;text-align:right;flex:none}
+.bar-row .track{flex:1;background:var(--paper-2);border-radius:8px;height:26px;overflow:hidden;position:relative;border:1px solid var(--line)}
+.bar-row .fill{height:100%;background:linear-gradient(90deg,var(--orange),var(--gold));border-radius:8px;transition:width .4s cubic-bezier(.2,.8,.2,1);min-width:2px}
+.bar-row .pct{width:54px;font-family:'JetBrains Mono';font-size:13px;font-weight:700;flex:none}
+.slider{width:100%;-webkit-appearance:none;height:8px;border-radius:8px;background:linear-gradient(90deg,var(--teal),var(--orange),var(--pink));outline:none}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--ink);cursor:pointer;box-shadow:var(--shadow)}
+.slider::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--ink);cursor:pointer}
+
+/* self-supervision visual */
+.mask-demo{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin:22px 0;box-shadow:var(--shadow);text-align:center}
+.mask-sent{font-family:'Fraunces';font-size:clamp(20px,3.4vw,28px);line-height:1.5;margin-bottom:18px}
+.mask-blank{display:inline-block;min-width:120px;border-bottom:3px solid var(--orange);color:var(--orange-deep);font-weight:700;transition:.3s}
+.mask-guesses{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.mask-guess{padding:8px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);font-weight:600;cursor:pointer;font-size:14px;transition:.15s}
+.mask-guess:hover{border-color:var(--orange)}
+.mask-guess.right{background:var(--teal-tint);border-color:var(--teal);color:var(--teal)}
+.mask-guess.wrong{background:var(--pink-tint);border-color:var(--pink);color:var(--pink)}
+
+/* multimodal senses */
+.senses{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;margin:22px 0}
+.sense-in{display:grid;gap:10px}
+.sense{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-weight:600;font-size:14px;box-shadow:var(--shadow)}
+.sense .e{font-size:18px}
+.brain-core{background:linear-gradient(135deg,var(--orange),var(--gold));color:#fff;border-radius:18px;padding:22px 26px;text-align:center;box-shadow:var(--shadow-lift)}
+.brain-core .e{font-size:34px}.brain-core b{display:block;font-family:'Fraunces';font-size:18px;margin-top:4px}
+.arrowcol{font-size:22px;color:var(--orange);display:grid;gap:30px}
+
+/* architecture diagram */
+.arch{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;justify-content:center;margin:24px 0}
+.arch-box{flex:1;min-width:130px;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:16px 14px;text-align:center;box-shadow:var(--shadow);position:relative}
+.arch-box .e{font-size:26px}
+.arch-box b{display:block;margin-top:6px;font-size:14px}
+.arch-box small{color:var(--ink-faint);font-size:12px;font-family:'JetBrains Mono'}
+.arch-arrow{display:grid;place-items:center;font-size:22px;color:var(--orange);padding:0 6px;font-weight:700}
+.arch-box.c1{border-color:#b8c8ee}.arch-box.c2{border-color:#ecd49b}.arch-box.c3{border-color:#d4bce8}.arch-box.c4{border-color:#ffd2c5}.arch-box.c5{border-color:#a9ddd2}
+
+/* react / rag msgs */
+.react-stage{display:grid;gap:10px}
+.react-msg{border-radius:12px;padding:12px 16px;border:1px solid;opacity:0;transform:translateY(8px);transition:all .4s}
+.react-msg.in{opacity:1;transform:none}
+.react-msg .role{font-family:'JetBrains Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:3px}
+.react-msg.thought{background:var(--blue-tint);border-color:#b8c8ee}.react-msg.thought .role{color:var(--blue)}
+.react-msg.action{background:var(--gold-tint);border-color:#ecd49b}.react-msg.action .role{color:#a8761a}
+.react-msg.obs{background:var(--teal-tint);border-color:#a9ddd2}.react-msg.obs .role{color:var(--teal)}
+.react-msg.answer{background:var(--orange-tint);border-color:#ffd2c5}.react-msg.answer .role{color:var(--orange-deep)}
+.react-msg code{font-size:13px}
+
+/* multi-agent */
+.agents-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:16px 0}
+.agent-card{border-radius:14px;padding:16px;border:2px solid var(--line);background:var(--card);transition:all .35s;position:relative}
+.agent-card.active{border-color:var(--orange);box-shadow:0 0 0 4px var(--orange-tint);transform:translateY(-3px)}
+.agent-card.done{border-color:var(--teal)}
+.agent-card .av{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:22px;margin-bottom:10px}
+.agent-card .nm{font-weight:800;font-size:15px}.agent-card .ro{font-size:12.5px;color:var(--ink-faint);margin-bottom:8px}
+.agent-card .out{font-size:13px;color:var(--ink-soft);min-height:18px;font-style:italic}
+.agent-card .badge{position:absolute;top:10px;right:10px;font-size:16px;opacity:0;transition:.3s}.agent-card.done .badge{opacity:1}
+
+/* gradio mock */
+.gradio{border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lift);background:var(--card)}
+.gradio .gbar{background:linear-gradient(90deg,#ff7c00,#ff5b35);padding:14px 20px;color:#fff;display:flex;align-items:center;gap:10px}
+.gradio .gbar b{font-size:17px;font-weight:800}
+.gradio .gbar .pill{margin-left:auto;font-size:11px;font-family:'JetBrains Mono';background:rgba(255,255,255,.2);padding:4px 9px;border-radius:6px}
+.gradio .gbody{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.gradio .gcol{padding:22px}
+.gradio .gcol.in{border-right:1px solid var(--line);background:var(--paper)}
+.gradio .out-box{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:16px;min-height:200px;font-size:14px;line-height:1.6}
+.gradio .out-box .placeholder{color:var(--ink-faint);font-style:italic}
+.gradio .out-box h5{font-family:'Fraunces';font-size:17px;margin:0 0 8px}
+.gradio .out-box ul{margin:6px 0;padding-left:20px}.gradio .out-box li{margin:3px 0}
+
+/* notes */
+.note{background:var(--purple-tint);border:1px solid #d4bce8;border-radius:14px;padding:16px 20px;margin:22px 0;display:flex;gap:12px}
+.note .ico{flex:none;font-size:20px}.note b{color:var(--purple)}.note p{margin:0;font-size:15px;color:#5a4566}
+
+/* takeaways */
+.takeaways{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:20px 0}
+.takeaways .tk{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.takeaways .tk .e{font-size:22px}.takeaways .tk b{display:block;margin:8px 0 4px;font-size:15px}.takeaways .tk p{margin:0;font-size:14px;color:var(--ink-soft)}
+
+/* agenda */
+.agenda{display:grid;gap:0;margin:8px 0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card);box-shadow:var(--shadow)}
+.agenda .row{display:grid;grid-template-columns:96px 1fr;border-bottom:1px solid var(--line)}
+.agenda .row:last-child{border-bottom:none}
+.agenda .row .tm{background:var(--paper-2);padding:16px;font-family:'JetBrains Mono';font-size:13px;font-weight:700;color:var(--orange-deep);border-right:1px solid var(--line);display:flex;align-items:center}
+.agenda .row .ct{padding:14px 18px}.agenda .row .ct b{font-size:15.5px}.agenda .row .ct p{margin:2px 0 0;font-size:13.5px;color:var(--ink-faint)}
+.agenda .row.peak .ct b:after{content:" ★ ship it";color:var(--orange-deep);font-family:'JetBrains Mono';font-size:11px;letter-spacing:.05em}
+
+/* linkedin card */
+.li-card{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-lift);overflow:hidden;margin:22px 0;max-width:560px}
+.li-top{display:flex;gap:12px;align-items:center;padding:16px 18px 8px}
+.li-av{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--gold));display:grid;place-items:center;color:#fff;font-weight:800;font-family:'Fraunces';font-size:20px}
+.li-top .nm{font-weight:700;font-size:15px;line-height:1.2}.li-top .mt{font-size:12px;color:var(--ink-faint)}
+.li-body{padding:4px 18px 14px;font-size:14.5px;white-space:pre-line}
+.li-foot{border-top:1px solid var(--line);padding:10px 18px;display:flex;gap:20px;color:var(--ink-faint);font-size:13px;font-weight:600}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s cubic-bezier(.2,.8,.2,1)}
+.reveal.in{opacity:1;transform:none}
+
+footer{background:var(--ink);color:#d8ccbf;padding:50px 0 40px;margin-top:30px}
+footer h3{color:#fff;font-family:'Fraunces';margin-top:0}
+footer .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:28px}
+footer .sig{margin-top:34px;padding-top:22px;border-top:1px solid #3a2f26;font-family:'JetBrains Mono';font-size:12.5px;color:#9a8a78;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+/* why-tokens example */
+.tok-why{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:16px 0}
+.tok-why .c{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.tok-why .c .h{font-weight:800;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.tok-why .c.bad .h{color:var(--pink)}.tok-why .c.bad{border-color:#f2bcd4}
+.tok-why .c.good .h{color:var(--teal)}.tok-why .c.good{border-color:#a9ddd2}
+.tok-why .c p{margin:0;font-size:13.5px;color:var(--ink-soft)}
+.split-chip{display:inline-flex;gap:3px;flex-wrap:wrap;font-family:'JetBrains Mono';font-size:13px;margin:2px 0}
+.split-chip span{background:var(--orange-tint);color:var(--orange-deep);padding:2px 7px;border-radius:6px}
+
+/* setup steps + key sim */
+.keysim{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lift);margin:18px 0}
+.keysim .kbar{background:#10a37f;color:#fff;padding:10px 16px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px}
+.keysim .kbar .url{margin-left:auto;font-family:'JetBrains Mono';font-size:11px;background:rgba(255,255,255,.2);padding:3px 9px;border-radius:6px}
+.keysim .kbody{padding:20px}
+.keysim .krow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.keyout{font-family:'JetBrains Mono';font-size:13px;background:var(--paper-2);border:1px dashed var(--line);border-radius:8px;padding:10px 14px;flex:1;min-width:220px;color:var(--ink-faint);word-break:break-all}
+.keyout.live{color:var(--teal);border-color:var(--teal);border-style:solid;background:var(--teal-tint)}
+.warn-key{font-size:12.5px;color:var(--pink);margin-top:10px;font-weight:600}
+
+/* terminal */
+.term{background:#0f0d0b;border-radius:12px;overflow:hidden;box-shadow:var(--shadow-lift);margin:16px 0;border:1px solid #34291f}
+.term .tbar{background:#1a1511;padding:9px 14px;display:flex;gap:7px;align-items:center}
+.term .tbar i{width:11px;height:11px;border-radius:50%}
+.term .tbar i:nth-child(1){background:#ff5f56}.term .tbar i:nth-child(2){background:#ffbd2e}.term .tbar i:nth-child(3){background:#27c93f}
+.term .tbar span{margin-left:8px;font-family:'JetBrains Mono';font-size:12px;color:#9a8a78}
+.term pre{margin:0;padding:16px 18px;font-family:'JetBrains Mono';font-size:13px;line-height:1.85;color:#e8ddd0;overflow-x:auto}
+.term .pr{color:#27c93f}.term .cmt{color:#6f7d63}.term .ok{color:#7fc7e8}
+
+.run-steps{counter-reset:rs;display:grid;gap:10px;margin:16px 0}
+.run-steps .rs{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.run-steps .rs:before{counter-increment:rs;content:counter(rs);flex:none;width:30px;height:30px;border-radius:8px;background:var(--ink);color:#fff;font-weight:800;display:grid;place-items:center;font-size:14px}
+.run-steps .rs b{display:block;margin-bottom:3px;font-size:14.5px}
+.run-steps .rs code{font-size:12.5px}
+.run-steps .rs p{margin:0;font-size:13.5px;color:var(--ink-soft)}
+
+/* LLM arena */
+.arena-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:0;margin:16px 0;align-items:stretch}
+.arena-side{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;transition:.25s}
+.arena-side.win{border-color:var(--teal);box-shadow:0 0 0 4px var(--teal-tint)}
+.arena-side .who{font-family:'JetBrains Mono';font-size:12px;font-weight:700;color:var(--ink-faint);margin-bottom:8px;display:flex;align-items:center;gap:6px;min-height:20px}
+.arena-side .who .reveal-tag{background:var(--orange-tint);color:var(--orange-deep);padding:2px 8px;border-radius:6px;font-size:11px}
+.arena-side .resp{font-size:14px;line-height:1.6;flex:1;white-space:pre-line;color:var(--ink)}
+.arena-side .resp .ph{color:var(--ink-faint);font-style:italic}
+.arena-side .voteb{margin-top:12px}
+.arena-vs{display:grid;place-items:center;font-family:'Fraunces';font-weight:900;font-size:22px;color:var(--orange);padding:0 10px}
+.arena-tally{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;font-size:13px}
+.arena-tally .t{background:var(--paper-2);border:1px solid var(--line);border-radius:10px;padding:8px 14px}
+.arena-tally .t b{font-family:'Fraunces';font-size:20px;color:var(--orange-deep);display:block;line-height:1}
+.typing{display:inline-block}
+.typing:after{content:'▋';animation:bl 1s steps(2) infinite;color:var(--orange)}
+@keyframes bl{50%{opacity:0}}
+
+/* copy button on code & terminal bars */
+.copybtn{margin-left:auto;font-family:'Manrope';font-weight:700;font-size:11.5px;border:1px solid #4a3c30;background:#2c241d;color:#e8ddd0;border-radius:7px;padding:4px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:.15s}
+.copybtn:hover{background:#3a2f26;border-color:var(--orange)}
+.copybtn.done{background:var(--teal);border-color:var(--teal);color:#fff}
+
+@media(max-width:720px){
+  body{font-size:16px}
+  .arena-grid{grid-template-columns:1fr}.arena-vs{padding:8px 0}
+  .gradio .gbody{grid-template-columns:1fr}
+  .gradio .gcol.in{border-right:none;border-bottom:1px solid var(--line)}
+  .agenda .row{grid-template-columns:74px 1fr}
+  .bar-row .word{width:84px}
+  .arch{flex-direction:column}.arch-arrow{transform:rotate(90deg);padding:4px 0}
+  .senses{flex-direction:column}.arrowcol{transform:rotate(90deg)}
+  .sec-num{width:44px;height:44px;font-size:18px}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div id="topnav"><div class="wrap">
+  <div class="brand">AI&nbsp;<b>Engineering</b> · Class 1</div>
+  <nav>
+    <a href="#why">Why now</a><a href="#llm">LLMs</a><a href="#magic">The trick</a>
+    <a href="#build">What you build</a><a href="#connect">Connect</a>
+    <a href="#project">★ Project</a><a href="#linkedin">Ship it</a>
+  </nav>
+</div></div>
+
+<!-- HERO -->
+<header class="hero"><div class="wrap">
+  <span class="kicker"><span class="dot"></span> Class 1 · Beginner Friendly · Build &amp; Ship Today</span>
+  <h1 class="title">By the end of <em>today</em>,<br>you'll have shipped<br>a <em>real</em> AI app.</h1>
+  <p class="lede">No PhD. No math. No machine learning background. In one class you'll understand how AI <em>actually</em> works — and you'll build a real, shareable <strong>AI Website Summarizer</strong> — then post it on LinkedIn. Let's go.</p>
+  <div class="hero-meta">
+    <span class="chip">🧠 How LLMs really work</span>
+    <span class="chip">🪄 The "fill-in-the-blank" trick</span>
+    <span class="chip">🛠️ Your first 6 lines of code</span>
+    <span class="chip">🎛️ A real Gradio app</span>
+    <span class="chip">🔎 AI Website Summarizer</span>
+    <span class="chip">📣 A LinkedIn post you're proud of</span>
+  </div>
+  <div class="promise">
+    <b>The promise of Class 1</b>
+    <p>You walk in curious. You walk out having <strong>built and shared a working AI app</strong> — ahead of 99% of people who only <em>talk</em> about AI.</p>
+  </div>
+  <div class="signature"><b>Scaler Academy</b> &nbsp;—&nbsp; everything below is interactive. <b>Click the simulators</b> as we go.</div>
+</div></header>
+
+<!-- AGENDA -->
+<section class="block reveal" id="agenda"><div class="wrap">
+  <div class="sec-head accent"><div class="sec-num">⏱</div><div>
+    <div class="sec-time">The plan for today</div><h2>Our flight plan</h2></div></div>
+  <p class="big-p">We climb gently — a "wow" at every step, then we build. Timings are a guide; the ★ moment is when <em>you</em> ship.</p>
+  <div class="agenda">
+    <div class="row"><div class="tm">0:00</div><div class="ct"><b>Why AI exploded right now</b><p>70 years of AI, compressed — and why one person can suddenly build this</p></div></div>
+    <div class="row"><div class="tm">0:15</div><div class="ct"><b>What an LLM really is</b><p>Super-autocomplete, tokens &amp; temperature — with live simulators</p></div></div>
+    <div class="row"><div class="tm">0:40</div><div class="ct"><b>The trick behind the magic</b><p>Self-supervision: how AI taught itself from the whole internet</p></div></div>
+    <div class="row"><div class="tm">0:55</div><div class="ct"><b>What can you actually build?</b><p>Foundation &amp; multimodal models + the 8 use-case categories</p></div></div>
+    <div class="row"><div class="tm">1:10</div><div class="ct"><b>Your first connection in code</b><p>6 lines of Python that talk to an AI</p></div></div>
+    <div class="row peak"><div class="tm">1:30</div><div class="ct"><b>Project: AI Website Summarizer</b><p>Build it, wrap it in Gradio, watch it work</p></div></div>
+    <div class="row peak"><div class="tm">2:00</div><div class="ct"><b>Publish to LinkedIn</b><p>Screenshot, caption template, post — today</p></div></div>
+  </div>
+</div></section>
+
+<!-- 1. WHY NOW -->
+<section class="block reveal" id="why"><div class="wrap">
+  <div class="sec-head accent"><div class="sec-num">1</div><div>
+    <div class="sec-time">Block 1 · ~15 min · the hook</div>
+    <h2>Why is AI suddenly<br><em>everywhere</em>?</h2></div></div>
+  <p class="big-p">AI is not new — it's <strong>70 years old</strong>. So why did it explode in <em>your</em> feed only recently? Two things changed, and they changed everything about what <em>you</em> can build.</p>
+
+  <div class="timeline">
+    <div class="tl-item"><div class="dot"></div><div class="yr">1950s–2000s</div><b>AI is a research lab thing</b><p>Decades of slow progress. You needed a PhD, a university, and years to do anything useful.</p></div>
+    <div class="tl-item"><div class="dot"></div><div class="yr">2017</div><b>The "Transformer" is invented</b><p>A new model design that learns language astonishingly well. This is the engine inside GPT, Claude, Gemini.</p></div>
+    <div class="tl-item"><div class="dot"></div><div class="yr">Nov 2022</div><b>ChatGPT launches</b><p>The fastest-adopted product in history. Suddenly everyone can <em>talk</em> to AI.</p></div>
+    <div class="tl-item"><div class="dot" style="border-color:var(--orange);background:var(--orange)"></div><div class="yr">Now → you</div><b>Anyone can build on top of it</b><p>The hardest part is done by giant labs. You just <em>call</em> their AI with a few lines of code. That's this class.</p></div>
+  </div>
+
+  <div class="wow"><span class="star">🤯</span><div><b>The wow that defines our era</b><p>Something that used to need <strong>a team + 6 months + a data warehouse</strong> can now be built by <strong>one person in an afternoon</strong> with an internet connection. That collapse in cost is why "AI Engineer" is one of the fastest-growing jobs on the planet — and why you're in the right room.</p></div></div>
+
+  <h3>The two big shifts</h3>
+  <div class="analogy gold"><div class="ico">🌐</div><div><b>1. The model is general-purpose</b><p>Old AI did <em>one</em> task (spam-or-not). Today's AI does <em>thousands</em> — write, summarise, translate, code, answer — all from the same model. One brain, endless uses.</p></div></div>
+  <div class="analogy teal"><div class="ico">🚪</div><div><b>2. The barrier to entry collapsed</b><p>You don't build the AI. You <em>use</em> it through a simple API — like ordering food through an app instead of running a kitchen. If you can call a function, you can build with AI.</p></div></div>
+
+  <div class="note"><div class="ico">🎙️</div><div><b>Speaker note</b><p>Make this personal: ask the room "what took you forever last week that an AI could've drafted in 30 seconds?" Everyone has an answer. <em>That</em> gap is the opportunity we're learning to fill.</p></div></div>
+</div></section>
+
+<!-- 2. WHAT IS AN LLM -->
+<section class="block reveal" id="llm"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">2</div><div>
+    <div class="sec-time">Block 2 · ~25 min</div>
+    <h2>What is an LLM,<br><em>really?</em></h2></div></div>
+  <p class="big-p">LLM = <strong>Large Language Model</strong>. Strip the hype and it does exactly one thing, unbelievably well: <strong>it predicts the next chunk of text.</strong> Everything — chat, code, summaries — is built on that single trick.</p>
+
+  <div class="analogy purple"><div class="ico">⌨️</div><div><b>The "super-autocomplete" mental model</b><p>Your phone suggests the next word as you type. An LLM is that idea scaled up <em>a billion times</em> and trained on much of the internet — so its guesses are good enough to write essays, code and answers.</p></div></div>
+
+  <h3>First: words become <em>tokens</em></h3>
+  <p>A model doesn't read letters or words — it reads <strong>tokens</strong> (pieces roughly ¾ of a word). It thinks in tokens and you pay per token, so let's <em>see</em> them. Type anything:</p>
+  <div class="sim">
+    <div class="sim-head"><div class="t"><span class="live">Live sim</span> Tokenizer playground</div><div class="hint">type → watch it split into tokens</div></div>
+    <div class="sim-body">
+      <label class="lbl">Your text</label>
+      <textarea class="text" id="tokInput" rows="2">AI Engineering is surprisingly approachable!</textarea>
+      <div id="tokOut" style="margin-top:16px;line-height:2.2"></div>
+      <div class="tokstats">
+        <div class="s"><b id="tokCount">0</b><span>Tokens</span></div>
+        <div class="s"><b id="charCount">0</b><span>Characters</span></div>
+        <div class="s"><b id="costEst">$0</b><span>Cost @ $5/1M tok</span></div>
+      </div>
+      <p style="font-size:13.5px;color:var(--ink-faint);margin:14px 0 0">Notice: common words = 1 token; rare/long words get chopped into pieces. <strong>Rough rule: 1 token ≈ ¾ of a word ≈ 4 characters.</strong></p>
+    </div>
+
+    <h4>But why <em style="color:var(--orange);font-style:italic;font-size:1em">tokens</em> — why not just whole words, or single letters?</h4>
+    <p>This is a clever engineering trade-off. The model needs a fixed list of "things it knows" (its <strong>vocabulary</strong>). Words and letters both fail at the extremes — tokens sit in the sweet spot:</p>
+    <div class="tok-why">
+      <div class="c bad"><div class="h">❌ One token per word</div><p>There are <em>millions</em> of words across all languages, plus names, typos, slang &amp; new words daily. The vocabulary would be impossibly huge — and it would freeze the first time it met a word it had never seen.</p></div>
+      <div class="c bad"><div class="h">❌ One token per letter</div><p>Only ~100 symbols — tiny vocabulary — but now every sentence is hundreds of tokens long. Slow, expensive, and the model has to relearn spelling from scratch every time.</p></div>
+      <div class="c good"><div class="h">✅ Tokens (sub-words)</div><p>A vocabulary of ~100k common chunks. Frequent words stay whole; anything rare is built from pieces. Best of both: compact <em>and</em> it can spell out <em>any</em> word it's never seen.</p></div>
+    </div>
+    <p>Concrete example — a word the model probably never saw in training still works fine, because it's assembled from familiar pieces:</p>
+    <div class="def"><div class="lab">how a rare word gets built</div>
+      <p style="margin-bottom:8px"><code>"unbelievableness"</code> &nbsp;→&nbsp; <span class="split-chip"><span>un</span><span>believ</span><span>able</span><span>ness</span></span></p>
+      <p style="margin:0">Four known tokens, zero panic. Meanwhile <code>"the"</code>, <code>"cat"</code>, <code>"is"</code> are each a single token. That's why <strong>tokens were chosen</strong>: they let one fixed vocabulary handle every word in every language — even ones invented tomorrow.</p>
+    </div>
+    <div class="note"><div class="ico">💡</div><div><b>Why you'll feel this as an engineer</b><p>English is "cheap" (≈¾ word per token). Code, emojis, and many non-English scripts use <em>more</em> tokens per character — so the same sentence in Hindi or Tamil can cost noticeably more tokens than in English. Worth knowing when you price an app.</p></div>
+    </div>
+  </div>
+
+  <h3>Then: it predicts the <em>next</em> token — over and over</h3>
+  <p>Given the tokens so far, the model scores <strong>every possible next token</strong> with a probability, picks one, adds it, and repeats. That loop <em>is</em> "generating text".</p>
+  <div class="analogy blue"><div class="ico">🎲</div><div><b>Temperature = the creativity dial</b><p><strong>Low</strong> → always pick the most likely word → focused &amp; repeatable. <strong>High</strong> → sometimes pick surprising words → creative &amp; varied. Drag the slider and watch the probabilities reshape:</p></div></div>
+  <div class="sim">
+    <div class="sim-head"><div class="t"><span class="live">Live sim</span> Next-token &amp; temperature</div><div class="hint">prompt: "I love building things in ___"</div></div>
+    <div class="sim-body">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px">
+        <label class="lbl" style="margin:0">Temperature</label>
+        <b id="tempVal" style="font-family:'JetBrains Mono';color:var(--orange-deep);font-size:18px">0.7</b>
+        <span style="font-size:12px;color:var(--ink-faint)" id="tempLabel">balanced</span>
+      </div>
+      <input type="range" min="0" max="150" value="70" class="slider" id="tempSlider">
+      <div id="probBars" style="margin-top:20px"></div>
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;align-items:center">
+        <button class="btn" id="sampleBtn">🎲 Sample a token</button>
+        <div id="sampleOut" style="font-family:'JetBrains Mono';font-size:14px"></div>
+      </div>
+    </div>
+  </div>
+  <div class="note"><div class="ico">💡</div><div><b>This is a real engineering choice</b><p>A support bot wants <em>temperature ≈ 0.2</em> (consistent). A brainstorming tool wants <em>≈ 1.0</em> (varied). You'll set this on day one of any real project — including today's.</p></div></div>
+
+  <h3>One more truth: the model has <em>no memory</em></h3>
+  <p>Between calls, an LLM forgets everything. Anything it should "know" in a conversation must be <strong>re-sent every time</strong>, inside a limited <strong>context window</strong> (measured in tokens). This one fact quietly explains a huge amount of AI engineering.</p>
+
+  <div class="takeaways">
+    <div class="tk"><div class="e">🔤</div><b>Tokens, not words</b><p>It reads, thinks &amp; bills in tokens.</p></div>
+    <div class="tk"><div class="e">🎯</div><b>Predicts next token</b><p>All abilities emerge from this loop.</p></div>
+    <div class="tk"><div class="e">🌡️</div><b>Temperature</b><p>Low = focused, high = creative.</p></div>
+    <div class="tk"><div class="e">🪟</div><b>No memory</b><p>You resend context each time.</p></div>
+  </div>
+</div></section>
+
+<!-- 3. THE TRICK -->
+<section class="block reveal" id="magic"><div class="wrap">
+  <div class="sec-head accent"><div class="sec-num">3</div><div>
+    <div class="sec-time">Block 3 · ~15 min · the "aha"</div>
+    <h2>The trick that made<br>all of this <em>possible</em></h2></div></div>
+  <p class="big-p">Here's the part that makes people go "ohhh". How do you teach a machine language without an army of humans labelling billions of examples? You let it <strong>play fill-in-the-blank with the entire internet.</strong></p>
+
+  <div class="analogy gold"><div class="ico">📚</div><div><b>The old way (slow &amp; expensive)</b><p>Humans hand-label data: "this email = spam", "this review = positive". Accurate, but you need millions of labelled examples. Painfully slow.</p></div></div>
+  <div class="analogy teal"><div class="ico">🪄</div><div><b>The clever shortcut: self-supervision</b><p>Take any sentence from the web, <em>hide a word</em>, and ask the model to guess it. The answer is <strong>already in the text</strong> — so the internet becomes its own teacher. No humans needed. Trillions of free practice questions.</p></div></div>
+
+  <p>Try being the model for a second — guess the hidden word:</p>
+  <div class="mask-demo">
+    <div class="mask-sent" id="maskSent">The barista handed me a hot cup of <span class="mask-blank" id="maskBlank">______</span>.</div>
+    <div class="mask-guesses" id="maskGuesses"></div>
+    <p style="font-size:13.5px;color:var(--ink-faint);margin:16px 0 0" id="maskMsg">Pick the word you think fills the blank.</p>
+  </div>
+
+  <div class="wow"><span class="star">🤯</span><div><b>Why this changes everything</b><p>You just did what the model does <strong>billions of times</strong>. To guess "coffee", it had to quietly learn grammar, context, what baristas do, what's hot, what fits in a cup… <em>Understanding emerges as a side-effect of getting really good at fill-in-the-blank.</em> That's the whole secret behind ChatGPT.</p></div></div>
+
+  <div class="note"><div class="ico">⚠️</div><div><b>Keep it honest (mention this)</b><p>Because it learned by predicting plausible text, an LLM can sometimes produce confident-sounding <em>wrong</em> answers — called <strong>hallucinations</strong>. A big part of our job as AI engineers is designing around that (e.g. feeding it real documents — we'll see that later). Trust, but verify.</p></div></div>
+</div></section>
+
+<!-- 4. WHAT CAN YOU BUILD -->
+<section class="block reveal" id="build"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">4</div><div>
+    <div class="sec-time">Block 4 · ~15 min</div>
+    <h2>So… what can you<br>actually <em>build?</em></h2></div></div>
+  <p class="big-p">First, a quick upgrade to your mental model. Modern AI isn't just about text anymore — it can also see, hear and speak. We call these <strong>foundation models</strong>: one giant general-purpose brain you adapt to many jobs.</p>
+
+  <h3>Multimodal: models with more <em>senses</em></h3>
+  <div class="senses">
+    <div class="sense-in">
+      <div class="sense"><span class="e">📝</span> Text</div>
+      <div class="sense"><span class="e">🖼️</span> Images</div>
+      <div class="sense"><span class="e">🎤</span> Audio</div>
+      <div class="sense"><span class="e">🎬</span> Video</div>
+    </div>
+    <div class="arrowcol"><span>➜</span></div>
+    <div class="brain-core"><span class="e">🧠</span><b>Foundation<br>Model</b></div>
+    <div class="arrowcol"><span>➜</span></div>
+    <div class="sense-in">
+      <div class="sense"><span class="e">💬</span> An answer</div>
+      <div class="sense"><span class="e">🖌️</span> An image</div>
+      <div class="sense"><span class="e">🔊</span> A voice</div>
+      <div class="sense"><span class="e">📊</span> A report</div>
+    </div>
+  </div>
+  <p style="text-align:center;color:var(--ink-faint);font-size:14px">Show it a photo of your fridge → get a recipe. Speak to it → it talks back. Same idea as text, more senses.</p>
+
+  <h3>The 8 things people build with AI</h3>
+  <p>Almost every AI product you've seen falls into one of these buckets. Find <em>your</em> idea here:</p>
+  <div class="usecases">
+    <div class="uc"><div class="e">💻</div><b>Coding</b><p>Write, explain &amp; fix code. The #1 use case today.</p><span class="tag">Copilot · Cursor</span></div>
+    <div class="uc"><div class="e">✍️</div><b>Writing</b><p>Emails, blogs, marketing copy, rewriting.</p><span class="tag">Jasper · Notion AI</span></div>
+    <div class="uc"><div class="e">🎨</div><b>Image &amp; Video</b><p>Generate art, edit photos, make clips.</p><span class="tag">Midjourney</span></div>
+    <div class="uc"><div class="e">🎓</div><b>Education</b><p>Personal tutors that explain anything, your pace.</p><span class="tag">Khanmigo</span></div>
+    <div class="uc"><div class="e">💬</div><b>Chatbots</b><p>Support, sales &amp; assistants that converse.</p><span class="tag">Intercom Fin</span></div>
+    <div class="uc"><div class="e">📥</div><b>Info Aggregation</b><p>Summarise &amp; search across mountains of text.</p><span class="tag">★ today's project</span></div>
+    <div class="uc"><div class="e">🗂️</div><b>Data Organization</b><p>Tag, sort &amp; structure messy information.</p><span class="tag">classification</span></div>
+    <div class="uc"><div class="e">⚙️</div><b>Workflow / Agents</b><p>AI that takes multi-step actions for you.</p><span class="tag">the frontier</span></div>
+  </div>
+
+  <div class="industry">
+    <div class="tag">🏭 Industry spotlight · same skill, different product</div>
+    <h4>The pattern is always the same</h4>
+    <p>A coding tool, a legal-doc reader, a Swiggy-order chatbot — under the hood they all do one thing: <em>connect to a model, give it the right context, get a useful answer, wrap it in a UI.</em> Learn that once (today) and every one of these 8 becomes buildable.</p>
+    <div class="cos"><span>GitHub Copilot</span><span>Harvey · legal</span><span>Klarna · support</span><span>Khan Academy · tutoring</span><span>Perplexity · search</span></div>
+  </div>
+  <p style="text-align:center"><strong>Today we build a 📥 Info-Aggregation tool</strong> — an AI Website Summarizer. Simple, genuinely useful, and very shareable.</p>
+</div></section>
+
+<!-- 6. CONNECT -->
+<section class="block reveal" id="connect"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">6</div><div>
+    <div class="sec-time">Block 6 · ~20 min</div>
+    <h2>Your first 6 lines<br>that talk to an AI</h2></div></div>
+
+  <h3>Step 0 — Get set up <span style="font-size:.6em;color:var(--ink-faint);font-family:'Manrope'">(do this once, ~10 min)</span></h3>
+  <p>Before any code runs, three quick bits of plumbing. Don't worry — it's a one-time setup.</p>
+
+  <h4>① Install a code editor — Cursor <span style="color:var(--ink-faint);font-weight:600">or</span> VS Code</h4>
+  <p>You need one editor to write and run code. Both are free and work identically for this course — pick whichever you like:</p>
+  <div class="analogy purple"><div class="ico">🆚</div><div><b>Cursor vs VS Code — which one?</b><p><strong>VS Code</strong> is the world's most popular editor (by Microsoft) — rock-solid and widely used. <strong>Cursor</strong> is built <em>on top of</em> VS Code with an AI assistant baked in. If you want AI help while coding, pick Cursor; if you want the classic standard, pick VS Code. <em>Either is totally fine — you only need one.</em></p></div></div>
+  <div class="flow">
+    <div class="step"><div class="n">a</div><div><b>Download &amp; install</b><p><strong>Cursor:</strong> go to <code>cursor.com</code> → Download. &nbsp;<strong>VS Code:</strong> go to <code>code.visualstudio.com</code> → Download. Install like any normal app (Windows / Mac / Linux).</p></div></div>
+    <div class="step"><div class="n">b</div><div><b>Add the Python &amp; Jupyter extensions</b><p>Open your editor → click the <em>Extensions</em> icon on the left → search <code>Python</code> (by Microsoft) and <code>Jupyter</code> → Install both. (Same steps in Cursor and VS Code.)</p></div></div>
+    <div class="step"><div class="n">c</div><div><b>Open a notebook &amp; pick the kernel</b><p>Open a <code>.ipynb</code> file → click <em>Select Kernel</em> (top-right) → choose your Python environment. You run a cell with <strong>Shift + Enter</strong>.</p></div></div>
+  </div>
+
+  <h4>② Get your OpenAI API key</h4>
+  <p>An API key is a secret password that lets your code use OpenAI's models (you pay only for what you use — cents for this class). Here's the flow, simulated — click through it:</p>
+  <div class="keysim">
+    <div class="kbar">🔑 OpenAI Platform <span class="url">platform.openai.com/api-keys</span></div>
+    <div class="kbody">
+      <p style="margin:0 0 14px;font-size:14px;color:var(--ink-soft)">Sign in, add a little credit under <em>Billing</em>, then create a key:</p>
+      <div class="krow">
+        <button class="btn" id="keyBtn">+ Create new secret key</button>
+        <div class="keyout" id="keyOut">your key will appear here…</div>
+      </div>
+      <div class="warn-key" id="keyWarn" style="display:none">⚠️ Copy it now — OpenAI shows a secret key only once. And never share it or commit it to GitHub.</div>
+      <p style="margin:14px 0 0;font-size:13px;color:var(--ink-faint)">🔁 Prefer free? You can skip this entirely and use <strong>Ollama</strong> (runs on your laptop, no key, same code) — we'll cover it next class.</p>
+    </div>
+  </div>
+
+  <h4>③ Put the key in a <code>.env</code> file (never in your code)</h4>
+  <p>Create a file literally named <code>.env</code> in your project folder, and paste your key inside. Your code reads it from there — so the secret never appears in the code you share.</p>
+  <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>.env</span></div>
+<pre><span class="cm"># .env  — keep this file private! Add it to .gitignore</span>
+OPENAI_API_KEY<span class="op">=</span>sk-proj-xxxxxxxxxxxxxxxxxxxxxxxx</pre></div>
+  <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>load_key.py — read it in your code</span></div>
+<pre><span class="cm"># pip install python-dotenv</span>
+<span class="kw">from</span> dotenv <span class="kw">import</span> load_dotenv
+load_dotenv()                 <span class="cm"># loads everything from .env</span>
+
+<span class="cm"># now OpenAI() finds the key automatically — no key in your code 🎉</span></pre></div>
+  <div class="note"><div class="ico">🔐</div><div><b>The one habit that saves careers</b><p>Add <code>.env</code> to your <code>.gitignore</code> so it's never uploaded to GitHub. Leaked keys get found by bots in minutes and can run up real bills. Secrets live in <code>.env</code>, never in code.</p></div></div>
+
+  <h3>Now — the 6 lines that actually talk to the AI</h3>
+  <p>With setup done, calling an LLM is just an <strong>API call</strong> — like fetching the weather, except the reply is intelligence. Here's the whole thing:</p>
+  <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>first_call.py</span></div>
+<pre><span class="cm"># pip install python-dotenv</span>
+<span class="kw">from</span> dotenv <span class="kw">import</span> load_dotenv
+<span class="cm"># pip install openai</span>
+<span class="kw">from</span> openai <span class="kw">import</span> OpenAI
+load_dotenv()                 <span class="cm"># loads everything from .env</span>
+
+client <span class="op">=</span> <span class="fn">OpenAI</span>()   <span class="cm"># reads your API key from the environment</span>
+
+response <span class="op">=</span> client.chat.completions.<span class="fn">create</span>(
+    model<span class="op">=</span><span class="st">"gpt-4o-mini"</span>,
+    messages<span class="op">=</span>[
+        {<span class="st">"role"</span>: <span class="st">"system"</span>, <span class="st">"content"</span>: <span class="st">"You are a witty travel guide."</span>},
+        {<span class="st">"role"</span>: <span class="st">"user"</span>,   <span class="st">"content"</span>: <span class="st">"Suggest one thing to do in Bangalore."</span>},
+    ],
+)
+<span class="fn">print</span>(response.choices[<span class="nm">0</span>].message.content)
+
+
+<span class="cm"># now OpenAI() finds the key automatically — no key in your code 🎉</span></pre></div>
+
+  <h3>The 3 "roles" — the entire grammar of chat models</h3>
+  <div class="flow">
+    <div class="step"><div class="n">S</div><div><b>system</b><p>Sets the personality &amp; rules — "You are a careful tutor. Never give the full answer." Written once, applies throughout.</p></div></div>
+    <div class="step"><div class="n">U</div><div><b>user</b><p>What the human asks. The actual request.</p></div></div>
+    <div class="step"><div class="n">A</div><div><b>assistant</b><p>The model's reply. To continue a chat, append it back and resend the whole list (remember: no memory!).</p></div></div>
+  </div>
+
+  <div class="sim">
+    <div class="sim-head"><div class="t"><span class="live">Live sim</span> Anatomy of one API round-trip</div><div class="hint">press send → watch it travel</div></div>
+    <div class="sim-body">
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;text-align:center">
+        <div style="background:var(--blue-tint);border:1px solid #b8c8ee;border-radius:12px;padding:16px">
+          <div style="font-size:26px">🧑‍💻</div><b style="font-size:13px">Your app</b>
+          <div id="apiReq" style="font-family:'JetBrains Mono';font-size:11px;color:var(--blue);margin-top:6px;min-height:30px"></div>
+        </div>
+        <div id="apiArrow" style="font-size:24px;color:var(--orange);transition:.3s">➜</div>
+        <div style="background:var(--orange-tint);border:1px solid #ffd2c5;border-radius:12px;padding:16px">
+          <div style="font-size:26px" id="apiBrain">🧠</div><b style="font-size:13px">LLM model</b>
+          <div id="apiResp" style="font-family:'JetBrains Mono';font-size:11px;color:var(--orange-deep);margin-top:6px;min-height:30px"></div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:18px"><button class="btn" id="apiBtn">📤 Send the request</button></div>
+      <div id="apiResult" style="margin-top:16px;background:var(--paper-2);border:1px solid var(--line);border-radius:10px;padding:14px;font-size:14px;display:none"></div>
+    </div>
+  </div>
+
+  <div class="note"><div class="ico">🔐</div><div><b>Golden rule</b><p>Never paste your API key into shared/public code — it's a password to your wallet. Keep it in a <code>.env</code> file or environment variable, on the server side only.</p></div></div>
+  <div class="industry">
+    <div class="tag">🏭 Industry spotlight · the model is swappable</div>
+    <h4>Same code, different brains</h4>
+    <p>Change one string — <code>"gpt-4o-mini"</code> → a Claude or open-source model — and your whole product runs on a different engine. There's even a <strong>free, runs-on-your-laptop</strong> option (Ollama) that uses this exact same code, just pointed at a local address. We'll meet it soon.</p>
+    <div class="cos"><span>OpenAI · GPT</span><span>Anthropic · Claude</span><span>Google · Gemini</span><span>Groq · Llama (free &amp; fast)</span><span>Ollama · free &amp; local</span></div>
+  </div>
+
+  <h3>Bonus: the <em>same</em> code on a free, blazing-fast model (Groq + Llama)</h3>
+  <p>Don't want to add billing yet? <strong>Groq</strong> gives you a free API key and runs open models like Meta's <strong>Llama</strong> incredibly fast. Because Groq speaks the same "language" as OpenAI, you change just <em>two things</em> — the key and one line — and everything else stays identical:</p>
+  <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>groq_call.py</span></div>
+<pre><span class="cm"># pip install openai   (yes — the same library!)</span>
+<span class="kw">import</span> os
+<span class="kw">from</span> openai <span class="kw">import</span> OpenAI
+<span class="kw">from</span> dotenv <span class="kw">import</span> load_dotenv
+load_dotenv()
+
+<span class="cm"># point the SAME client at Groq instead of OpenAI 👇</span>
+client <span class="op">=</span> <span class="fn">OpenAI</span>(
+    api_key<span class="op">=</span>os.<span class="fn">getenv</span>(<span class="st">"GROQ_API_KEY"</span>),
+    base_url<span class="op">=</span><span class="st">"https://api.groq.com/openai/v1"</span>,
+)
+
+response <span class="op">=</span> client.chat.completions.<span class="fn">create</span>(
+    model<span class="op">=</span><span class="st">"llama-3.3-70b-versatile"</span>,        <span class="cm"># a free Llama model on Groq</span>
+    messages<span class="op">=</span>[
+        {<span class="st">"role"</span>: <span class="st">"system"</span>, <span class="st">"content"</span>: <span class="st">"You are a witty travel guide."</span>},
+        {<span class="st">"role"</span>: <span class="st">"user"</span>,   <span class="st">"content"</span>: <span class="st">"Suggest one thing to do in Bangalore."</span>},
+    ],
+)
+<span class="fn">print</span>(response.choices[<span class="nm">0</span>].message.content)</pre></div>
+  <div class="def"><div class="lab">where to get the key</div><p>Sign up free at <code>console.groq.com</code> → <em>API Keys</em> → Create key, then add it to your <code>.env</code> as <code>GROQ_API_KEY=gsk_...</code>. <strong>Notice how little changed</strong> — just the key, the <code>base_url</code>, and the model name. The whole point of AI Engineering: the brain is swappable.</p></div>
+</div></section>
+
+<!-- 7. MINI PROJECT -->
+<section class="block reveal" id="project"><div class="wrap">
+  <div class="sec-head accent"><div class="sec-num">7</div><div>
+    <div class="sec-time">Block 7 · ~30 min · 🏁 THE BUILD</div>
+    <h2>Mini-Project:<br>AI Website Summarizer</h2></div></div>
+  <p class="big-p">Time to build. Our app: <strong>give it any web page URL → it reads the page and hands you a clean summary.</strong> The Reader's Digest of the internet. It's simple, genuinely useful, and exactly the kind of thing that makes a great first LinkedIn post.</p>
+
+  <h3>How it works — the whole app in one picture</h3>
+  <div class="arch">
+    <div class="arch-box c1"><div class="e">🔗</div><b>URL</b><small>user pastes it</small></div>
+    <div class="arch-arrow">➜</div>
+    <div class="arch-box c2"><div class="e">🕷️</div><b>Scrape</b><small>grab page text</small></div>
+    <div class="arch-arrow">➜</div>
+    <div class="arch-box c3"><div class="e">🧩</div><b>Prompt</b><small>text + instructions</small></div>
+    <div class="arch-arrow">➜</div>
+    <div class="arch-box c4"><div class="e">🧠</div><b>LLM</b><small>summarise</small></div>
+    <div class="arch-arrow">➜</div>
+    <div class="arch-box c5"><div class="e">📄</div><b>Summary</b><small>shown in UI</small></div>
+  </div>
+  <p style="text-align:center;color:var(--ink-faint);font-size:14px">Five boxes. That's a real AI product. Let's write each piece.</p>
+
+  <h3>Step 1 — Grab the page text (the "scraper")</h3>
+  <div class="note"><div class="ico">📦</div><div><b>Treat this one as a black box</b><p>You do <strong>not</strong> need to understand a single line below. This is plain web-scraping (not AI), and there's a library for it. All it does: <em>take a URL → return the page's readable text as a string.</em> That's it. Copy it, trust it, move on — the AI magic is in Step 2.</p></div></div>
+  <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>scraper.py</span></div>
+<pre><span class="cm"># pip install requests beautifulsoup4</span>
+<span class="kw">import</span> requests
+<span class="kw">from</span> bs4 <span class="kw">import</span> BeautifulSoup
+
+HEADERS <span class="op">=</span> {
+    <span class="st">"User-Agent"</span>: <span class="st">"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "</span>
+                  <span class="st">"AppleWebKit/537.36 (KHTML, like Gecko) "</span>
+                  <span class="st">"Chrome/120.0 Safari/537.36"</span>,
+    <span class="st">"Accept"</span>: <span class="st">"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"</span>,
+    <span class="st">"Accept-Language"</span>: <span class="st">"en-US,en;q=0.9"</span>,
+}
+
+<span class="kw">def</span> <span class="fn">fetch_website_contents</span>(url):
+    <span class="cm"># add scheme if the user forgot it</span>
+    <span class="kw">if not</span> url.<span class="fn">startswith</span>((<span class="st">"http://"</span>, <span class="st">"https://"</span>)):
+        url <span class="op">=</span> <span class="st">"https://"</span> <span class="op">+</span> url
+
+    <span class="kw">try</span>:
+        response <span class="op">=</span> requests.<span class="fn">get</span>(url, headers<span class="op">=</span>HEADERS, timeout<span class="op">=</span><span class="nm">15</span>)
+        response.<span class="fn">raise_for_status</span>()
+    <span class="kw">except</span> requests.exceptions.RequestException <span class="kw">as</span> e:
+        <span class="kw">return</span> <span class="st">f"Could not fetch the website. Error: {e}"</span>
+
+    soup <span class="op">=</span> <span class="fn">BeautifulSoup</span>(response.text, <span class="st">"html.parser"</span>)
+    title <span class="op">=</span> soup.title.string <span class="kw">if</span> soup.title <span class="kw">else</span> <span class="st">"No title found"</span>
+
+    <span class="kw">for</span> tag <span class="kw">in</span> <span class="fn">soup</span>([<span class="st">"script"</span>, <span class="st">"style"</span>, <span class="st">"nav"</span>, <span class="st">"footer"</span>, <span class="st">"header"</span>, <span class="st">"img"</span>, <span class="st">"input"</span>]):
+        tag.<span class="fn">decompose</span>()
+
+    text <span class="op">=</span> soup.<span class="fn">get_text</span>(separator<span class="op">=</span><span class="st">"\n"</span>, strip<span class="op">=</span><span class="kw">True</span>)
+    <span class="kw">return</span> <span class="st">f"Title: {title}\n\nPage contents:\n{text}"</span></pre></div>
+  <h3>Step 2 — The brain (prompt + LLM call)</h3>
+  <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>summarizer.py</span></div>
+<pre><span class="kw">from</span> openai <span class="kw">import</span> OpenAI
+<span class="kw">from</span> dotenv <span class="kw">import</span> load_dotenv
+<span class="kw">from</span> scraper <span class="kw">import</span> fetch_website_contents
+
+load_dotenv()          <span class="cm"># &lt;-- this reads your .env file</span>
+client <span class="op">=</span> <span class="fn">OpenAI</span>()
+
+system_prompt <span class="op">=</span> <span class="st">"""You analyze the contents of a website and
+give a short, friendly summary. Ignore navigation menus.
+Respond in markdown."""</span>
+
+<span class="kw">def</span> <span class="fn">summarize</span>(url):
+    website <span class="op">=</span> <span class="fn">fetch_website_contents</span>(url)
+    response <span class="op">=</span> client.chat.completions.<span class="fn">create</span>(
+        model<span class="op">=</span><span class="st">"gpt-4o-mini"</span>,
+        messages<span class="op">=</span>[
+            {<span class="st">"role"</span>:<span class="st">"system"</span>, <span class="st">"content"</span>: system_prompt},
+            {<span class="st">"role"</span>:<span class="st">"user"</span>,   <span class="st">"content"</span>: <span class="st">f"Summarize this website:\n\n{website}"</span>},
+        ],
+    )
+    <span class="kw">return</span> response.choices[<span class="nm">0</span>].message.content</pre></div>
+  <div class="note"><div class="ico">🪄</div><div><b>The "wow" lever — change the personality</b><p>Edit one line of the <code>system_prompt</code> — "give a <em>snarky, humorous</em> summary" or "explain it to a 10-year-old" or "respond in Hindi" — and the whole app behaves differently. <strong>That's prompt engineering, and you just learned it.</strong> Try the personality buttons in the live demo below 👇</p></div></div>
+
+  <h3>Step 3 — The face (Gradio = a web app in 4 lines)</h3>
+  <p>Nobody will run your Python script. <strong>Gradio turns your function into a shareable web app</strong> — no HTML, no CSS, no JavaScript:</p>
+  <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app.py</span></div>
+<pre><span class="cm"># pip install gradio</span>
+<span class="kw">import</span> gradio <span class="kw">as</span> gr
+<span class="kw">from</span> summarizer <span class="kw">import</span> summarize
+
+gr.<span class="fn">Interface</span>(
+    fn<span class="op">=</span>summarize,                                  <span class="cm"># your function</span>
+    inputs<span class="op">=</span>gr.<span class="fn">Textbox</span>(label<span class="op">=</span><span class="st">"Website URL"</span>),
+    outputs<span class="op">=</span>gr.<span class="fn">Markdown</span>(label<span class="op">=</span><span class="st">"Summary"</span>),
+    title<span class="op">=</span><span class="st">"🔎 AI Website Summarizer"</span>,
+).<span class="fn">launch</span>(share<span class="op">=</span><span class="kw">True</span>)   <span class="cm"># share=True → a public link you can post! 🎉</span></pre></div>
+
+  <h3>Step 4 — Run it on your machine 👇</h3>
+  <p>Save the three files (<code>scraper.py</code>, <code>summarizer.py</code>, <code>app.py</code>) and your <code>.env</code> in one folder. Then open the terminal in Cursor (<em>Terminal → New Terminal</em>) and run:</p>
+  <div class="term">
+    <div class="tbar"><i></i><i></i><i></i><span>bash — your project folder</span></div>
+<pre><span class="cmt"># 1. install everything you need (one time)</span>
+<span class="pr">$</span> pip install openai gradio requests beautifulsoup4 python-dotenv
+
+<span class="cmt"># 2. launch the app</span>
+<span class="pr">$</span> python app.py
+
+<span class="cmt"># 3. Gradio prints two links:</span>
+<span class="ok">Running on local URL:  http://127.0.0.1:7860</span>
+<span class="ok">Running on public URL: https://a1b2c3.gradio.live</span>   <span class="cmt"># ← share this!</span></pre>
+  </div>
+  <div class="run-steps">
+    <div class="rs"><div><b>Open the local link</b><p>Click <code>http://127.0.0.1:7860</code> — your app opens in the browser. This is your app running on <em>your</em> computer.</p></div></div>
+    <div class="rs"><div><b>Paste a URL and hit submit</b><p>Try a blog or news site. In a second or two, the summary appears. 🎉 You just used your own AI app.</p></div></div>
+    <div class="rs"><div><b>Share the public link</b><p>The <code>*.gradio.live</code> link works for anyone for ~72 hours — perfect to send a friend or screen-record for LinkedIn. (For a permanent home, deploy free to Hugging Face Spaces — a one-class topic for later.)</p></div></div>
+    <div class="rs"><div><b>Stop it anytime</b><p>Press <code>Ctrl + C</code> in the terminal to shut the app down.</p></div></div>
+  </div>
+  <p style="font-size:13px;color:var(--ink-faint)">🐞 If you hit an error, 90% of the time it's a missing <code>pip install</code> or a key not loaded from <code>.env</code> — check those two first.</p>
+
+  <h3>Try the working version right here</h3>
+  <p>Below is a <strong>live, in-browser version</strong> of exactly that app. Pick a sample site (or paste your own text), choose a personality, and hit summarize:</p>
+
+  <div class="gradio">
+    <div class="gbar">🔎 <b>AI Website Summarizer</b> <span class="pill">live demo</span></div>
+    <div class="gbody">
+      <div class="gcol in">
+        <label class="lbl">Pick a sample "website"</label>
+        <div id="siteExamples" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+        <label class="lbl">…or paste any article text</label>
+        <textarea class="text" id="sumIn" rows="5" placeholder="Paste a paragraph or article here and hit Summarize…"></textarea>
+        <label class="lbl" style="margin-top:14px">Personality (the system prompt)</label>
+        <div id="toneBtns" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        <button class="btn" id="sumBtn" style="margin-top:16px;width:100%">✨ Summarize</button>
+      </div>
+      <div class="gcol">
+        <label class="lbl">Summary</label>
+        <div class="out-box" id="sumOut"><span class="placeholder">Your summary will appear here…</span></div>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:13px;color:var(--ink-faint);margin-top:10px">⚙️ This demo summarizes <em>in your browser</em> (a simple method) so it runs with no API key. Your real <code>app.py</code> sends the text to GPT for a smarter summary — but the shape, the flow, and the personality switch are exactly what you see here.</p>
+
+  <div class="industry">
+    <div class="tag">🏭 Industry spotlight · you just built a real product category</div>
+    <h4>Summarization quietly runs the business world</h4>
+    <p>Summarizing news, earnings calls, support threads, legal contracts, research papers, meeting transcripts — it's one of the most-used AI features in companies today. Swap "website" for "PDF", "email thread", or "YouTube transcript" and you've got a dozen more apps from the same code.</p>
+    <div class="cos"><span>News digests</span><span>Earnings-call summaries</span><span>Meeting notes</span><span>Contract review</span><span>Research papers</span></div>
+  </div>
+
+</div></section>
+
+<!-- 8. LINKEDIN -->
+<section class="block reveal" id="linkedin"><div class="wrap">
+  <div class="sec-head accent"><div class="sec-num">8</div><div>
+    <div class="sec-time">Block 8 · ~15 min · 📣 ship it</div>
+    <h2>Now put it on<br>LinkedIn — <em>today</em></h2></div></div>
+  <p class="big-p">A project nobody sees doesn't build your name. The single highest-leverage thing you can do as a beginner is <strong>build small &amp; share loudly.</strong> Let's get your summarizer out the door.</p>
+
+  <h3>The 3-step ship checklist</h3>
+  <div class="flow">
+    <div class="step"><div class="n">1</div><div><b>Record a 15-second screen capture</b><p>Show yourself pasting a URL and the summary appearing. A short video out-performs a screenshot. (Even a screenshot is great.)</p></div></div>
+    <div class="step"><div class="n">2</div><div><b>Write the caption</b><p>Use the template below. Keep it human: what you built, what surprised you, and the lines of code it took.</p></div></div>
+    <div class="step"><div class="n">3</div><div><b>Post it &amp; tag #AIEngineering</b><p>Add 3–4 tags. Reply to every comment in the first hour — that's how the algorithm rewards you.</p></div></div>
+  </div>
+
+  <h3>Steal this caption (fill in the blanks)</h3>
+  <div class="li-card">
+    <div class="li-top"><div class="li-av">You</div><div><div class="nm">Your Name</div><div class="mt">Aspiring AI Engineer · now · 🌐</div></div></div>
+    <div class="li-body">🚀 I just built &amp; shipped my very first AI app — on Day 1.
+
+Give it any website URL and it hands you a clean summary in seconds. The "Reader's Digest of the internet." ✨
+
+The mind-blowing part? It's basically just:
+🕷️ grab the page text
+🧠 ask an LLM to summarise it
+🎛️ wrap it in a tiny Gradio web app
+
+A few weeks ago I assumed this needed a PhD and months of study. Turns out it needs curiosity, an afternoon, and the right guide.
+
+And that's the real unlock here: I'm learning straight from @Shivank Agrawal — an industry expert who's not just teaching theory, but building real AI systems every single day and showing us exactly how it's done. 🙌
+
+This is Day 1 of my AI Engineering journey with @Scaler, and I am ALL in.
+
+👉 What should I point my summarizer at next? Drop a URL below.
+
+#AIEngineering #LLM #Python #BuildInPublic #100DaysOfCode</div>
+    <div class="li-foot"><span>👍 You and others</span><span>💬 Comments</span><span>↗ Repost</span></div>
+  </div>
+  <p style="font-size:13.5px;color:var(--ink-soft);margin-top:10px">👉 When you type "@Shivank Agrawal", LinkedIn will suggest the profile — pick <a class="link" href="https://www.linkedin.com/in/shivankagrawal/" target="_blank" rel="noopener">linkedin.com/in/shivankagrawal</a> so the tag links correctly. Tagging your instructor &amp; Scaler boosts reach and lets us reshare your win.</p>
+  <div class="note"><div class="ico">🎙️</div><div><b>Speaker note — make it a class ritual</b><p>Give everyone 10 minutes <em>in class</em> to post. Then collect links and have people like &amp; comment on each other's. Momentum is everything for a beginner — the first post is the hardest, so we do it together.</p></div></div>
+
+  <h3>Want a different flavour? Make it <em>yours</em></h3>
+  <p>Same 3-step recipe (input → prompt → Gradio), different idea. Pick whichever feels fun — all are beginner-simple:</p>
+  <div class="usecases">
+    <div class="uc"><div class="e">✉️</div><b>Email Subject Liner</b><p>Paste an email → get 5 catchy subject lines.</p></div>
+    <div class="uc"><div class="e">📄</div><b>CV → Cover Letter</b><p>Paste your CV + a job ad → a tailored draft.</p></div>
+    <div class="uc"><div class="e">🏢</div><b>Company Brochure</b><p>Give a company site → a fun marketing brochure.</p></div>
+    <div class="uc"><div class="e">📺</div><b>YouTube Summarizer</b><p>Paste a transcript → the key takeaways.</p></div>
+    <div class="uc"><div class="e">🍳</div><b>Recipe Formatter</b><p>Messy recipe text → clean steps &amp; a shopping list.</p></div>
+    <div class="uc"><div class="e">✈️</div><b>Travel Planner</b><p>"3 days in Goa" → a day-by-day itinerary.</p></div>
+  </div>
+  <p style="font-size:14px;color:var(--ink-faint)">💡 These are drawn from real beginner projects in your course's community folder — proof that "simple + shipped" beats "complex + someday".</p>
+</div></section>
+
+<!-- SECTIONS_INSERT -->
+
+<footer><div class="wrap">
+  <div class="grid">
+    <div><h3>You shipped it 🎉</h3><p style="color:#d8ccbf">You understand how LLMs work, you built a real AI app, and you put it on LinkedIn. That's a bigger Class 1 than most people's first month.</p></div>
+    <div><h4 style="color:#ffb39e;text-transform:uppercase;font-size:12px;letter-spacing:.12em;font-family:'JetBrains Mono'">For next class</h4><p style="color:#d8ccbf;font-size:14px">Try one variation of your summarizer on your own — a different website, a different "personality", another language. Bring questions.</p></div>
+  </div>
+  <div class="sig"><span>AI Engineering · Class 1 — Build &amp; Ship Your First AI App</span><span>Scaler Academy</span></div>
+</div></footer>
+
+<script>
+const prog=document.getElementById('progress'),tnav=document.getElementById('topnav');
+addEventListener('scroll',()=>{const h=document.documentElement,sc=h.scrollTop,max=h.scrollHeight-h.clientHeight;prog.style.width=(sc/max*100)+'%';tnav.classList.toggle('show',sc>620);});
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:0,rootMargin:'0px 0px -8% 0px'});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+/* safety net: never let a section stay hidden (e.g. very tall sections / no-JS-observer) */
+function revealOnScreen(){var vh=innerHeight||document.documentElement.clientHeight;document.querySelectorAll('.reveal:not(.in)').forEach(function(el){var r=el.getBoundingClientRect();if(r.top<vh*0.95&&r.bottom>0)el.classList.add('in');});}
+addEventListener('scroll',revealOnScreen,{passive:true});
+addEventListener('resize',revealOnScreen);
+addEventListener('load',revealOnScreen);
+revealOnScreen();
+
+/* inject a Copy button into every code/terminal block */
+(function(){
+  function add(barSel,wrapSel){
+    document.querySelectorAll(wrapSel).forEach(block=>{
+      const bar=block.querySelector(barSel),pre=block.querySelector('pre');
+      if(!bar||!pre||bar.querySelector('.copybtn'))return;
+      const b=document.createElement('button');b.className='copybtn';b.innerHTML='📋 Copy';
+      b.addEventListener('click',()=>{
+        const txt=pre.innerText;
+        navigator.clipboard.writeText(txt).then(()=>{b.classList.add('done');b.innerHTML='✓ Copied';setTimeout(()=>{b.classList.remove('done');b.innerHTML='📋 Copy';},1600);})
+        .catch(()=>{const r=document.createRange();r.selectNodeContents(pre);const s=getSelection();s.removeAllRanges();s.addRange(r);try{document.execCommand('copy');b.classList.add('done');b.innerHTML='✓ Copied';setTimeout(()=>{b.classList.remove('done');b.innerHTML='📋 Copy';},1600);}catch(e){}s.removeAllRanges();});
+      });
+      bar.appendChild(b);
+    });
+  }
+  add('.bar','.code');
+  add('.tbar','.term');
+})();
+</script>
+<script>
+/* ===== 1. TOKENIZER ===== */
+(function(){
+  const inp=document.getElementById('tokInput'),out=document.getElementById('tokOut');
+  const bg=['#ffe9e1','#d8f0eb','#dde6f7','#fbeecd','#ece0f6'],fg=['#d83c18','#10806f','#2b4a8b','#a8761a','#7a4ca0'];
+  function tok(t){const raw=t.match(/\s+|[^\s]+/g)||[];let o=[];raw.forEach(c=>{if(/^\s+$/.test(c)){o.push(c);return;}(c.match(/[A-Za-z]+|[0-9]+|[^\sA-Za-z0-9]/g)||[c]).forEach(p=>{if(p.length<=5)o.push(p);else for(let i=0;i<p.length;i+=4)o.push(p.slice(i,i+4));});});return o;}
+  function render(){const ts=tok(inp.value);out.innerHTML='';let c=0;ts.forEach(t=>{if(/^\s+$/.test(t)){out.appendChild(document.createTextNode(' '));return;}const s=document.createElement('span');s.className='tok';s.style.background=bg[c%5];s.style.color=fg[c%5];s.textContent=t;out.appendChild(s);c++;});document.getElementById('tokCount').textContent=c;document.getElementById('charCount').textContent=inp.value.length;document.getElementById('costEst').textContent='$'+(c/1e6*5).toFixed(6);}
+  inp.addEventListener('input',render);render();
+})();
+
+/* ===== 2. TEMPERATURE ===== */
+(function(){
+  const base=[{w:'Python',l:3.2},{w:'JavaScript',l:2.4},{w:'Rust',l:1.6},{w:'public',l:0.9},{w:'spreadsheets',l:0.3},{w:'bananas',l:-1.2}];
+  const sl=document.getElementById('tempSlider'),bars=document.getElementById('probBars'),tv=document.getElementById('tempVal'),tl=document.getElementById('tempLabel');
+  function soft(a,T){T=Math.max(0.01,T);const z=a.map(x=>x.l/T),m=Math.max(...z),e=z.map(v=>Math.exp(v-m)),s=e.reduce((p,c)=>p+c,0);return a.map((x,i)=>({w:x.w,p:e[i]/s}));}
+  function render(){const T=sl.value/100;tv.textContent=T.toFixed(2);tl.textContent=T<0.3?'❄️ focused':T<0.9?'⚖️ balanced':'🔥 creative';const p=soft(base,T).sort((a,b)=>b.p-a.p);bars.innerHTML=p.map(x=>`<div class="bar-row"><div class="word">${x.w}</div><div class="track"><div class="fill" style="width:${(x.p*100).toFixed(1)}%"></div></div><div class="pct">${(x.p*100).toFixed(1)}%</div></div>`).join('');}
+  sl.addEventListener('input',render);render();
+  document.getElementById('sampleBtn').addEventListener('click',()=>{const T=sl.value/100,p=soft(base,T);let r=Math.random(),a=0,pick=p[0].w;for(const x of p){a+=x.p;if(r<=a){pick=x.w;break;}}document.getElementById('sampleOut').innerHTML=`→ picked: <b style="color:var(--orange-deep)">"${pick}"</b>`;});
+})();
+
+/* ===== 3. API ROUND-TRIP ===== */
+(function(){
+  const btn=document.getElementById('apiBtn'),ar=document.getElementById('apiArrow'),rq=document.getElementById('apiReq'),rs=document.getElementById('apiResp'),br=document.getElementById('apiBrain'),res=document.getElementById('apiResult');
+  btn.addEventListener('click',()=>{btn.disabled=true;rq.textContent='';rs.textContent='';res.style.display='none';rq.textContent='{ "Bangalore?" }';ar.style.transform='translateX(6px)';
+    setTimeout(()=>{ar.style.transform='';br.textContent='🤔';rs.textContent='thinking…';},600);
+    setTimeout(()=>{br.textContent='🧠';rs.textContent='200 OK';ar.textContent='⬅';res.style.display='block';res.innerHTML='<b>Response:</b> "Sip filter coffee on an MTR rooftop and watch the city wake up — Bangalore\'s best 10-minute holiday. ☕"';btn.disabled=false;ar.textContent='➜';},1500);});
+})();
+
+/* ===== 3b. OPENAI KEY GENERATOR SIM ===== */
+(function(){
+  const btn=document.getElementById('keyBtn'),out=document.getElementById('keyOut'),warn=document.getElementById('keyWarn');
+  if(!btn)return;
+  btn.addEventListener('click',()=>{
+    out.textContent='generating…';out.classList.remove('live');
+    const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let k='sk-proj-';for(let i=0;i<32;i++)k+=chars[Math.floor(Math.random()*chars.length)];
+    setTimeout(()=>{out.textContent=k;out.classList.add('live');warn.style.display='block';btn.textContent='+ Create another key';},500);
+  });
+})();
+(function(){
+  const blank=document.getElementById('maskBlank'),box=document.getElementById('maskGuesses'),msg=document.getElementById('maskMsg');
+  const opts=[{w:'coffee',ok:true},{w:'bicycle',ok:false},{w:'tea',ok:'close'},{w:'sadness',ok:false}];
+  opts.forEach(o=>{const b=document.createElement('button');b.className='mask-guess';b.textContent=o.w;b.onclick=()=>{
+    document.querySelectorAll('.mask-guess').forEach(x=>x.classList.remove('right','wrong'));
+    if(o.ok===true){b.classList.add('right');blank.textContent=o.w;blank.style.color='var(--teal)';blank.style.borderColor='var(--teal)';msg.innerHTML='✅ Exactly! And to "know" that, the model quietly learned context, grammar &amp; the world. <b>That\'s self-supervision.</b>';}
+    else if(o.ok==='close'){b.classList.add('right');blank.textContent=o.w;msg.innerHTML='☕ Reasonable! "tea" works too — the model learns there are <em>several</em> good answers, with different probabilities (remember temperature?).';}
+    else{b.classList.add('wrong');msg.innerHTML='😅 Not quite — but every wrong guess is how the model <em>learns</em>. Billions of these and it gets scarily good.';}
+  };box.appendChild(b);});
+})();
+
+/* ===== 5. WEBSITE SUMMARIZER (live, in-browser) ===== */
+(function(){
+  const samples=[
+    {label:'🚀 Startup site',text:"NimbusPay — Payments that just work. NimbusPay is a payments platform built for small Indian businesses who are tired of clunky tools and hidden fees. Accept UPI, cards, and wallets with a single integration that takes ten minutes to set up. Our flat 1% fee means no surprises at the end of the month. NimbusPay also gives you a real-time dashboard so you can see every transaction as it happens. Over 12,000 shops already use NimbusPay to get paid faster. We just launched instant settlements, so your money reaches your bank account the same day instead of waiting three days. Sign up today and your first month is completely free."},
+    {label:'📰 News article',text:"Governments race to regulate AI as adoption surges. Lawmakers around the world are scrambling to write rules for artificial intelligence as the technology spreads into hospitals, banks, and classrooms. Supporters say clear regulation will build public trust and prevent harm. Critics worry that heavy rules could slow innovation and hand an advantage to larger companies who can afford compliance. A new draft framework focuses on transparency, requiring companies to disclose when content is AI-generated. It also demands that high-risk systems, such as those used in hiring or medicine, be tested for bias before launch. Industry groups have asked for more time to adapt. The debate is expected to continue for years as the technology keeps evolving."},
+    {label:'✍️ Personal blog',text:"My journey from teacher to AI engineer. Three years ago I had never written a line of Python. I was a high-school teacher who felt stuck and curious about the AI everyone kept talking about. I started small: one tiny project every weekend, even when they barely worked. The first thing I built was a tool that summarized news articles for my students. It was ugly, but it worked, and that little win changed everything. I kept shipping projects and sharing them online, and slowly people started noticing. Last month I started my first job as an AI engineer at a startup. The lesson I keep repeating to anyone who will listen: you do not need permission or a perfect plan, you just need to build small things often and share them."}
+  ];
+  const tones=[
+    {id:'friend',label:'🙂 Friendly',intro:"Here's the gist, in plain English:",tldr:"In short:"},
+    {id:'snark',label:'😏 Snarky',intro:"Fine, I read it so you don't have to:",tldr:"The honest TL;DR:"},
+    {id:'eli5',label:'🧒 Explain like I\'m 5',intro:"Okay, imagine I'm explaining this to a 10-year-old:",tldr:"So basically:"},
+    {id:'pro',label:'💼 Professional',intro:"Executive summary:",tldr:"Bottom line:"}
+  ];
+  let tone=tones[0];
+  const exBox=document.getElementById('siteExamples'),tBox=document.getElementById('toneBtns'),inp=document.getElementById('sumIn'),out=document.getElementById('sumOut');
+  samples.forEach(s=>{const b=document.createElement('button');b.className='btn ghost small';b.textContent=s.label;b.onclick=()=>{inp.value=s.text;run();};exBox.appendChild(b);});
+  function paintTones(){tBox.innerHTML='';tones.forEach(t=>{const b=document.createElement('button');b.className='btn small'+(t.id===tone.id?'':' ghost');b.textContent=t.label;b.onclick=()=>{tone=t;paintTones();if(inp.value.trim())run();};tBox.appendChild(b);});}
+  paintTones();
+  const stop=new Set("a an the and or but if then so of to in on at for with from by is are was were be been being this that these those it its as we you they he she i our your their my his her have has had do does did not no will would can could should may might about into over under more most very just also".split(' '));
+  function summarize(text){
+    text=text.replace(/\s+/g,' ').trim();
+    let sents=text.match(/[^.!?]+[.!?]+/g)||[text];
+    sents=sents.map(s=>s.trim()).filter(s=>s.split(' ').length>=4);
+    if(sents.length===0)return null;
+    const freq={};text.toLowerCase().match(/[a-z']+/g).forEach(w=>{if(!stop.has(w)&&w.length>2)freq[w]=(freq[w]||0)+1;});
+    const scored=sents.map((s,i)=>{const ws=s.toLowerCase().match(/[a-z']+/g)||[];let sc=0;ws.forEach(w=>{if(freq[w])sc+=freq[w];});return {s,i,sc:sc/Math.sqrt(ws.length||1)};});
+    const top=[...scored].sort((a,b)=>b.sc-a.sc).slice(0,Math.min(3,sents.length)).sort((a,b)=>a.i-b.i);
+    const tldr=[...scored].sort((a,b)=>b.sc-a.sc)[0].s;
+    return {points:top.map(t=>t.s.replace(/\s+/g,' ').trim()),tldr:tldr.replace(/\s+/g,' ').trim()};
+  }
+  function run(){
+    const text=inp.value.trim();
+    if(!text){out.innerHTML='<span class="placeholder">Paste some text or pick a sample first.</span>';return;}
+    out.innerHTML='<span class="placeholder">🧠 Reading &amp; summarizing…</span>';
+    setTimeout(()=>{
+      const r=summarize(text);
+      if(!r){out.innerHTML='<span class="placeholder">Hmm, that text was too short to summarize.</span>';return;}
+      out.innerHTML=`<h5>${tone.intro}</h5><ul>${r.points.map(p=>`<li>${p}</li>`).join('')}</ul><p style="margin:10px 0 0"><b>${tone.tldr}</b> ${r.tldr}</p><div style="margin-top:12px;font-family:'JetBrains Mono';font-size:10.5px;color:var(--ink-faint)">↳ in your real app, GPT writes this — richer &amp; in full sentences</div>`;
+    },650);
+  }
+  document.getElementById('sumBtn').addEventListener('click',run);
+})();
+
+</script>
+<!-- SCRIPTS_INSERT -->
+</body>
+</html>
