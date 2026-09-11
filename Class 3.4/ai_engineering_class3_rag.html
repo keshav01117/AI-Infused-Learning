@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Engineering · Class 3 — RAG: Give Your AI Its Own Library | Scaler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#fdf7f0;--paper-2:#f7eee2;--card:#ffffff;
+  --ink:#1c1714;--ink-soft:#5a4f47;--ink-faint:#8a7d72;
+  --orange:#ff5b35;--orange-deep:#d83c18;--orange-tint:#ffe9e1;
+  --teal:#10806f;--teal-tint:#d8f0eb;
+  --blue:#2b4a8b;--blue-tint:#dde6f7;
+  --gold:#e0972a;--gold-tint:#fbeecd;
+  --purple:#7a4ca0;--purple-tint:#ece0f6;
+  --pink:#c23a78;--pink-tint:#fbe0ec;
+  --line:#e9ddcf;--code-bg:#211c18;--code-ink:#f2e9df;
+  --shadow:0 2px 0 rgba(28,23,20,.05),0 18px 40px -22px rgba(28,23,20,.45);
+  --shadow-lift:0 4px 0 rgba(28,23,20,.06),0 30px 60px -28px rgba(28,23,20,.5);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at 12% 6%,#fff4ea 0,transparent 38%),radial-gradient(circle at 88% 3%,#ffe6dd 0,transparent 30%),var(--paper);color:var(--ink);font-family:'Manrope',sans-serif;font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 26px}
+
+/* progress + nav */
+#progress{position:fixed;top:0;left:0;height:4px;width:0;background:linear-gradient(90deg,var(--orange),var(--gold));z-index:200;transition:width .1s linear}
+#topnav{position:fixed;top:0;left:0;right:0;z-index:150;backdrop-filter:blur(10px);background:rgba(253,247,240,.85);border-bottom:1px solid var(--line);transform:translateY(-110%);transition:transform .35s}
+#topnav.show{transform:translateY(0)}
+#topnav .wrap{display:flex;align-items:center;justify-content:space-between;height:54px;gap:14px}
+#topnav .brand{font-family:'Fraunces';font-weight:600;font-size:16px}#topnav .brand b{color:var(--orange)}
+#topnav nav{display:flex;gap:4px;flex-wrap:wrap;overflow:auto}
+#topnav nav a{font-size:12.5px;font-weight:600;color:var(--ink-soft);text-decoration:none;padding:5px 9px;border-radius:8px;white-space:nowrap}
+#topnav nav a:hover{background:var(--orange-tint);color:var(--orange-deep)}
+
+/* hero with live vector map */
+.hero{position:relative;overflow:hidden;padding:92px 0 56px}
+.hero:before{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--line) 1.1px,transparent 1.1px);background-size:22px 22px;opacity:.5;mask-image:linear-gradient(180deg,#000 30%,transparent)}
+.hero .orb{position:absolute;left:-140px;top:-120px;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(16,128,111,.18),transparent 65%);animation:float 10s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(24px) scale(1.05)}}
+.hero .wrap{position:relative;display:grid;grid-template-columns:1.2fr .9fr;gap:36px;align-items:center}
+@media(max-width:860px){.hero .wrap{grid-template-columns:1fr}}
+.kicker{display:inline-flex;align-items:center;gap:9px;font-family:'JetBrains Mono';font-size:12px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--orange-deep);background:var(--orange-tint);border:1px solid #ffd2c5;padding:7px 14px;border-radius:100px}
+.kicker .dot{width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 4px #ffd2c5;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px #ffd2c5}50%{box-shadow:0 0 0 7px rgba(255,210,197,.4)}}
+h1.title{font-family:'Fraunces';font-weight:900;font-size:clamp(38px,6.2vw,66px);line-height:1.02;letter-spacing:-.02em;margin:20px 0 0}
+h1.title em{font-style:italic;color:var(--orange)}
+.lede{font-size:19px;color:var(--ink-soft);max-width:640px;margin:18px 0 0;line-height:1.55}
+.hero-meta{display:flex;flex-wrap:wrap;gap:9px;margin-top:24px}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:100px;padding:8px 15px;font-weight:600;font-size:13.5px;box-shadow:var(--shadow)}
+.signature{margin-top:28px;font-family:'JetBrains Mono';font-size:13px;color:var(--ink-faint);border-top:1px dashed var(--line);padding-top:16px}
+.signature b{color:var(--ink)}
+
+/* hero vector map card */
+.vmap{background:var(--card);border:2px solid var(--ink);border-radius:18px;box-shadow:var(--shadow-lift);overflow:hidden;transform:rotate(-1.2deg)}
+.vmap .vbar{background:var(--ink);color:var(--paper);padding:11px 16px;font-weight:700;font-size:13.5px;display:flex;gap:8px;align-items:center}
+.vmap .vbar .live{font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:.12em;background:var(--orange);padding:2px 7px;border-radius:5px;text-transform:uppercase}
+.vmap svg{display:block;width:100%;height:auto;background:var(--paper)}
+.vmap .vfoot{padding:9px 14px;font-family:'JetBrains Mono';font-size:11.5px;color:var(--ink-faint);background:var(--paper-2);border-top:1px solid var(--line);text-align:center}
+
+/* sections */
+section.block{padding:60px 0;border-top:1px solid var(--line)}
+.sec-head{display:flex;align-items:flex-start;gap:18px;margin-bottom:14px}
+.sec-num{flex:none;width:54px;height:54px;border-radius:14px;background:var(--ink);color:var(--paper);font-family:'Fraunces';font-weight:700;font-size:22px;display:grid;place-items:center;box-shadow:var(--shadow)}
+.sec-head.accent .sec-num{background:var(--orange)}
+.sec-time{font-family:'JetBrains Mono';font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--orange-deep)}
+h2{font-family:'Fraunces';font-weight:700;font-size:clamp(28px,4.4vw,42px);line-height:1.08;letter-spacing:-.015em;margin:4px 0 0}
+h2 em{font-style:italic;color:var(--orange)}
+h3{font-family:'Fraunces';font-weight:600;font-size:25px;letter-spacing:-.01em;margin:34px 0 10px}
+h3 em{font-style:italic;color:var(--orange)}
+h4{font-family:'Manrope';font-weight:800;font-size:16px;letter-spacing:.01em;margin:22px 0 6px;text-transform:uppercase;color:var(--ink-soft)}
+p{margin:0 0 16px}
+.big-p{font-size:19px;color:var(--ink-soft);max-width:730px}
+strong{color:var(--ink);font-weight:700}
+code{font-family:'JetBrains Mono';font-size:.88em;background:rgba(0,0,0,.06);padding:2px 6px;border-radius:5px}
+a.link{color:var(--orange-deep);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+
+/* boxes shared */
+.def{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--orange);border-radius:14px;padding:20px 24px;margin:22px 0;box-shadow:var(--shadow)}
+.def .lab{font-family:'JetBrains Mono';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--orange-deep);font-weight:500;margin-bottom:6px}
+.def p:last-child{margin-bottom:0}
+.wow{background:linear-gradient(135deg,#fff3ec,#ffe9e1);border:1px solid #ffd2c5;border-radius:16px;padding:20px 24px;margin:24px 0;display:flex;gap:14px;align-items:flex-start;box-shadow:var(--shadow)}
+.wow .star{flex:none;font-size:26px;filter:drop-shadow(0 2px 4px rgba(216,60,24,.3))}
+.wow b{color:var(--orange-deep)}
+.wow p{margin:0;font-size:16px}
+.analogy{border-radius:14px;padding:18px 22px;margin:20px 0;border:1px solid;display:flex;gap:14px;align-items:flex-start}
+.analogy .ico{flex:none;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:20px}
+.analogy.teal{background:var(--teal-tint);border-color:#a9ddd2}.analogy.teal .ico{background:var(--teal);color:#fff}
+.analogy.blue{background:var(--blue-tint);border-color:#b8c8ee}.analogy.blue .ico{background:var(--blue);color:#fff}
+.analogy.gold{background:var(--gold-tint);border-color:#ecd49b}.analogy.gold .ico{background:var(--gold);color:#fff}
+.analogy.purple{background:var(--purple-tint);border-color:#d4bce8}.analogy.purple .ico{background:var(--purple);color:#fff}
+.analogy.pink{background:var(--pink-tint);border-color:#f2bcd4}.analogy.pink .ico{background:var(--pink);color:#fff}
+.analogy b{display:block;font-size:15px;margin-bottom:2px}
+.analogy p{margin:0;font-size:15.5px;color:var(--ink-soft)}
+.analogy em{color:var(--ink);font-style:italic}
+.note{background:var(--purple-tint);border:1px solid #d4bce8;border-radius:14px;padding:16px 20px;margin:22px 0;display:flex;gap:12px;align-items:flex-start}
+.note .ico{flex:none;font-size:20px}.note b{color:var(--purple)}.note p{margin:0;font-size:15px;color:#5a4566}
+.industry{position:relative;background:linear-gradient(135deg,#211c18,#2e2620);color:#f4ece2;border-radius:18px;padding:26px 28px;margin:26px 0;overflow:hidden;box-shadow:var(--shadow-lift)}
+.industry:before{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,var(--orange),transparent 70%);opacity:.4}
+.industry .tag{font-family:'JetBrains Mono';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#ffb39e;margin-bottom:10px;display:inline-flex;font-weight:500}
+.industry h4{color:#fff;text-transform:none;font-family:'Fraunces';font-size:21px;font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
+.industry p{margin:0;color:#d8ccbf;font-size:15.5px}
+.industry .cos{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.industry .cos span{font-size:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);padding:5px 11px;border-radius:6px;color:#fff;font-family:'JetBrains Mono'}
+
+/* code blocks */
+.code{background:var(--code-bg);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lift);margin:20px 0}
+.code .bar{background:#171411;padding:9px 16px;display:flex;align-items:center;gap:7px}
+.code .bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
+.code .bar .r{background:#ff5f56}.code .bar .y{background:#ffbd2e}.code .bar .g{background:#27c93f}
+.code .bar span{margin-left:8px;font-family:'JetBrains Mono';font-size:12px;color:#9a8a78}
+.code pre{margin:0;padding:18px 20px;overflow-x:auto;font-family:'JetBrains Mono';font-size:13.5px;line-height:1.7;color:var(--code-ink)}
+.cm{color:#7f9c6a;font-style:italic}.kw{color:#ff9d7a}.st{color:#f2c97d}.fn{color:#7fc7e8}.nm{color:#c8a8e8}.op{color:#9a8a78}
+.term{background:#0e0c0a;color:#d8ccbf;border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lift);margin:18px 0}
+.term .tbar{background:#181513;padding:9px 14px;display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono';font-size:12px;color:#7a6e62}
+.term .tbar i{width:10px;height:10px;border-radius:50%;background:#5a4f47;display:inline-block}
+.term pre{margin:0;padding:14px 18px;font-family:'JetBrains Mono';font-size:13px;line-height:1.65;white-space:pre-wrap}
+.term .pr{color:#ff9d7a}.term .cmt{color:#7f9c6a;font-style:italic}.term .ok{color:#7fc7a8}
+
+/* decoder */
+.decode{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:14px 0 22px;box-shadow:var(--shadow);overflow:hidden}
+.decode .dhead{background:var(--paper-2);padding:10px 18px;font-weight:800;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);border-bottom:1px solid var(--line)}
+.decode .drow{display:flex;gap:14px;padding:13px 18px;border-bottom:1px solid var(--line);align-items:flex-start}
+.decode .drow:last-child{border-bottom:none}
+.decode .dn{flex:none;width:28px;height:28px;border-radius:8px;background:var(--ink);color:#fff;font-weight:800;display:grid;place-items:center;font-size:13px;font-family:'JetBrains Mono'}
+.decode .drow p{margin:0;font-size:14.5px;color:var(--ink-soft)}
+.decode .drow code{font-size:12.5px}
+
+/* takeaways */
+.takeaways{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:20px 0}
+.takeaways .tk{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.takeaways .tk .e{font-size:22px}.takeaways .tk b{display:block;margin:8px 0 4px;font-size:15px}.takeaways .tk p{margin:0;font-size:14px;color:var(--ink-soft)}
+
+/* agenda */
+.agenda{display:grid;gap:0;margin:8px 0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card);box-shadow:var(--shadow)}
+.agenda .row{display:grid;grid-template-columns:96px 1fr;border-bottom:1px solid var(--line)}
+.agenda .row:last-child{border-bottom:none}
+.agenda .row .tm{background:var(--paper-2);padding:16px;font-family:'JetBrains Mono';font-size:13px;font-weight:700;color:var(--orange-deep);border-right:1px solid var(--line);display:flex;align-items:center}
+.agenda .row .ct{padding:14px 18px}.agenda .row .ct b{font-size:15.5px}.agenda .row .ct p{margin:2px 0 0;font-size:13.5px;color:var(--ink-faint)}
+.agenda .row.peak .ct b:after{content:" ★ ship it";color:var(--orange-deep);font-family:'JetBrains Mono';font-size:11px;letter-spacing:.05em}
+
+/* recap chips */
+.recap{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 4px}
+.recap .r{display:inline-flex;align-items:center;gap:8px;background:var(--teal-tint);border:1px solid #a9ddd2;color:var(--teal);font-weight:600;font-size:13.5px;padding:8px 14px;border-radius:10px}
+.recap .r .c{width:14px;height:14px;border-radius:50%;background:var(--teal);position:relative}
+.recap .r .c:after{content:"✓";position:absolute;color:#fff;font-size:10px;font-weight:800;left:3px;top:-1px}
+
+/* pieces grid (3 ways) */
+.pieces{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0}
+.piece{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);position:relative}
+.piece .e{font-size:28px}
+.piece b{display:block;margin:8px 0 4px;font-family:'Fraunces';font-size:18px}
+.piece p{margin:0;font-size:14px;color:var(--ink-soft)}
+.piece.now{border-color:var(--orange);background:linear-gradient(180deg,#fff,#fff8f3)}
+.piece.now:after{content:"★ TODAY";position:absolute;top:-10px;right:14px;background:var(--orange);color:#fff;font-family:'JetBrains Mono';font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.06em}
+
+/* problems grid (why RAG) */
+.probs{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:20px 0}
+.prob{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.prob .head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.prob .head .e{font-size:24px}
+.prob .head b{font-family:'Fraunces';font-size:17px}
+.prob p{margin:0;font-size:14.5px;color:var(--ink-soft)}
+.prob .fix{margin-top:10px;font-size:13px;color:var(--teal);font-weight:700;background:var(--teal-tint);border-radius:8px;padding:6px 10px;display:inline-block}
+
+/* arch diagram (5 boxes) */
+.arch{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;justify-content:center;margin:24px 0}
+.arch-box{flex:1;min-width:130px;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:16px 14px;text-align:center;box-shadow:var(--shadow);position:relative}
+.arch-box .e{font-size:26px}
+.arch-box b{display:block;margin-top:6px;font-size:14px}
+.arch-box small{color:var(--ink-faint);font-size:12px;font-family:'JetBrains Mono'}
+.arch-arrow{display:grid;place-items:center;font-size:22px;color:var(--orange);padding:0 6px;font-weight:700}
+.arch-box.c1{border-color:#b8c8ee}.arch-box.c2{border-color:#ecd49b}.arch-box.c3{border-color:#d4bce8}.arch-box.c4{border-color:#ffd2c5}.arch-box.c5{border-color:#a9ddd2}
+
+/* simulator shell */
+.sim{background:var(--card);border:2px solid var(--ink);border-radius:18px;margin:28px 0;overflow:hidden;box-shadow:var(--shadow-lift)}
+.sim .sim-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;background:var(--ink);color:var(--paper);flex-wrap:wrap}
+.sim .sim-head .t{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+.sim .sim-head .t .live{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.12em;background:var(--orange);color:#fff;padding:3px 8px;border-radius:6px;text-transform:uppercase}
+.sim .sim-head .hint{font-size:12.5px;color:#bcae9f}
+.sim .sim-body{padding:22px}
+.btn{font-family:'Manrope';font-weight:700;font-size:14px;border:none;border-radius:10px;padding:11px 18px;cursor:pointer;background:var(--orange);color:#fff;box-shadow:0 2px 0 var(--orange-deep);transition:transform .06s}
+.btn:hover{filter:brightness(1.04)}.btn:active{transform:translateY(2px);box-shadow:0 0 0 var(--orange-deep)}
+.btn.ghost{background:var(--paper-2);color:var(--ink);box-shadow:0 2px 0 var(--line)}
+.btn.small{padding:8px 13px;font-size:13px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+input.text,textarea.text{width:100%;font-family:'Manrope';font-size:15px;border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--paper);color:var(--ink);resize:vertical}
+input.text:focus,textarea.text:focus{outline:none;border-color:var(--orange)}
+label.lbl{display:block;font-weight:700;font-size:13px;margin-bottom:6px;color:var(--ink-soft)}
+
+/* similarity meter */
+.simrow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:660px){.simrow{grid-template-columns:1fr}}
+.simquick{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+.simquick button{font-family:'Manrope';font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);border-radius:8px;padding:6px 11px;cursor:pointer}
+.simquick button:hover{background:var(--orange-tint);border-color:#ffd2c5;color:var(--orange-deep)}
+.meter{margin-top:18px;background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:18px;text-align:center}
+.meter .val{font-family:'Fraunces';font-size:48px;font-weight:700;color:var(--orange-deep);line-height:1}
+.meter .lab{font-family:'JetBrains Mono';font-size:11px;color:var(--ink-faint);letter-spacing:.1em;text-transform:uppercase;margin-top:6px}
+.meter .bar{margin-top:14px;height:14px;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.meter .fill{height:100%;background:linear-gradient(90deg,var(--pink),var(--gold),var(--teal));transition:width .5s cubic-bezier(.2,.8,.2,1);min-width:2px}
+.meter .verdict{margin-top:10px;font-size:14px;color:var(--ink-soft);font-style:italic;min-height:20px}
+
+/* vector arithmetic demo */
+.varith{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:20px 0;box-shadow:var(--shadow)}
+.varith .eq{font-family:'JetBrains Mono';font-size:18px;text-align:center;background:var(--paper-2);border-radius:10px;padding:14px;margin-bottom:14px;font-weight:700;color:var(--ink-soft)}
+.varith .eq .w{background:var(--orange-tint);color:var(--orange-deep);padding:3px 8px;border-radius:6px;margin:0 2px}
+.varith .eq .op{color:var(--ink-faint)}
+.varith .eq .eq-sign{color:var(--ink-faint);margin:0 6px}
+.varith .eq .ans{background:var(--teal-tint);color:var(--teal);padding:3px 10px;border-radius:6px;font-weight:800;opacity:0;transition:opacity .5s}
+.varith .eq .ans.show{opacity:1}
+.varith .picks{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.varith .pick{font-family:'Manrope';font-size:13.5px;font-weight:700;border:1.5px solid var(--line);background:var(--card);color:var(--ink-soft);border-radius:8px;padding:9px 14px;cursor:pointer}
+.varith .pick.active{background:var(--orange);color:#fff;border-color:var(--orange)}
+.varith .pick:hover:not(.active){border-color:var(--orange);color:var(--orange-deep)}
+
+/* chunking strategies simulator (17) */
+.slider{width:200px;-webkit-appearance:none;height:8px;border-radius:8px;background:linear-gradient(90deg,var(--teal),var(--orange),var(--pink));outline:none}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--ink);cursor:pointer;box-shadow:var(--shadow)}
+.slider::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--ink);cursor:pointer}
+.src-block{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:18px}
+.src-label{font-family:'JetBrains Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:8px}
+.src-text{margin:0;font-family:'Fraunces';font-size:14px;line-height:1.6;color:var(--ink);white-space:pre-wrap;font-weight:500}
+.strat-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+@media(max-width:680px){.strat-tabs{grid-template-columns:repeat(2,1fr)}}
+.strat-tab{display:flex;gap:10px;align-items:center;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;font-family:'Manrope';text-align:left;transition:all .15s}
+.strat-tab:hover{border-color:var(--orange);background:#fff8f3}
+.strat-tab.active{border-color:var(--orange);background:linear-gradient(180deg,#fff,#fff8f3);box-shadow:var(--shadow)}
+.strat-tab .se{font-size:22px;flex:none}
+.strat-tab b{display:block;font-size:14px;font-weight:700;color:var(--ink);line-height:1.1}
+.strat-tab small{font-size:11px;color:var(--ink-faint);font-family:'JetBrains Mono';display:block;margin-top:2px}
+.strat-ctl{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:14px;min-height:38px;padding:10px 14px;background:var(--paper-2);border-radius:10px}
+.strat-ctl label{font-weight:700;font-size:13px;color:var(--ink-soft)}
+.strat-ctl .empty-ctl{font-size:13px;color:var(--ink-faint);font-style:italic}
+.strat-ctl .empty-ctl strong{color:var(--ink-soft);font-style:normal}
+.strat-chunks{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.cchunk{display:flex;gap:0;border-radius:10px;overflow:hidden;border:1.5px solid;background:var(--card);box-shadow:0 1px 0 rgba(0,0,0,.03);transition:transform .15s}
+.cchunk:hover{transform:translateX(2px)}
+.cchunk .stripe{flex:none;width:8px}
+.cchunk .cbody{padding:10px 14px;flex:1;font-family:'Fraunces';font-size:14px;line-height:1.55;white-space:pre-wrap;min-width:0;overflow-wrap:break-word}
+.cchunk .meta{flex:none;font-family:'JetBrains Mono';font-size:11px;color:var(--ink-faint);align-self:center;padding:0 10px;border-left:1px dashed var(--line);min-width:82px;text-align:center;line-height:1.4}
+.cchunk.split{border-style:dashed;background:#fff5f0}
+.cchunk.split .cbody:before{content:"🪓 ";opacity:.7;margin-right:2px}
+.cchunk .topic-tag{display:inline-block;font-family:'JetBrains Mono';font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:5px;margin-right:8px;vertical-align:1px;color:#fff;font-weight:700}
+.cchunk .header-line{font-family:'Manrope';font-weight:800;font-size:13.5px;color:var(--ink);display:block;margin-bottom:3px}
+.strat-stats{display:flex;gap:18px;flex-wrap:wrap;font-family:'JetBrains Mono';font-size:12.5px;color:var(--ink-faint);padding:10px 14px;background:var(--paper-2);border-radius:10px;margin-bottom:12px}
+.strat-stats b{color:var(--orange-deep);font-size:18px;display:block;font-family:'Fraunces'}
+.strat-notice{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--teal);border-radius:12px;padding:14px 18px}
+.strat-notice .ico{flex:none;font-size:22px}
+.strat-notice .ttl{font-weight:800;font-size:11.5px;color:var(--teal);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;font-family:'JetBrains Mono'}
+.strat-notice p{margin:0;font-size:14.5px;color:var(--ink-soft);line-height:1.55}
+.strat-notice p code{font-size:13px;background:rgba(0,0,0,.06)}
+
+/* pipeline step-through */
+.pipe{display:grid;gap:10px;margin:14px 0}
+.pipe .step{border-radius:12px;padding:14px 16px;border:1.5px solid;opacity:0;transform:translateY(8px);transition:all .4s;background:var(--card)}
+.pipe .step.in{opacity:1;transform:none}
+.pipe .step .role{font-family:'JetBrains Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:4px}
+.pipe .step .body{font-size:14.5px;line-height:1.5}
+.pipe .step.s1{background:var(--blue-tint);border-color:#b8c8ee}.pipe .step.s1 .role{color:var(--blue)}
+.pipe .step.s2{background:var(--purple-tint);border-color:#d4bce8}.pipe .step.s2 .role{color:var(--purple)}
+.pipe .step.s3{background:var(--gold-tint);border-color:#ecd49b}.pipe .step.s3 .role{color:#a8761a}
+.pipe .step.s4{background:var(--teal-tint);border-color:#a9ddd2}.pipe .step.s4 .role{color:var(--teal)}
+.pipe .step.s5{background:var(--orange-tint);border-color:#ffd2c5}.pipe .step.s5 .role{color:var(--orange-deep)}
+.pipe .step code{font-size:13px;background:rgba(0,0,0,.07)}
+.pipe .chunk-pill{display:inline-block;background:#fff;border:1px dashed var(--gold);padding:4px 9px;border-radius:6px;margin:3px 4px 0 0;font-size:12.5px;font-family:'JetBrains Mono'}
+
+/* paired comparison cards (20) */
+.cmp-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+@media(max-width:720px){.cmp-pair{grid-template-columns:1fr}}
+.cmp-card{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow);position:relative;display:flex;flex-direction:column}
+.cmp-card.left{border-color:#ecd49b;background:linear-gradient(180deg,#fffbf2,#fff)}
+.cmp-card.right{border-color:#b8c8ee;background:linear-gradient(180deg,#f4f7fd,#fff)}
+.cmp-card.teal-l{border-color:#a9ddd2;background:linear-gradient(180deg,#f4fbf9,#fff)}
+.cmp-card.purple-r{border-color:#d4bce8;background:linear-gradient(180deg,#f9f5fc,#fff)}
+.cmp-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
+.cmp-hd .cico{font-size:22px;flex:none}
+.cmp-hd b{font-family:'Fraunces';font-size:18px;font-weight:700}
+.cmp-hd .ctag{font-family:'JetBrains Mono';font-size:10.5px;letter-spacing:.06em;background:var(--paper-2);color:var(--ink-soft);padding:3px 9px;border-radius:6px;text-transform:uppercase;font-weight:700;margin-left:auto}
+.cmp-card.left .cmp-hd .ctag{background:var(--gold-tint);color:#a8761a}
+.cmp-card.right .cmp-hd .ctag{background:var(--blue-tint);color:var(--blue)}
+.cmp-card.teal-l .cmp-hd .ctag{background:var(--teal-tint);color:var(--teal)}
+.cmp-card.purple-r .cmp-hd .ctag{background:var(--purple-tint);color:var(--purple)}
+.cmp-card p{margin:0 0 10px;font-size:14.5px;line-height:1.55;color:var(--ink-soft)}
+.cmp-card p:last-of-type{margin-bottom:0}
+.cmp-card ul.cmp-list{margin:8px 0 0 0;padding-left:0;list-style:none}
+.cmp-card ul.cmp-list li{font-size:13.5px;padding:5px 0;color:var(--ink-soft);display:flex;gap:8px;align-items:flex-start;line-height:1.45}
+.cmp-card ul.cmp-list li span.li-em{flex:none;font-size:14px;line-height:1.5}
+.cmp-card .cmp-bottom{margin-top:auto;padding-top:12px;border-top:1px dashed var(--line);font-size:13px;color:var(--ink);font-weight:700;font-family:'JetBrains Mono';letter-spacing:.02em}
+
+/* two-stage funnel (20) */
+.funnel{background:linear-gradient(135deg,#211c18,#2e2620);color:#f4ece2;border-radius:14px;padding:22px 24px;margin:24px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;box-shadow:var(--shadow-lift);position:relative;overflow:hidden}
+.funnel:before{content:"";position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,var(--orange),transparent 70%);opacity:.25}
+.funnel .stg{text-align:center;flex:0 1 auto;position:relative;z-index:1}
+.funnel .stg .n{font-family:'Fraunces';font-weight:700;font-size:30px;color:#fff;line-height:1}
+.funnel .stg .lab{font-family:'JetBrains Mono';font-size:10.5px;letter-spacing:.08em;color:#bcae9f;margin-top:5px;text-transform:uppercase}
+.funnel .arr{display:flex;flex-direction:column;align-items:center;gap:4px;flex:0 1 auto;position:relative;z-index:1}
+.funnel .arr .meth{font-family:'JetBrains Mono';font-size:11px;color:#fff;background:rgba(255,142,118,.18);padding:3px 9px;border-radius:6px;border:1px solid rgba(255,142,118,.35);white-space:nowrap;font-weight:700}
+.funnel .arr .a{font-size:24px;color:#ff8e76;line-height:1}
+.funnel .arr .tm{font-family:'JetBrains Mono';font-size:10px;color:#bcae9f;margin-top:1px}
+@media(max-width:680px){.funnel{flex-direction:column;gap:8px}.funnel .arr{flex-direction:row}.funnel .arr .a{transform:rotate(90deg)}}
+
+/* rerank visualizer */
+.rerank{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:center;margin:18px 0}
+@media(max-width:720px){.rerank{grid-template-columns:1fr;gap:14px}.rerank .arrow{transform:rotate(90deg);justify-self:center}}
+.rerank .col{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+.rerank .col .ct{font-family:'JetBrains Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-bottom:10px;text-align:center}
+.rerank .col .ct.before{color:var(--blue)}
+.rerank .col .ct.after{color:var(--teal)}
+.rerank .doc{background:var(--paper-2);border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin:5px 0;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px;transition:transform .4s,background .3s}
+.rerank .doc .sc{font-family:'JetBrains Mono';font-size:12px;font-weight:700;background:var(--card);border-radius:5px;padding:2px 6px;color:var(--orange-deep)}
+.rerank .doc.gold{background:linear-gradient(135deg,#fffae8,#fff3c4);border-color:#ecd49b}
+.rerank .arrow{font-size:30px;color:var(--orange);text-align:center}
+
+/* hybrid showdown */
+.hybrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:18px 0}
+@media(max-width:760px){.hybrid{grid-template-columns:1fr}}
+.hcol{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
+.hcol h5{margin:0 0 10px;font-family:'Fraunces';font-size:16px;display:flex;align-items:center;gap:8px}
+.hcol h5 .tag{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.08em;padding:2px 6px;border-radius:5px;font-weight:700;text-transform:uppercase}
+.hcol.bm h5 .tag{background:var(--gold-tint);color:#8a6312}
+.hcol.vec h5 .tag{background:var(--purple-tint);color:var(--purple)}
+.hcol.hy h5 .tag{background:var(--teal-tint);color:var(--teal)}
+.hcol .h-doc{background:var(--paper-2);border:1px solid var(--line);border-radius:7px;padding:7px 10px;margin:4px 0;font-size:12.5px}
+.hcol .h-doc.win{background:var(--teal-tint);border-color:#a9ddd2;font-weight:600}
+.hcol .why{font-size:12.5px;color:var(--ink-faint);font-style:italic;margin-top:8px;border-top:1px dashed var(--line);padding-top:8px}
+
+/* run steps */
+.run-steps{display:grid;gap:10px;margin:14px 0}
+.run-steps .rs{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.run-steps .rs:before{content:"▶";color:var(--orange);font-weight:700;flex:none;font-size:14px;margin-top:1px}
+.run-steps .rs b{display:block;font-size:14.5px;margin-bottom:2px}
+.run-steps .rs p{margin:0;font-size:14px;color:var(--ink-soft)}
+
+/* PDF chat UI */
+.pdfui{border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lift);background:var(--card);margin:18px 0}
+.pdfui .pbar{background:linear-gradient(90deg,#10806f,#13a48f);padding:14px 20px;color:#fff;display:flex;align-items:center;gap:10px}
+.pdfui .pbar b{font-size:17px;font-weight:800}
+.pdfui .pbar .pill{margin-left:auto;font-size:11px;font-family:'JetBrains Mono';background:rgba(255,255,255,.2);padding:4px 9px;border-radius:6px}
+.pdfui .pbody{display:grid;grid-template-columns:1fr 1.4fr;gap:0}
+@media(max-width:740px){.pdfui .pbody{grid-template-columns:1fr}}
+.pdfui .docpane{padding:16px;background:var(--paper);border-right:1px solid var(--line)}
+.pdfui .docpane h5{margin:0 0 8px;font-family:'Fraunces';font-size:15px;color:var(--ink-soft)}
+.pdfui .docpicker{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.pdfui .docpicker button{font-family:'Manrope';font-size:12px;font-weight:600;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 11px;cursor:pointer;color:var(--ink-soft)}
+.pdfui .docpicker button.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.pdfui .docprev{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:12.5px;color:var(--ink-soft);line-height:1.55;max-height:230px;overflow-y:auto;font-family:'Fraunces'}
+.pdfui .chatpane{padding:0;display:flex;flex-direction:column;min-height:340px}
+.pdfui .clog{padding:14px 16px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;max-height:380px}
+.cmsg{max-width:88%;border-radius:14px;padding:9px 13px;font-size:14px;line-height:1.5;opacity:0;transform:translateY(6px);transition:all .3s}
+.cmsg.show{opacity:1;transform:none}
+.cmsg.u{background:var(--blue);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.cmsg.b{background:var(--paper-2);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px}
+.cmsg.src{background:var(--gold-tint);border:1px dashed var(--gold);font-family:'JetBrains Mono';font-size:11.5px;color:#8a6312;padding:7px 11px;align-self:flex-start;font-style:italic}
+.pdfui .cin{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line);background:var(--paper-2)}
+
+/* shippable linkedin card */
+.li-card{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-lift);overflow:hidden;margin:22px 0;max-width:560px}
+.li-top{display:flex;gap:12px;align-items:center;padding:16px 18px 8px}
+.li-av{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--gold));display:grid;place-items:center;color:#fff;font-weight:800;font-family:'Fraunces';font-size:20px}
+.li-top .nm{font-weight:700;font-size:15px;line-height:1.2}.li-top .mt{font-size:12px;color:var(--ink-faint)}
+.li-body{padding:4px 18px 14px;font-size:14.5px;white-space:pre-line}
+.li-foot{border-top:1px solid var(--line);padding:10px 18px;display:flex;gap:20px;color:var(--ink-faint);font-size:13px;font-weight:600}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s cubic-bezier(.2,.8,.2,1)}
+.reveal.in{opacity:1;transform:none}
+
+footer{background:var(--ink);color:#d8ccbf;padding:50px 0 40px;margin-top:30px}
+footer h3{color:#fff;font-family:'Fraunces';margin-top:0}
+footer .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:28px}
+footer .sig{margin-top:34px;padding-top:22px;border-top:1px solid #3a2f26;font-family:'JetBrains Mono';font-size:12.5px;color:#9a8a78;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+@media(max-width:720px){
+  body{font-size:16px}
+  .agenda .row{grid-template-columns:74px 1fr}
+  .sec-num{width:44px;height:44px;font-size:18px}
+  .vmap{transform:none}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div id="topnav"><div class="wrap">
+  <div class="brand">AI&nbsp;<b>Engineering</b> · Class 3</div>
+  <nav>
+    <a href="#why">Why RAG</a><a href="#how">How it works</a><a href="#emb">Embeddings</a>
+    <a href="#chunk">Chunking</a><a href="#vdb">Vector DB</a><a href="#build">Build it</a>
+    <a href="#rerank">Rerank</a><a href="#project">★ Project</a><a href="#linkedin">Ship it</a>
+  </nav>
+</div></div>
+
+<!-- HERO -->
+<header class="hero"><div class="orb"></div><div class="wrap">
+  <div>
+    <span class="kicker"><span class="dot"></span> Class 3 · RAG · Talk to your own documents</span>
+    <h1 class="title">Stop letting your<br>AI <em>guess</em>.<br>Give it a library.</h1>
+    <p class="lede">Class 2: your agent could <em>act</em> — but it still didn't know <strong>your</strong> data. Today you fix that. You'll build a system that reads your PDFs, finds the right passage for any question, and answers from <strong>real text</strong> — not vibes. It's called <strong>RAG</strong>, and it's how every "chat with your docs" app on the planet actually works. 👉</p>
+    <div class="hero-meta">
+      <span class="chip">📚 Embeddings, intuition first</span>
+      <span class="chip">✂️ Chunking, demystified</span>
+      <span class="chip">🗂️ Vector databases</span>
+      <span class="chip">🎯 Reranking + hybrid search</span>
+      <span class="chip">📄 Chat-with-your-PDF, shipped</span>
+    </div>
+    <div class="signature"><b>Scaler Academy</b> — every diagram below is interactive. Drag, click, type along.</div>
+  </div>
+  <div>
+    <div class="vmap">
+      <div class="vbar">🧭 vector space, live <span class="live">demo</span></div>
+      <svg id="heroSvg" viewBox="0 0 360 280" xmlns="http://www.w3.org/2000/svg">
+        <!-- background grid -->
+        <defs>
+          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e9ddcf" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="360" height="280" fill="url(#grid)"/>
+        <!-- clusters will be drawn by JS -->
+        <g id="heroDots"></g>
+      </svg>
+      <div class="vfoot">similar meaning ⟶ nearby points · that's the entire trick</div>
+    </div>
+  </div>
+</div></header>
+
+<!-- RECAP -->
+<section class="block reveal" id="recap"><div class="wrap">
+  <div class="sec-head accent"><div class="sec-num">↺</div><div>
+    <div class="sec-time">30-second recap · classes 1 + 2</div><h2>What you can already do</h2></div></div>
+  <div class="recap">
+    <span class="r"><span class="c"></span> Call any LLM (OpenAI, Groq, Ollama)</span>
+    <span class="r"><span class="c"></span> Snap a LangChain chain together</span>
+    <span class="r"><span class="c"></span> Pass chat history with placeholders</span>
+    <span class="r"><span class="c"></span> Build an agent that picks tools</span>
+  </div>
+  <div class="analogy pink"><div class="ico">🤔</div><div><b>But your agent has two real problems</b><p><strong>1) It doesn't know <em>your</em> stuff</strong> — your company's docs, your PDFs, last week's release notes. <strong>2) When it doesn't know, it makes things up</strong> (hallucinates) confidently. Today's class is the single biggest fix in AI engineering. Same agent loop — but now it can look things up in a library <em>you</em> built.</p></div></div>
+  <div class="note"><div class="ico">🎙️</div><div><b>Speaker note · landing the bridge</b><p>If the shop-assistant agent felt fuzzy last class, this class is the cleanup. Say it plainly: "Last week the model <em>chose</em> a tool. Today the tool is its own library — and the magic moves from <em>which tool</em> to <em>how do we find the right page?</em>." That's RAG, in one sentence.</p></div></div>
+</div></section>
+
+<!-- AGENDA -->
+<section class="block reveal" id="agenda"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">⏱</div><div><div class="sec-time">Plan for today</div><h2>Our Class 3 flight plan</h2></div></div>
+  <p class="big-p">Two clean halves: <strong>understand the four pieces of RAG</strong> (embeddings → chunking → vector DB → retrieval) and then <strong>build a real "chat with your PDF" app</strong>. Every concept gets a simulator.</p>
+  <div class="agenda">
+    <div class="row"><div class="tm">0:00</div><div class="ct"><b>Recap + Why RAG?</b><p>The 4 problems RAG solves — knowledge cutoff, private data, hallucinations, citations</p></div></div>
+    <div class="row"><div class="tm">0:10</div><div class="ct"><b>The RAG mental model in 1 picture</b><p>Librarian analogy + the 5-box pipeline</p></div></div>
+    <div class="row"><div class="tm">0:20</div><div class="ct"><b>Embeddings — words become coordinates</b><p>The "aha" moment: <em>king − man + woman ≈ queen</em>. Live similarity meter.</p></div></div>
+    <div class="row"><div class="tm">0:45</div><div class="ct"><b>Chunking — cut the book into snippets</b><p>Strategies + chunk-size simulator</p></div></div>
+    <div class="row"><div class="tm">1:00</div><div class="ct"><b>Vector databases — search engine for meaning</b><p>Chroma · Pinecone · Qdrant — which one when</p></div></div>
+    <div class="row"><div class="tm">1:10</div><div class="ct"><b>Build the 30-line RAG (live code)</b><p>Load → chunk → embed → store → retrieve → answer</p></div></div>
+    <div class="row"><div class="tm">1:30</div><div class="ct"><b>Make it better — reranking + hybrid search</b><p>Bi-encoder ✕ cross-encoder · BM25 ✕ vector</p></div></div>
+    <div class="row peak"><div class="tm">1:45</div><div class="ct"><b>Project: Chat with Your PDF</b><p>Gradio chat UI + your own doc + public link</p></div></div>
+    <div class="row peak"><div class="tm">2:05</div><div class="ct"><b>Ship it to LinkedIn</b><p>Caption template + post — today 🎉</p></div></div>
+    <div class="row"><div class="tm">2:15</div><div class="ct"><b>Peek ahead — Agentic RAG</b><p>Where this leads next class</p></div></div>
+  </div>
+</div></section>
+
+<!-- BLOCK 14 · WHY RAG -->
+<section class="block reveal" id="why"><div class="wrap">
+  <div class="sec-head accent"><div class="sec-num">14</div><div>
+    <div class="sec-time">Block 14 · ~10 min · the hook</div>
+    <h2>Why does RAG <em>exist?</em></h2></div></div>
+  <p class="big-p">An LLM is a brilliant intern who finished training a year ago and was never allowed inside your office. RAG fixes both — fresh data, <em>and</em> your private data — by handing the intern a relevant page <strong>at question-time</strong>.</p>
+
+  <div class="probs">
+    <div class="prob"><div class="head"><span class="e">🗓️</span><b>Knowledge cutoff</b></div><p>The model's training ended months ago. It doesn't know yesterday's RBI rate cut or last week's Budget numbers.</p><span class="fix">✓ RAG: fetch today's article</span></div>
+    <div class="prob"><div class="head"><span class="e">🔒</span><b>Private / internal data</b></div><p>It has never seen your HR policy, your contracts, your product wiki, or your customer tickets — and you can't paste them all into one prompt.</p><span class="fix">✓ RAG: search your docs</span></div>
+    <div class="prob"><div class="head"><span class="e">🌀</span><b>Hallucinations</b></div><p>When unsure, the model invents confident-sounding answers. Bad in customer support, dangerous in legal, fatal in healthcare.</p><span class="fix">✓ RAG: ground in real text</span></div>
+    <div class="prob"><div class="head"><span class="e">🔗</span><b>No citations</b></div><p>Ask "where did you get that?" and a raw LLM has nothing. Real products need <em>"see source: page 14"</em>.</p><span class="fix">✓ RAG: return the source chunk</span></div>
+  </div>
+
+  <div class="wow"><span class="star">🤯</span><div><b>The 1-line definition</b><p><strong>RAG = Retrieval-Augmented Generation.</strong> Before the model answers, <em>you</em> retrieve the most relevant snippets from your own data and stuff them into the prompt. The model then answers <em>from</em> those snippets. No retraining. No fine-tuning. Just open-book exam instead of closed-book.</p></div></div>
+
+  <div class="industry">
+    <div class="tag">🏭 Industry spotlight · where you've seen this already</div>
+    <h4>Almost every "AI feature" you've used is RAG underneath</h4>
+    <p>Notion AI answering from your workspace, Glean searching your company's apps, Perplexity citing sources, Intercom's Fin support bot, ChatGPT's "search the web", Cursor finding code in your repo, even the new "ask about this PDF" button in your browser — same pattern, every time. Master this, and you can clone any of them.</p>
+    <div class="cos"><span>Notion AI</span><span>Glean</span><span>Perplexity</span><span>Intercom Fin</span><span>Cursor</span><span>ChatGPT Search</span></div>
+  </div>
+
+  <div class="note"><div class="ico">💡</div><div><b>Quick reality-check (mention in class)</b><p>People sometimes ask: "Why not just fine-tune the model on our data?" Three reasons it's usually wrong: <strong>(1)</strong> expensive and slow to redo every time data changes, <strong>(2)</strong> still can't cite sources, <strong>(3)</strong> still hallucinates. RAG is faster, cheaper, traceable, and almost always the right first move.</p></div></div>
+</div></section>
+
+<!-- BLOCK 15 · MENTAL MODEL -->
+<section class="block reveal" id="how"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">15</div><div>
+    <div class="sec-time">Block 15 · ~10 min · the picture</div>
+    <h2>RAG in one<br>simple <em>picture</em></h2></div></div>
+  <p class="big-p">Forget the buzzwords. The whole pipeline is just <strong>a smart librarian</strong> sitting between your question and the model.</p>
+
+  <div class="analogy teal"><div class="ico">📚</div><div><b>The library analogy that explains everything</b><p>Imagine you ask your friend a question about a 800-page book they've never read. Bad idea — they'll guess. Smart move? <strong>You find the 3 most relevant pages, hand them over, and <em>then</em> ask.</strong> They read the pages and answer confidently with the real text. That's RAG. The "librarian" who finds those 3 pages is the only new thing we're building today.</p></div></div>
+
+  <h3>The 5-box pipeline (memorise this)</h3>
+  <div class="arch">
+    <div class="arch-box c1"><div class="e">❓</div><b>Question</b><small>user types it</small></div>
+    <div class="arch-arrow">➜</div>
+    <div class="arch-box c2"><div class="e">🔎</div><b>Search</b><small>find relevant chunks</small></div>
+    <div class="arch-arrow">➜</div>
+    <div class="arch-box c3"><div class="e">📋</div><b>Stuff</b><small>add chunks to prompt</small></div>
+    <div class="arch-arrow">➜</div>
+    <div class="arch-box c4"><div class="e">🧠</div><b>LLM</b><small>answer using them</small></div>
+    <div class="arch-arrow">➜</div>
+    <div class="arch-box c5"><div class="e">💬</div><b>Answer</b><small>+ source citation</small></div>
+  </div>
+  <p style="text-align:center;color:var(--ink-faint);font-size:14px">Boxes 1, 4, 5 you already know from Class 1. Boxes 2 + 3 are the entire job of today's class.</p>
+
+  <div class="def"><div class="lab">Two phases · don't confuse them</div>
+    <p><strong>Phase 1 — Indexing (offline, once):</strong> read your docs → break into chunks → turn each chunk into numbers (embedding) → store in a vector database. Slow, but you only do it when documents change.</p>
+    <p><strong>Phase 2 — Querying (online, every question):</strong> turn the question into numbers → find nearest chunks in the database → paste them into the prompt → LLM answers. Milliseconds per query.</p>
+  </div>
+
+  <div class="wow"><span class="star">✨</span><div><b>The unlock that surprises everyone</b><p>You are <em>not</em> retraining the model. The model stays exactly the same as Class 1's <code>gpt-4o-mini</code>. We're only changing <strong>what goes into the prompt</strong>. RAG is, at its core, very fancy <em>prompt engineering</em> — automated.</p></div></div>
+</div></section>
+
+<!-- BLOCK 16 · EMBEDDINGS -->
+<section class="block reveal" id="emb"><div class="wrap">
+  <div class="sec-head accent"><div class="sec-num">16</div><div>
+    <div class="sec-time">Block 16 · ~25 min · the "aha" of the whole class</div>
+    <h2>Embeddings:<br>words become <em>coordinates</em></h2></div></div>
+  <p class="big-p">Before we can "search by meaning", we need a way to <strong>turn meaning into numbers</strong>. That's an <em>embedding</em>. And once you see what it does, every confusing thing about RAG suddenly makes sense.</p>
+
+  <div class="def"><div class="lab">definition · keep this in your head</div>
+    <p>An <strong>embedding</strong> is a list of numbers (a <em>vector</em>) that captures the meaning of a piece of text. Similar meanings ⟶ similar numbers ⟶ nearby points in space. Different meanings ⟶ far apart.</p>
+  </div>
+
+  <h3>Imagine a 2D world first — height &amp; weight</h3>
+  <p>Forget AI for a second. If I plot people by <em>height vs weight</em>, people of similar build end up close together on the chart. Same idea, scaled up. Real embeddings have <strong>384, 768 or even 3072 dimensions</strong> — way more than we can draw — but the principle is identical: <em>similar ⟶ close, different ⟶ far.</em></p>
+  <div class="analogy gold"><div class="ico">📊</div><div><b>"Why so many dimensions?"</b><p>Because meaning is rich. Two words can be similar in many ways at once — <em>topic, tone, formality, language, sentiment</em>. Each dimension captures a different axis of similarity. 768 isn't arbitrary; it's just enough to separate millions of distinct ideas.</p></div></div>
+
+  <h3>The <em>aha</em>: embedding math actually works</h3>
+  <p>This is the demo that turned a generation of engineers into believers. Trained on enough text, vectors carry real relationships you can do arithmetic on. Pick a side and watch:</p>
+
+  <div class="varith">
+    <div class="eq" id="arithEq">
+      <span class="w">king</span> <span class="op">−</span> <span class="w">man</span> <span class="op">+</span> <span class="w">woman</span> <span class="eq-sign">≈</span> <span class="ans" id="arithAns">queen</span>
+    </div>
+    <div class="picks">
+      <button class="pick active" data-eq="kmw">king − man + woman</button>
+      <button class="pick" data-eq="pfi">paris − france + india</button>
+      <button class="pick" data-eq="dpi">delhi − india + japan</button>
+      <button class="pick" data-eq="wda">walking − walk + run</button>
+    </div>
+    <p style="font-size:13.5px;color:var(--ink-faint);text-align:center;margin:14px 0 0">Click a different equation. Each is a <em>real result</em> from GloVe / Word2Vec embeddings — no tricks. The model never saw any rule like "queen is the female king" — that pattern just <em>emerges</em> from the geometry of meaning.</p>
+  </div>
+
+  <div class="wow"><span class="star">🤯</span><div><b>Why this is the foundation of everything today</b><p>If <em>woman</em> and <em>queen</em> can be found by simple arithmetic, then "find the chunk most similar to my question" is also just arithmetic — fast, scalable, and runs on commodity hardware. Every RAG system uses exactly this idea. <strong>Search by meaning = nearest point in vector space.</strong></p></div></div>
+
+  <h3>See it in 2D — same idea, drawable</h3>
+  <p>A real-world plot of word vectors squished from 768 dimensions down to 2 for visualization. Click pairs and notice the <em>direction</em> connecting them is the same:</p>
+  <div class="sim">
+    <div class="sim-head"><div class="t"><span class="live">Live sim</span> Vector space mini-map</div><div class="hint">click the pairs · watch the arrows align</div></div>
+    <div class="sim-body">
+      <svg id="vec2d" viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:var(--paper-2);border-radius:12px"></svg>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;justify-content:center">
+        <button class="btn small ghost" data-pair="royalty">👑 king ↔ queen / man ↔ woman</button>
+        <button class="btn small ghost" data-pair="capital">🏛️ paris ↔ france / delhi ↔ india</button>
+        <button class="btn small ghost" data-pair="food">🍎 banana ↔ grape (close) vs aeroplane (far)</button>
+        <button class="btn small ghost" data-pair="clear" id="vec2dClear">↺ clear</button>
+      </div>
+      <p style="font-size:13px;color:var(--ink-faint);text-align:center;margin:12px 0 0"><em>"capital-of"</em> is encoded as the <strong>direction</strong> from country → capital. Same arrow length, same angle, anywhere on the map. That direction <em>is</em> the relationship.</p>
+    </div>
+  </div>
+
+  <h3>The score we use: <em>cosine similarity</em></h3>
+  <p>Two vectors close together = the <em>angle</em> between them is small. The cosine of that angle is our score. It ranges from <strong>-1 (opposite) to +1 (identical)</strong>. Practically: <strong>above 0.7 means "very similar"</strong>, below 0.3 means "barely related". No math needed to use it — just remember: <em>bigger number = more similar</em>.</p>
+
+  <div class="analogy blue"><div class="ico">📐</div><div><b>The clock-hands intuition</b><p>Two clock hands pointing at the same time ⟶ angle = 0 ⟶ cosine = 1 ⟶ perfectly similar. Pointing at 12 and 6 ⟶ angle = 180° ⟶ cosine = −1 ⟶ opposites. We don't care how <em>long</em> the hands are, only the angle. That's why text length doesn't break the score.</p></div></div>
+
+  <h3>Try it — the similarity meter</h3>
+  <p>Type any two sentences. The meter shows the cosine similarity our system would compute (this in-browser simulation uses a small built-in semantic table, so results feel realistic for common topics).</p>
+  <div class="sim">
+    <div class="sim-head"><div class="t"><span class="live">Live sim</span> Cosine similarity meter</div><div class="hint">try opposites, synonyms, totally unrelated pairs</div></div>
+    <div class="sim-body">
+      <div class="simrow">
+        <div>
+          <label class="lbl">Sentence A</label>
+          <textarea class="text" id="simA" rows="2">A cat is sleeping on the couch.</textarea>
+        </div>
+        <div>
+          <label class="lbl">Sentence B</label>
+          <textarea class="text" id="simB" rows="2">A kitten is napping on the sofa.</textarea>
+        </div>
+      </div>
+      <div class="simquick" id="simQuick"></div>
+      <div class="meter">
+        <div class="val" id="simVal">0.00</div>
+        <div class="lab">cosine similarity</div>
+        <div class="bar"><div class="fill" id="simFill" style="width:0"></div></div>
+        <div class="verdict" id="simVerdict">Type or click a preset to score.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>How do we actually get an embedding? One function call.</h3>
+  <p>You don't have to train anything — somebody else already did. Open-source models from Hugging Face (<code>sentence-transformers</code>) or APIs from OpenAI / Cohere give you embeddings in one line:</p>
+  <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>embeddings.py</span></div>
+<pre><span class="cm"># pip install sentence-transformers</span>
+<span class="kw">from</span> sentence_transformers <span class="kw">import</span> SentenceTransformer
+
+model <span class="op">=</span> <span class="fn">SentenceTransformer</span>(<span class="st">"all-MiniLM-L6-v2"</span>)   <span class="cm"># ① free, fast, 384 dims</span>
+
+vec <span class="op">=</span> model.<span class="fn">encode</span>(<span class="st">"A cat is sleeping on the couch"</span>)  <span class="cm"># ② that's an embedding!</span>
+<span class="fn">print</span>(vec.shape)         <span class="cm"># → (384,)  — 384 numbers</span>
+<span class="fn">print</span>(vec[:<span class="nm">5</span>])          <span class="cm"># → [-0.05, 0.12, 0.41, -0.08, 0.22] (something like that)</span>
+
+<span class="cm"># to compare two pieces of text → encode both → take cosine similarity</span>
+<span class="kw">from</span> numpy <span class="kw">import</span> dot
+<span class="kw">from</span> numpy.linalg <span class="kw">import</span> norm
+
+v1 <span class="op">=</span> model.<span class="fn">encode</span>(<span class="st">"A cat is sleeping on the couch"</span>)
+v2 <span class="op">=</span> model.<span class="fn">encode</span>(<span class="st">"A kitten is napping on the sofa"</span>)
+similarity <span class="op">=</span> <span class="fn">dot</span>(v1, v2) <span class="op">/</span> (<span class="fn">norm</span>(v1) <span class="op">*</span> <span class="fn">norm</span>(v2))   <span class="cm"># cosine</span>
+<span class="fn">print</span>(similarity)       <span class="cm"># → 0.87 (very similar 🎉)</span></pre></div>
+  <div class="decode">
+    <div class="dhead">🔍 decoder</div>
+    <div class="drow"><div class="dn">①</div><p><strong>all-MiniLM-L6-v2</strong> is a tiny but excellent open-source embedding model — runs on your laptop, no API key needed. For production, look at <code>BAAI/bge-large-en-v1.5</code> (best English) or OpenAI's <code>text-embedding-3-small</code> (paid, very good multilingual).</p></div>
+    <div class="drow"><div class="dn">②</div><p><code>.encode("text")</code> returns the vector. That's the whole API surface — one call, 384 numbers back. Now your text is searchable by meaning.</p></div>
+  </div>
+
+  <div class="note"><div class="ico">🎙️</div><div><b>Speaker note · how to pitch this section</b><p>This is the "physics" of RAG. Don't rush. Spend a full 5 minutes letting them play with the meter and the king-queen equation. Once they internalize <em>"similar meaning = nearby vector"</em>, everything else in this class is bookkeeping.</p></div></div>
+
+  <div class="takeaways">
+    <div class="tk"><div class="e">📍</div><b>Vectors = coordinates</b><p>Every chunk of text gets a point in space.</p></div>
+    <div class="tk"><div class="e">📐</div><b>Cosine similarity</b><p>Score from −1 to +1. Bigger = closer.</p></div>
+    <div class="tk"><div class="e">🪄</div><b>Math you can do</b><p>king − man + woman ≈ queen. Really.</p></div>
+    <div class="tk"><div class="e">⚡</div><b>One function call</b><p><code>.encode(text)</code> — that's it.</p></div>
+  </div>
+</div></section>
+
+<!-- BLOCK 17 · CHUNKING -->
+<section class="block reveal" id="chunk"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">17</div><div>
+    <div class="sec-time">Block 17 · ~15 min · the unglamorous part that decides everything</div>
+    <h2>Chunking:<br>cut the book into <em>snippets</em></h2></div></div>
+  <p class="big-p">Before we embed anything, we have to cut it up. You can't embed a 200-page PDF as one vector — meaning gets averaged away to mush. So we split it into <em>chunks</em>. <strong>How</strong> you chunk decides how good your RAG actually is. Engineers underestimate this; the best ones obsess over it.</p>
+
+  <div class="analogy purple"><div class="ico">🍕</div><div><b>The pizza-slice analogy</b><p>One whole pizza is hard to share — too big. Cut it into 100 confetti-sized bits and nobody can taste anything. <strong>Slice sizes matter.</strong> Chunks are pizza slices: too big and you lose precision (the relevant bit is buried), too small and you lose context (each crumb is meaningless).</p></div></div>
+
+  <h3>The 4 chunking strategies worth knowing</h3>
+  <div class="probs">
+    <div class="prob"><div class="head"><span class="e">📏</span><b>Fixed size</b></div><p>Every N characters or tokens — done. Brain-dead simple, fast, your default. <em>Downside:</em> chops mid-sentence, mid-table, mid-thought.</p><span class="fix">Best for: prototypes, blog posts</span></div>
+    <div class="prob"><div class="head"><span class="e">🔁</span><b>Recursive</b></div><p>Try to split on paragraphs first; if too big, split on sentences; if still too big, on words. Smart fallback ladder. The default in LangChain.</p><span class="fix">Best for: most real apps</span></div>
+    <div class="prob"><div class="head"><span class="e">🧠</span><b>Semantic</b></div><p>Embed every sentence; group consecutive sentences that "talk about the same thing". Chunks follow meaning, not size.</p><span class="fix">Best for: long flowing prose</span></div>
+    <div class="prob"><div class="head"><span class="e">📑</span><b>Structure-aware</b></div><p>Use the document's own structure — markdown headings, code blocks, HTML sections. Each section becomes a chunk.</p><span class="fix">Best for: docs, code, wikis</span></div>
+  </div>
+
+  <h3>Watch all 4 strategies — same text, four different cuts</h3>
+  <p>Same source passage, four ways to chop it. Switch tabs and watch <strong>where the cuts land</strong> and <strong>how chunks change shape</strong>. The differences <em>are</em> the lesson — pure text won't make this click; the picture will.</p>
+  <div class="sim">
+    <div class="sim-head"><div class="t"><span class="live">Live sim</span> 4 chunking strategies · same source</div><div class="hint">click tabs · compare cuts side by side</div></div>
+    <div class="sim-body">
+      <div class="src-block">
+        <div class="src-label">📄 Source · a tiny markdown doc with 3 topics</div>
+        <pre class="src-text" id="srcText"></pre>
+      </div>
+      <div class="strat-tabs">
+        <button class="strat-tab active" data-s="fixed"><span class="se">📏</span><div><b>Fixed</b><small>blind char-count</small></div></button>
+        <button class="strat-tab" data-s="recursive"><span class="se">🔁</span><div><b>Recursive</b><small>respect boundaries</small></div></button>
+        <button class="strat-tab" data-s="semantic"><span class="se">🧠</span><div><b>Semantic</b><small>group by topic</small></div></button>
+        <button class="strat-tab" data-s="structure"><span class="se">📑</span><div><b>Structure</b><small>follow headers</small></div></button>
+      </div>
+      <div class="strat-ctl" id="stratCtl"></div>
+      <div class="strat-chunks" id="stratChunks"></div>
+      <div class="strat-stats" id="stratStats"></div>
+      <div class="strat-notice" id="stratNotice"></div>
+    </div>
+  </div>
+  <p style="font-size:13.5px;color:var(--ink-soft);margin:14px 0 0"><strong>Try this sequence in class:</strong> start on <em>Fixed</em> at size 80 → count the 🪓 mid-word cuts → flip to <em>Recursive</em> at the same size → they're all gone → flip to <em>Semantic</em> → notice three chunks emerge that align perfectly with the three topics → flip to <em>Structure</em> → see how the markdown <code>##</code> headers do the work for free.</p>
+
+  <div class="def"><div class="lab">the recall vs precision tradeoff · keep this in mind</div>
+    <p><strong>Big chunks</strong> → high recall (the answer is probably <em>in</em> there), but low precision (lots of fluff around it). <strong>Small chunks</strong> → high precision (the chunk is exactly the answer), but low recall (the relevant bit might be split across two chunks and you only pulled one). Most teams sweep chunk size as their first RAG tuning knob.</p>
+  </div>
+
+  <h3>One line of real code</h3>
+  <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>chunk.py</span></div>
+<pre><span class="kw">from</span> langchain_text_splitters <span class="kw">import</span> RecursiveCharacterTextSplitter
+
+splitter <span class="op">=</span> <span class="fn">RecursiveCharacterTextSplitter</span>(
+    chunk_size<span class="op">=</span><span class="nm">800</span>,        <span class="cm"># aim for ~800 chars per chunk</span>
+    chunk_overlap<span class="op">=</span><span class="nm">100</span>,     <span class="cm"># adjacent chunks share 100 chars (context glue)</span>
+)
+
+chunks <span class="op">=</span> splitter.<span class="fn">split_text</span>(your_long_document)
+<span class="fn">print</span>(<span class="fn">len</span>(chunks))    <span class="cm"># → e.g. 47 chunks ready to embed</span></pre></div>
+  <div class="note"><div class="ico">💡</div><div><b>Why <code>chunk_overlap</code>?</b><p>If your question's answer sits exactly at a chunk boundary, you'd miss it. Overlap (50–100 chars) makes sure every sentence appears in at least one chunk fully. Cheap insurance.</p></div></div>
+</div></section>
+
+<!-- BLOCK 18 · VECTOR DB -->
+<section class="block reveal" id="vdb"><div class="wrap">
+  <div class="sec-head accent"><div class="sec-num">18</div><div>
+    <div class="sec-time">Block 18 · ~10 min</div>
+    <h2>Vector databases:<br>a search engine for <em>meaning</em></h2></div></div>
+  <p class="big-p">You have thousands of embeddings. For every question, you need the top-k nearest ones — <em>fast</em>. That's what a vector database does, and that's <strong>all</strong> it does.</p>
+
+  <div class="analogy teal"><div class="ico">🗂️</div><div><b>One-line definition</b><p>A vector database is a <em>search engine</em> where instead of "find documents containing this word", the query is "find vectors closest to <em>this</em> vector". Same idea as Google, swapped engine.</p></div></div>
+
+  <h3>The three names you'll hear all the time</h3>
+  <div class="pieces">
+    <div class="piece now"><div class="e">🟢</div><b>Chroma</b><p>Open-source, runs in-process (no server!), one <code>pip install</code>. Perfect for prototypes &amp; up to ~10M vectors. <strong>What we'll use today.</strong></p></div>
+    <div class="piece"><div class="e">🔵</div><b>Pinecone</b><p>Fully managed SaaS. Zero ops, scales to billions, but paid. The boring-and-reliable choice for production.</p></div>
+    <div class="piece"><div class="e">🟣</div><b>Qdrant</b><p>Open-source <em>and</em> production-grade. Self-host or use their cloud. Great middle ground when you outgrow Chroma.</p></div>
+  </div>
+
+  <div class="note"><div class="ico">🎯</div><div><b>Picking one (don't overthink)</b><p>Prototyping or under 1M chunks? <strong>Chroma</strong>. Want zero ops &amp; have a budget? <strong>Pinecone</strong>. Need to self-host at scale? <strong>Qdrant</strong> or <strong>Weaviate</strong>. The good news: LangChain wraps all of them with the same interface, so swapping later is a one-line change.</p></div></div>
+
+  <h3>What it actually does — three operations</h3>
+  <div class="decode">
+    <div class="dhead">a vector DB is just these three calls</div>
+    <div class="drow"><div class="dn">1</div><p><code>db.add(documents, embeddings)</code> — store chunks and their vectors. (Indexing.)</p></div>
+    <div class="drow"><div class="dn">2</div><p><code>db.query(query_vector, k=3)</code> — return the 3 chunks whose vectors are closest. (Retrieval.)</p></div>
+    <div class="drow"><div class="dn">3</div><p><code>db.delete(ids)</code> — remove chunks when a doc is deleted. That's it. Three calls.</p></div>
+  </div>
+
+  <div class="industry">
+    <div class="tag">🏭 Industry spotlight · how it stays fast</div>
+    <h4>HNSW — the trick behind every vector DB</h4>
+    <p>Searching billions of vectors naively means computing billions of distances per query. <strong>HNSW</strong> (Hierarchical Navigable Small World — a 2018 algorithm) builds a "ladder" graph so each query takes only ~log(N) hops. Result: sub-10ms lookups on 100M vectors. You'll never write this yourself — every vector DB ships it built-in.</p>
+    <div class="cos"><span>Chroma · HNSW</span><span>Pinecone · proprietary</span><span>Qdrant · HNSW</span><span>FAISS · IVF + HNSW</span></div>
+  </div>
+</div></section>
+
+<!-- BLOCK 19 · BUILD IT -->
+<section class="block reveal" id="build"><div class="wrap">
+  <div class="sec-head accent"><div class="sec-num">19</div><div>
+    <div class="sec-time">Block 19 · ~20 min · all four pieces, working together</div>
+    <h2>Build a real RAG<br>in <em>30 lines</em></h2></div></div>
+  <p class="big-p">We've talked about every piece. Now we wire them up. This is the whole pattern — every RAG system you'll see in production is just a fancier version of <em>this</em>.</p>
+
+  <h3>Step 1 — Index your documents (once)</h3>
+  <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>index.py</span></div>
+<pre><span class="kw">from</span> langchain_text_splitters <span class="kw">import</span> RecursiveCharacterTextSplitter
+<span class="kw">from</span> langchain_huggingface <span class="kw">import</span> HuggingFaceEmbeddings
+<span class="kw">from</span> langchain_chroma <span class="kw">import</span> Chroma
+
+<span class="cm"># ① load your documents (any text — for now, hardcoded)</span>
+docs <span class="op">=</span> [
+    <span class="st">"Our return policy allows refunds within 30 days of purchase."</span>,
+    <span class="st">"Shipping is free for orders above ₹999 across India."</span>,
+    <span class="st">"For corporate orders above 50 units, contact sales@example.com."</span>,
+    <span class="st">"Our office is in Indiranagar, Bangalore. Open Mon-Fri 10am-7pm."</span>,
+]
+
+<span class="cm"># ② split into chunks (small docs here, but production = thousands of pages)</span>
+splitter <span class="op">=</span> <span class="fn">RecursiveCharacterTextSplitter</span>(chunk_size<span class="op">=</span><span class="nm">500</span>, chunk_overlap<span class="op">=</span><span class="nm">50</span>)
+chunks <span class="op">=</span> splitter.<span class="fn">create_documents</span>(docs)
+
+<span class="cm"># ③ pick an embedding model (free, runs locally, no API key)</span>
+embedder <span class="op">=</span> <span class="fn">HuggingFaceEmbeddings</span>(model_name<span class="op">=</span><span class="st">"all-MiniLM-L6-v2"</span>)
+
+<span class="cm"># ④ build the vector store from chunks + embeddings (saves to disk)</span>
+db <span class="op">=</span> Chroma.<span class="fn">from_documents</span>(chunks, embedder, persist_directory<span class="op">=</span><span class="st">"./chroma_db"</span>)
+
+<span class="fn">print</span>(<span class="st">f"Indexed </span>{<span class="fn">len</span>(chunks)}<span class="st"> chunks 🎉"</span>)</pre></div>
+
+  <h3>Step 2 — Ask a question (every time)</h3>
+  <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>rag.py</span></div>
+<pre><span class="kw">from</span> langchain_huggingface <span class="kw">import</span> HuggingFaceEmbeddings
+<span class="kw">from</span> langchain_chroma <span class="kw">import</span> Chroma
+<span class="kw">from</span> langchain_openai <span class="kw">import</span> ChatOpenAI
+<span class="kw">from</span> langchain_core.prompts <span class="kw">import</span> ChatPromptTemplate
+<span class="kw">from</span> dotenv <span class="kw">import</span> load_dotenv
+load_dotenv()
+
+<span class="cm"># ⑤ open the same vector store we built in step 1</span>
+embedder <span class="op">=</span> <span class="fn">HuggingFaceEmbeddings</span>(model_name<span class="op">=</span><span class="st">"all-MiniLM-L6-v2"</span>)
+db       <span class="op">=</span> <span class="fn">Chroma</span>(persist_directory<span class="op">=</span><span class="st">"./chroma_db"</span>, embedding_function<span class="op">=</span>embedder)
+model    <span class="op">=</span> <span class="fn">ChatOpenAI</span>(model<span class="op">=</span><span class="st">"gpt-4o-mini"</span>, temperature<span class="op">=</span><span class="nm">0</span>)
+
+<span class="cm"># ⑥ the prompt: instructions + chunks + question</span>
+prompt <span class="op">=</span> ChatPromptTemplate.<span class="fn">from_template</span>(<span class="st">"""
+Answer the question using ONLY the context below. If the context doesn't contain
+the answer, say "I don't know." Be concise and quote facts directly.
+
+Context:
+{context}
+
+Question: {question}
+"""</span>)
+
+<span class="kw">def</span> <span class="fn">rag_answer</span>(question):
+    chunks <span class="op">=</span> db.<span class="fn">similarity_search</span>(question, k<span class="op">=</span><span class="nm">3</span>)         <span class="cm"># ⑦ retrieve top 3</span>
+    context <span class="op">=</span> <span class="st">"\n\n"</span>.<span class="fn">join</span>(c.page_content <span class="kw">for</span> c <span class="kw">in</span> chunks)
+    chain <span class="op">=</span> prompt <span class="op">|</span> model                                <span class="cm"># ⑧ same chain trick as Class 2</span>
+    <span class="kw">return</span> chain.<span class="fn">invoke</span>({<span class="st">"context"</span>: context, <span class="st">"question"</span>: question}).content
+
+<span class="fn">print</span>(<span class="fn">rag_answer</span>(<span class="st">"How long do I have to return something?"</span>))
+<span class="cm"># → "30 days from the purchase date."  ✅ from your data, not a guess</span></pre></div>
+
+  <div class="decode">
+    <div class="dhead">🔍 decoder — the 8 numbered steps</div>
+    <div class="drow"><div class="dn">①</div><p>Your data. In real life this is PDFs, web pages, Notion exports — anything you can turn into text.</p></div>
+    <div class="drow"><div class="dn">②</div><p>Chunk it. Block 17 in action. <code>chunk_size=500</code> is a sane default.</p></div>
+    <div class="drow"><div class="dn">③</div><p>Pick an embedder. We're using a free local one — swap to <code>OpenAIEmbeddings()</code> for a paid, slightly better version.</p></div>
+    <div class="drow"><div class="dn">④</div><p><code>Chroma.from_documents</code> embeds every chunk and stores both the text and the vector. Done once per dataset.</p></div>
+    <div class="drow"><div class="dn">⑤</div><p>Reopen the same database. The embeddings are already on disk — no re-encoding.</p></div>
+    <div class="drow"><div class="dn">⑥</div><p>The magic prompt template. Notice <code>"ONLY the context below"</code> — this single line is the most important hallucination-fighter in RAG.</p></div>
+    <div class="drow"><div class="dn">⑦</div><p><code>similarity_search</code> = embed the question, find the 3 nearest chunks, return them. The librarian.</p></div>
+    <div class="drow"><div class="dn">⑧</div><p>Same LangChain pipe (<code>prompt | model</code>) you used in Class 2. <strong>RAG didn't replace your previous knowledge — it slotted right in.</strong></p></div>
+  </div>
+
+  <h3>Watch it run — step-by-step pipeline</h3>
+  <p>Press <em>Next</em> to see exactly what happens inside <code>rag_answer("How long do I have to return something?")</code>. Each step is a card; this is the whole RAG flow on one screen:</p>
+  <div class="sim">
+    <div class="sim-head"><div class="t"><span class="live">Live sim</span> RAG, step by step</div><div class="hint">press ▶ five times</div></div>
+    <div class="sim-body">
+      <div class="pipe" id="ragPipe"></div>
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+        <button class="btn" id="ragNext">▶ Next step</button>
+        <button class="btn ghost small" id="ragReset">↺ Reset</button>
+        <span id="ragStatus" style="font-size:13px;color:var(--ink-faint);align-self:center"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="wow"><span class="star">🎯</span><div><b>Take a moment — this <em>is</em> the canonical pattern</b><p>That's it. Every RAG system in the world — from a hobby project to Perplexity — is a variant of these 8 lines. From here we're just making it <em>better</em>: smarter retrieval, smarter prompts, multiple passes. The core never changes.</p></div></div>
+</div></section>
+
+<!-- BLOCK 20 · RERANK & HYBRID -->
+<section class="block reveal" id="rerank"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">20</div><div>
+    <div class="sec-time">Block 20 · ~15 min · 80% of RAG quality lives here</div>
+    <h2>Make it better:<br><em>rerank</em> + <em>hybrid</em> search</h2></div></div>
+  <p class="big-p">A vanilla RAG works. A <em>good</em> RAG works <strong>well</strong>. The two tricks that close that gap — and that every senior engineer asks about — are <em>reranking</em> and <em>hybrid search</em>. Both are easy to add.</p>
+
+  <h3>Problem 1: the top-5 from vector search isn't the <em>best</em> 5</h3>
+  <p>Embedding similarity is fast, but it sometimes ranks shallow word-matches above deep semantic matches. So we use a <strong>two-stage retrieval</strong> — a fast first pass to narrow down, then a slow accurate pass to pick the real winners.</p>
+
+  <div class="analogy gold"><div class="ico">📄</div><div><b>Imagine hiring for one open role — with 1,000 applicants</b><p>You can't interview 1,000 people (it would take a year). You also can't pick someone by gut feel from a stack of resumes (you'd hire badly). So you do <strong>two passes</strong>: a fast <em>resume scan</em> to shortlist 25, then a real <em>30-minute interview</em> with each of those 25. <strong>Bi-encoder and cross-encoder are exactly these two passes.</strong></p></div></div>
+
+  <div class="cmp-pair">
+    <div class="cmp-card left">
+      <div class="cmp-hd"><span class="cico">📋</span><b>Bi-encoder</b><span class="ctag">like a resume scan</span></div>
+      <p>Reads the query and the document <strong>separately</strong>, turns each into a vector, then compares the two vectors with cosine similarity. The encoder <em>never sees them together</em> — it judges each "card" alone.</p>
+      <ul class="cmp-list">
+        <li><span class="li-em">⚡</span> <strong>Fast</strong> — sub-10ms over millions of docs</li>
+        <li><span class="li-em">💾</span> <strong>Pre-computable</strong> — encode all your docs once, store forever, only encode the query at runtime</li>
+        <li><span class="li-em">📉</span> <strong>Shallow</strong> — misses subtle relevance because the model never compares them side-by-side</li>
+      </ul>
+      <div class="cmp-bottom">→ use it to grab top 50–100 candidates</div>
+    </div>
+    <div class="cmp-card right">
+      <div class="cmp-hd"><span class="cico">🎙️</span><b>Cross-encoder</b><span class="ctag">like a 30-min interview</span></div>
+      <p>Feeds the query <strong>and</strong> the document into one transformer <em>together</em>, lets the model attend to both at once, then outputs a single relevance score. The model can compare them token by token, weigh trade-offs, spot nuance.</p>
+      <ul class="cmp-list">
+        <li><span class="li-em">🎯</span> <strong>Way more accurate</strong> — sees query↔doc word interactions directly</li>
+        <li><span class="li-em">🐢</span> <strong>Slow</strong> — full transformer run per (query, doc) pair</li>
+        <li><span class="li-em">❌</span> <strong>Not pre-computable</strong> — each score is pair-specific, you can't cache anything</li>
+      </ul>
+      <div class="cmp-bottom">→ use it to rerank those 50 → top 3</div>
+    </div>
+  </div>
+
+  <div class="funnel">
+    <div class="stg"><div class="n">1,000,000</div><div class="lab">all your chunks</div></div>
+    <div class="arr"><div class="meth">📋 bi-encoder</div><div class="a">➜</div><div class="tm">~10 ms</div></div>
+    <div class="stg"><div class="n">50</div><div class="lab">candidates</div></div>
+    <div class="arr"><div class="meth">🎙️ cross-encoder</div><div class="a">➜</div><div class="tm">~200 ms</div></div>
+    <div class="stg"><div class="n">3</div><div class="lab">to the LLM</div></div>
+  </div>
+  <p style="font-size:13.5px;color:var(--ink-faint);text-align:center;margin:-8px 0 18px"><em>Funnel total: ~210ms — fast enough for live chat, accurate enough to beat raw vector search by miles.</em></p>
+
+  <div class="def"><div class="lab">remember this — the two-stage pattern is universal</div>
+    <p><strong>Stage 1 (bi-encoder):</strong> grab top 50-100 candidates from the vector DB. Fast.</p>
+    <p><strong>Stage 2 (cross-encoder):</strong> re-score those candidates with a smarter model. Slow per item, but you're only re-scoring 50, not 50 million. Keep the top 3-5 for the LLM.</p>
+  </div>
+
+  <h3>See reranking flip the order</h3>
+  <p>Same query, same candidates. <em>Left</em>: what cosine similarity returned. <em>Right</em>: what a cross-encoder reranker returns. Press the button and watch the real answer rise:</p>
+  <div class="sim">
+    <div class="sim-head"><div class="t"><span class="live">Live sim</span> Reranker · before vs after</div><div class="hint">query: "how do I return a defective product?"</div></div>
+    <div class="sim-body">
+      <div class="rerank" id="rerankUI">
+        <div class="col">
+          <div class="ct before">stage 1 · vector search (top 5)</div>
+          <div id="rerankBefore"></div>
+        </div>
+        <div class="arrow">➜</div>
+        <div class="col">
+          <div class="ct after">stage 2 · cross-encoder rerank</div>
+          <div id="rerankAfter"></div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:14px">
+        <button class="btn" id="rerankRun">▶ Run reranker</button>
+        <button class="btn ghost small" id="rerankReset">↺ Reset</button>
+      </div>
+      <p style="font-size:13px;color:var(--ink-faint);margin-top:12px;text-align:center">Notice doc #3 — it never says the word "return" but it's clearly the most relevant. Pure vector search ranks it #4; cross-encoder lifts it to #1. <em>That</em> is why we rerank.</p>
+    </div>
+  </div>
+
+  <p>The code to add reranking is laughably short:</p>
+  <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>rerank.py</span></div>
+<pre><span class="kw">from</span> sentence_transformers <span class="kw">import</span> CrossEncoder
+
+reranker <span class="op">=</span> <span class="fn">CrossEncoder</span>(<span class="st">"cross-encoder/ms-marco-MiniLM-L6-v2"</span>)   <span class="cm"># free, fast</span>
+
+<span class="kw">def</span> <span class="fn">retrieve_with_rerank</span>(question, top_k<span class="op">=</span><span class="nm">3</span>):
+    candidates <span class="op">=</span> db.<span class="fn">similarity_search</span>(question, k<span class="op">=</span><span class="nm">25</span>)        <span class="cm"># grab 25 cheap candidates</span>
+    pairs <span class="op">=</span> [(question, c.page_content) <span class="kw">for</span> c <span class="kw">in</span> candidates]
+    scores <span class="op">=</span> reranker.<span class="fn">predict</span>(pairs)                          <span class="cm"># cross-encoder scores each pair</span>
+    <span class="kw">return</span> [c <span class="kw">for</span> _, c <span class="kw">in</span> <span class="fn">sorted</span>(<span class="fn">zip</span>(scores, candidates), reverse<span class="op">=</span><span class="kw">True</span>)[:top_k]]</pre></div>
+
+  <h3>Problem 2: sometimes you need the <em>exact word</em></h3>
+  <p>Pure semantic search ignores keywords. Ask "what's the price of <strong>SKU-4429</strong>?" and the embedding doesn't care about that specific code — it just sees "price" and "product". For codes, names, IDs, dates — <strong>keyword search beats semantic</strong> hands down. The fix isn't to pick one or the other. It's to use <em>both</em>, with very different strengths.</p>
+
+  <div class="analogy teal"><div class="ico">📚</div><div><b>Two librarians, very different superpowers</b><p>Remember our librarian from Block 15? She has <strong>two assistants</strong> who search the stacks completely differently. One is a literalist who lives for exact words. The other is a philosopher who lives for meaning. Send your query to the right one and you get great results. <strong>Send your query to <em>both</em> — and let them merge their rankings — and you get magic.</strong> That's hybrid search.</p></div></div>
+
+  <div class="cmp-pair">
+    <div class="cmp-card teal-l">
+      <div class="cmp-hd"><span class="cico">🔤</span><b>Librarian A · BM25</b><span class="ctag">the literalist</span></div>
+      <p>Obsessed with <strong>exact words</strong>. Type <em>"SKU-4429"</em> or <em>"Article 21"</em> and she'll find every single doc containing those exact characters. But ask for <em>"running shoes"</em> and she'll skip the doc titled <em>"marathon footwear"</em> — different words, even though same meaning.</p>
+      <ul class="cmp-list">
+        <li><span class="li-em">✅</span> <strong>Brilliant at</strong> product codes, SKUs, model numbers, version strings</li>
+        <li><span class="li-em">✅</span> <strong>Brilliant at</strong> proper nouns, dates, legal references, technical jargon</li>
+        <li><span class="li-em">❌</span> <strong>Blind to</strong> synonyms, paraphrase, intent — words are just characters to her</li>
+      </ul>
+      <div class="cmp-bottom">→ catches what vector misses</div>
+    </div>
+    <div class="cmp-card purple-r">
+      <div class="cmp-hd"><span class="cico">🧠</span><b>Librarian B · Vector</b><span class="ctag">the philosopher</span></div>
+      <p>Obsessed with <strong>meaning</strong>. Ask for <em>"running shoes"</em> and she surfaces <em>"marathon footwear"</em>, <em>"jogging trainers"</em>, even <em>"sneakers for athletes"</em>. But ask for <em>"SKU-4429"</em> and she shrugs — random letters and numbers are just noise to her.</p>
+      <ul class="cmp-list">
+        <li><span class="li-em">✅</span> <strong>Brilliant at</strong> natural-language questions, "what's this about?"</li>
+        <li><span class="li-em">✅</span> <strong>Brilliant at</strong> fuzzy queries, paraphrase, multilingual matching</li>
+        <li><span class="li-em">❌</span> <strong>Blind to</strong> exact codes, IDs, technical strings — drowns them in averages</li>
+      </ul>
+      <div class="cmp-bottom">→ catches what BM25 misses</div>
+    </div>
+  </div>
+
+  <h3>Hybrid = both librarians on the case</h3>
+  <p>Send the same query to <em>both</em> librarians at the same time. Each ranks the docs by their own logic. You then <strong>merge their two ranked lists into one</strong> using a tiny formula called <strong>Reciprocal Rank Fusion (RRF)</strong>:</p>
+
+  <div class="wow"><span class="star">⚡</span><div><b>Reciprocal Rank Fusion in one line</b><p>For each doc, final score = <code>1 / (60 + rank in BM25) + 1 / (60 + rank in Vector)</code>. Docs that <em>both</em> librarians ranked highly bubble to the top. Docs only one of them liked still get a fair shot. No tuning, no thresholds, no magic numbers (well, 60 — but it almost never matters). <em>That's it.</em> Used by almost every production RAG system in the wild.</p></div></div>
+
+  <div class="analogy purple"><div class="ico">🤝</div><div><b>Why this works so well in practice</b><p>Real user queries are <em>messy</em> — mostly natural language, but sprinkled with technical terms, product codes, names, or jargon the embedding model has never seen. Hybrid covers both halves of every messy query automatically: the natural-language part goes to Vector, the technical-term part goes to BM25, and RRF stitches the answers together. <strong>You're not picking sides — you're using each tool for what it's actually good at.</strong></p></div></div>
+
+  <h3>See it on a real query — <em>"I want running shoes"</em></h3>
+  <p>Same query, three rankings. Watch how Librarian A and Librarian B return different top picks — and how Hybrid merges them. Press the button to see who wins:</p>
+  <div class="sim">
+    <div class="sim-head"><div class="t"><span class="live">Live sim</span> BM25 vs Vector vs Hybrid</div><div class="hint">same query, three rankings</div></div>
+    <div class="sim-body">
+      <div class="hybrid">
+        <div class="hcol bm">
+          <h5>🔤 BM25 <span class="tag">keyword</span></h5>
+          <div id="bmList"></div>
+          <p class="why">Counts word overlap. Loves "shoes" appearing literally.</p>
+        </div>
+        <div class="hcol vec">
+          <h5>🧠 Vector <span class="tag">semantic</span></h5>
+          <div id="vecList"></div>
+          <p class="why">Understands "running" means jogging — even if the word "shoes" isn't there.</p>
+        </div>
+        <div class="hcol hy">
+          <h5>⚡ Hybrid <span class="tag">blended</span></h5>
+          <div id="hyList"></div>
+          <p class="why">Reciprocal rank fusion — gives the best of both. Default for production.</p>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:12px"><button class="btn" id="hybridRun">▶ Compare all three</button></div>
+    </div>
+  </div>
+
+  <div class="industry">
+    <div class="tag">🏭 Industry spotlight · this is what the leaderboard chases</div>
+    <h4>Every "+10% retrieval quality" paper is one of these tricks</h4>
+    <p>Reranking + hybrid search are the two single biggest quality wins in RAG. Add them and you go from "demo works" to "production works". Almost every benchmark in the MTEB leaderboard uses some combination. You now know the playbook.</p>
+    <div class="cos"><span>BM25 + Vector</span><span>Cross-encoder rerank</span><span>Reciprocal rank fusion</span><span>Cohere Rerank API</span></div>
+  </div>
+</div></section>
+
+<!-- BLOCK 21 · MINI PROJECT -->
+<section class="block reveal" id="project"><div class="wrap">
+  <div class="sec-head accent"><div class="sec-num">21</div><div>
+    <div class="sec-time">Block 21 · ~20 min · 🏁 THE BUILD</div>
+    <h2>Mini-Project:<br>Chat with <em>your</em> PDF</h2></div></div>
+  <p class="big-p">Time to ship. Upload any PDF — your resume, a research paper, an annual report, your college notes — and chat with it. Every answer cites the page it came from. This is the project that gets <strong>"how did you build this?"</strong> in your LinkedIn DMs.</p>
+
+  <h3>The full app — 4 files</h3>
+  <div class="arch">
+    <div class="arch-box c1"><div class="e">📄</div><b>PDF in</b><small>user uploads</small></div>
+    <div class="arch-arrow">➜</div>
+    <div class="arch-box c2"><div class="e">✂️</div><b>Chunk</b><small>~800 chars</small></div>
+    <div class="arch-arrow">➜</div>
+    <div class="arch-box c3"><div class="e">📍</div><b>Embed + store</b><small>Chroma</small></div>
+    <div class="arch-arrow">➜</div>
+    <div class="arch-box c4"><div class="e">🔎</div><b>Retrieve</b><small>top-3 chunks</small></div>
+    <div class="arch-arrow">➜</div>
+    <div class="arch-box c5"><div class="e">💬</div><b>Chat</b><small>Gradio</small></div>
+  </div>
+
+  <h4>Step 1 — Load the PDF &amp; index it once</h4>
+  <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>pdf_chat.py · part 1</span></div>
+<pre><span class="cm"># pip install langchain langchain-openai langchain-chroma langchain-huggingface \
+#             langchain-community pypdf sentence-transformers gradio python-dotenv</span>
+
+<span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> PyPDFLoader
+<span class="kw">from</span> langchain_text_splitters <span class="kw">import</span> RecursiveCharacterTextSplitter
+<span class="kw">from</span> langchain_huggingface <span class="kw">import</span> HuggingFaceEmbeddings
+<span class="kw">from</span> langchain_chroma <span class="kw">import</span> Chroma
+
+<span class="kw">def</span> <span class="fn">build_index</span>(pdf_path):
+    pages    <span class="op">=</span> <span class="fn">PyPDFLoader</span>(pdf_path).<span class="fn">load</span>()                    <span class="cm"># ① read all pages</span>
+    splitter <span class="op">=</span> <span class="fn">RecursiveCharacterTextSplitter</span>(chunk_size<span class="op">=</span><span class="nm">800</span>, chunk_overlap<span class="op">=</span><span class="nm">100</span>)
+    chunks   <span class="op">=</span> splitter.<span class="fn">split_documents</span>(pages)                <span class="cm"># ② chunk them</span>
+    embedder <span class="op">=</span> <span class="fn">HuggingFaceEmbeddings</span>(model_name<span class="op">=</span><span class="st">"all-MiniLM-L6-v2"</span>)
+    db       <span class="op">=</span> Chroma.<span class="fn">from_documents</span>(chunks, embedder)         <span class="cm"># ③ in-memory store</span>
+    <span class="kw">return</span> db</pre></div>
+
+  <h4>Step 2 — Answer with retrieval + citations</h4>
+  <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>pdf_chat.py · part 2</span></div>
+<pre><span class="kw">from</span> langchain_openai <span class="kw">import</span> ChatOpenAI
+<span class="kw">from</span> langchain_core.prompts <span class="kw">import</span> ChatPromptTemplate
+<span class="kw">from</span> dotenv <span class="kw">import</span> load_dotenv
+load_dotenv()
+
+model <span class="op">=</span> <span class="fn">ChatOpenAI</span>(model<span class="op">=</span><span class="st">"gpt-4o-mini"</span>, temperature<span class="op">=</span><span class="nm">0</span>)
+
+prompt <span class="op">=</span> ChatPromptTemplate.<span class="fn">from_template</span>(<span class="st">"""
+You are a helpful PDF assistant. Answer the question using ONLY the context below.
+If the context doesn't contain the answer, say "I couldn't find that in the document."
+After your answer, list the page numbers you used as: Sources: page X, page Y.
+
+Context:
+{context}
+
+Question: {question}
+"""</span>)
+
+<span class="kw">def</span> <span class="fn">ask</span>(db, question):
+    chunks  <span class="op">=</span> db.<span class="fn">similarity_search</span>(question, k<span class="op">=</span><span class="nm">4</span>)
+    context <span class="op">=</span> <span class="st">"\n\n"</span>.<span class="fn">join</span>(
+        <span class="st">f"[page </span>{c.metadata[<span class="st">'page'</span>]<span class="op">+</span><span class="nm">1</span>]}<span class="st">] </span>{c.page_content}<span class="st">"</span> <span class="kw">for</span> c <span class="kw">in</span> chunks)
+    chain <span class="op">=</span> prompt <span class="op">|</span> model
+    <span class="kw">return</span> chain.<span class="fn">invoke</span>({<span class="st">"context"</span>: context, <span class="st">"question"</span>: question}).content</pre></div>
+
+  <h4>Step 3 — Give it a face with Gradio</h4>
+  <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>pdf_chat.py · part 3</span></div>
+<pre><span class="kw">import</span> gradio <span class="kw">as</span> gr
+
+state <span class="op">=</span> {<span class="st">"db"</span>: <span class="kw">None</span>}                    <span class="cm"># ① remember the index across turns</span>
+
+<span class="kw">def</span> <span class="fn">upload</span>(pdf):
+    state[<span class="st">"db"</span>] <span class="op">=</span> <span class="fn">build_index</span>(pdf.name)   <span class="cm"># ② re-index whenever a new PDF arrives</span>
+    <span class="kw">return</span> <span class="st">"✅ PDF indexed! Ask me anything about it."</span>
+
+<span class="kw">def</span> <span class="fn">chat</span>(message, history):
+    <span class="kw">if</span> state[<span class="st">"db"</span>] <span class="kw">is</span> <span class="kw">None</span>:
+        <span class="kw">return</span> <span class="st">"Please upload a PDF first 📄"</span>
+    <span class="kw">return</span> <span class="fn">ask</span>(state[<span class="st">"db"</span>], message)
+
+<span class="kw">with</span> gr.<span class="fn">Blocks</span>(title<span class="op">=</span><span class="st">"📄 Chat with your PDF"</span>) <span class="kw">as</span> demo:
+    gr.<span class="fn">Markdown</span>(<span class="st">"## 📄 Chat with your PDF (powered by RAG)"</span>)
+    pdf    <span class="op">=</span> gr.<span class="fn">File</span>(label<span class="op">=</span><span class="st">"Upload a PDF"</span>, file_types<span class="op">=</span>[<span class="st">".pdf"</span>])
+    status <span class="op">=</span> gr.<span class="fn">Markdown</span>()
+    pdf.<span class="fn">upload</span>(upload, inputs<span class="op">=</span>pdf, outputs<span class="op">=</span>status)
+    gr.<span class="fn">ChatInterface</span>(fn<span class="op">=</span>chat)
+
+demo.<span class="fn">launch</span>(share<span class="op">=</span><span class="kw">True</span>)                   <span class="cm"># share=True → public link!</span></pre></div>
+
+  <div class="decode">
+    <div class="dhead">🔍 decoder · the 3 small choices that matter</div>
+    <div class="drow"><div class="dn">①</div><p><code>state</code> is a plain dict that survives across Gradio events. Without it, every chat message would re-index the PDF from scratch (slow!).</p></div>
+    <div class="drow"><div class="dn">②</div><p>Re-indexing only on upload means typing is instant. This is the same indexing/querying split from Block 15.</p></div>
+    <div class="drow"><div class="dn">③</div><p>We pass <code>page</code> from the chunk metadata into the prompt — that's how the model knows which page to cite. <strong>Metadata is RAG's superpower.</strong></p></div>
+  </div>
+
+  <h4>Run it</h4>
+  <div class="term"><div class="tbar"><i></i><i></i><i></i><span>bash — your project folder</span></div>
+<pre><span class="pr">$</span> python pdf_chat.py
+
+<span class="ok">Running on local URL:  http://127.0.0.1:7860</span>
+<span class="ok">Running on public URL: https://abcd12.gradio.live</span>   <span class="cmt"># ← share this on LinkedIn!</span></pre></div>
+
+  <div class="run-steps">
+    <div class="rs"><div><b>Upload <em>any</em> PDF</b><p>Your resume, the Indian Constitution, your company's HR policy, last quarter's earnings call transcript. Anything text-based.</p></div></div>
+    <div class="rs"><div><b>Ask 3 questions</b><p>One factual ("when was X founded?"), one summary ("what's the main argument?"), one tricky ("compare X and Y"). Notice the citations.</p></div></div>
+    <div class="rs"><div><b>Try a question that's NOT in the doc</b><p>The answer should be <em>"I couldn't find that in the document."</em> — that's RAG <strong>refusing to hallucinate</strong>. Record this moment. It's the whole point.</p></div></div>
+  </div>
+
+  <h3>Try the working version 👇</h3>
+  <p>A live in-browser version with three pre-indexed sample documents — click a PDF, ask a question, see RAG retrieve the right chunk before answering:</p>
+  <div class="pdfui">
+    <div class="pbar">📄 <b>Chat with your PDF</b> <span class="pill">live demo</span></div>
+    <div class="pbody">
+      <div class="docpane">
+        <h5>Pick a sample document</h5>
+        <div class="docpicker" id="pdfPicker"></div>
+        <div class="docprev" id="pdfPreview"></div>
+      </div>
+      <div class="chatpane">
+        <div class="clog" id="pdfLog"></div>
+        <div class="cin">
+          <input class="text" id="pdfIn" placeholder="Ask anything about this doc..." style="flex:1">
+          <button class="btn" id="pdfSend">Ask</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px" id="pdfExamples"></div>
+  <p style="font-size:13px;color:var(--ink-faint);margin-top:10px">⚙️ Simulated in-browser with a tiny semantic-matching layer so it runs key-free. Your real <code>pdf_chat.py</code> uses actual embeddings + GPT — same flow, same feel, larger brain.</p>
+
+  <div class="industry">
+    <div class="tag">🏭 Industry spotlight · this <em>is</em> the canonical AI product</div>
+    <h4>You just built the most-shipped AI app of 2024–26</h4>
+    <p>"Chat with [your docs / your PDF / your codebase / your Notion]" is the single most common AI feature on the market today — and almost all of them are this exact pattern with a fancier UI. ChatGPT's "Browse my files", Claude Projects, Cursor's <code>@codebase</code>, Glean, Notion AI — every one of them. You now own the recipe.</p>
+    <div class="cos"><span>Notion AI</span><span>Glean</span><span>Claude Projects</span><span>Cursor @docs</span><span>Perplexity Spaces</span></div>
+  </div>
+</div></section>
+
+<!-- BLOCK 22 · LINKEDIN -->
+<section class="block reveal" id="linkedin"><div class="wrap">
+  <div class="sec-head accent"><div class="sec-num">22</div><div>
+    <div class="sec-time">Block 22 · ~10 min · 📣 ship it</div>
+    <h2>Ship it to LinkedIn —<br><em>today</em></h2></div></div>
+  <p class="big-p">"I built a RAG system" is an instant credibility upgrade — most people who post about AI have never actually built one. The shipping ritual continues: clip, caption, post, reply.</p>
+
+  <h3>The 3-step ship checklist (same as Class 1 &amp; 2)</h3>
+  <div class="run-steps">
+    <div class="rs"><div><b>Record a 20-second clip</b><p>Upload your PDF on screen, ask 2 questions, show the <em>"I couldn't find that"</em> moment. That's the magic.</p></div></div>
+    <div class="rs"><div><b>Use the caption template below</b><p>Fill in the blanks. Mention what PDF you tested with — specifics make it land.</p></div></div>
+    <div class="rs"><div><b>Post + reply for 1 hour</b><p>Tag <em>#AIEngineering</em>, <em>#RAG</em>, <em>#100DaysOfCode</em>. Replying to every comment in the first hour is the algorithm's favourite signal.</p></div></div>
+  </div>
+
+  <h3>Steal this caption</h3>
+  <div class="li-card">
+    <div class="li-top"><div class="li-av">You</div><div><div class="nm">Your Name</div><div class="mt">AI Engineering learner · now · 🌐</div></div></div>
+    <div class="li-body">📄 I just built <em>"Chat with your PDF"</em> — and it actually <em>understands</em> the document.
+
+Upload any PDF (I tested with [your doc here]) and it answers questions from the real text, with page citations. If the answer isn't in the doc, it says so instead of making something up. 🤯
+
+The trick is called <strong>RAG</strong> (Retrieval-Augmented Generation):
+🔪 Chop the doc into chunks
+📍 Turn each chunk into a vector (a "coordinate of meaning")
+🔎 For every question, find the 3 nearest chunks
+📋 Hand them to the LLM and let it answer from <em>real text</em>
+
+The most surprising thing? You can do <strong>math on meaning</strong>. <em>king − man + woman ≈ queen</em>. Once you see that, RAG stops feeling like magic and starts feeling like geometry. ✨
+
+This is the same pattern behind Notion AI, Perplexity, Glean, and "Chat with your codebase" features in modern IDEs. Big confidence boost knowing I can clone the architecture in ~50 lines.
+
+Learning AI Engineering with @Shivank Agrawal at @Scaler — Day 3 done. The pace of going from <em>I've heard of LLMs</em> to <em>I can ship AI products</em> is genuinely wild.
+
+👉 What PDF should I point it at next? Drop a suggestion in the comments.
+
+#AIEngineering #RAG #LLM #Python #BuildInPublic #100DaysOfCode</div>
+    <div class="li-foot"><span>👍 You and others</span><span>💬 Comments</span><span>↗ Repost</span></div>
+  </div>
+  <p style="font-size:13.5px;color:var(--ink-soft);margin-top:10px">👉 When you type "@Shivank Agrawal", pick <a class="link" href="https://www.linkedin.com/in/shivankagrawal/" target="_blank" rel="noopener">linkedin.com/in/shivankagrawal</a> so the tag links correctly. Tagging your instructor and Scaler boosts reach &amp; lets us amplify your post.</p>
+
+  <div class="note"><div class="ico">🎙️</div><div><b>Speaker note · the post-class ritual</b><p>Same as before: <strong>10 minutes in class</strong> for everyone to post. Then "follow-and-like" round across the cohort. Three classes in, this is becoming muscle memory — and that's exactly the point.</p></div></div>
+
+  <h3>Want a variation? Pick a flavour, swap the PDF</h3>
+  <p>The recipe is the same; the data makes it interesting. Try one of these on your own:</p>
+  <div class="probs">
+    <div class="prob"><div class="head"><span class="e">📜</span><b>Chat with the Constitution</b></div><p>Index the Indian Constitution PDF. Ask "what are the Fundamental Rights?" with citations.</p><span class="fix">data: indiacode.nic.in</span></div>
+    <div class="prob"><div class="head"><span class="e">📊</span><b>Chat with an earnings call</b></div><p>Index TCS or Infosys' last quarterly transcript. Ask about margins, guidance, hiring.</p><span class="fix">data: investor relations sites</span></div>
+    <div class="prob"><div class="head"><span class="e">📚</span><b>Chat with your textbook</b></div><p>Index a chapter. Ask exam-style questions. Suddenly: a personalised tutor.</p><span class="fix">data: your bookshelf</span></div>
+    <div class="prob"><div class="head"><span class="e">🧾</span><b>Chat with company HR policy</b></div><p>Genuinely useful at your workplace. "How many leaves do I have left?" "What's the WFH policy?"</p><span class="fix">data: your HR portal</span></div>
+  </div>
+</div></section>
+
+<!-- BLOCK 23 · PEEK AHEAD -->
+<section class="block reveal" id="next"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">23</div><div>
+    <div class="sec-time">Block 23 · ~5 min · what's coming</div>
+    <h2>Where this is <em>going</em></h2></div></div>
+  <p class="big-p">RAG works. But the frontier is making it <em>smarter</em> — and that's where this course leads next.</p>
+
+  <h3>🤖 Agentic RAG — when retrieval becomes a decision</h3>
+  <p>Today's RAG always retrieves. But sometimes you don't need to (small talk), and sometimes one retrieval isn't enough (multi-hop questions). <strong>Agentic RAG</strong> = combine Class 2's agent loop with Class 3's library. The agent <em>decides</em>: "do I need to look this up? Is what I found enough? Should I rewrite my query and try again?"</p>
+  <div class="analogy purple"><div class="ico">🔁</div><div><b>The loop you'll meet next class</b><p><em>Query → retrieve → grade chunks → if bad, rewrite query, search again → if still bad, ask user for clarification → answer.</em> Same agent loop you built in Class 2, with the librarian (Class 3) as one of its tools.</p></div></div>
+
+  <h3>📈 Advanced RAG — the tricks the senior engineers use</h3>
+  <div class="probs">
+    <div class="prob"><div class="head"><span class="e">✍️</span><b>HyDE</b></div><p>Hypothetical Document Embeddings: have the LLM <em>imagine</em> what the answer would look like, then search for chunks that match the imagined answer. Counter-intuitive, works surprisingly well.</p></div>
+    <div class="prob"><div class="head"><span class="e">🪜</span><b>Step-back prompting</b></div><p>Before searching, ask the LLM to generalize the question. "What's the formula for compound interest in this case?" → "What is compound interest?" → broader, better retrieval.</p></div>
+    <div class="prob"><div class="head"><span class="e">🕸️</span><b>Graph RAG</b></div><p>Build a knowledge graph from your docs (entities + relationships). Now you can answer "who reports to X" by walking the graph, not just searching.</p></div>
+    <div class="prob"><div class="head"><span class="e">📊</span><b>RAG evaluation</b></div><p>How do you measure if your RAG is good? Three metrics: <em>relevance</em>, <em>faithfulness</em>, <em>correctness</em>. We'll wire up a real eval pipeline.</p></div>
+  </div>
+
+  <div class="wow"><span class="star">🚀</span><div><b>Where you are right now</b><p>Three classes in, you've built a chatbot, an agent, and a RAG system. You understand the four pieces of every AI product — <em>model · prompt · tool · retrieval</em>. Almost everything ahead is recombining these four in cleverer ways. You're past the steep part of the curve.</p></div></div>
+
+  <div class="takeaways">
+    <div class="tk"><div class="e">📍</div><b>Embeddings</b><p>Text → vectors. Similar meaning = nearby.</p></div>
+    <div class="tk"><div class="e">✂️</div><b>Chunking</b><p>The unglamorous knob that decides quality.</p></div>
+    <div class="tk"><div class="e">🗂️</div><b>Vector DB</b><p>Three calls: add, query, delete.</p></div>
+    <div class="tk"><div class="e">🎯</div><b>You shipped</b><p>A real "Chat with your PDF" — on LinkedIn. 🎉</p></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="grid">
+    <div><h3>You shipped class 3 🎉</h3><p style="color:#d8ccbf">You now understand the four pieces of every modern AI product. Most people who claim to "know AI" don't know what you know.</p></div>
+    <div><h4 style="color:#ffb39e;text-transform:uppercase;font-size:12px;letter-spacing:.12em;font-family:'JetBrains Mono'">For next class</h4><p style="color:#d8ccbf;font-size:14px">Index a PDF that matters to <em>you</em> (your resume, your notes, your company policy) and bring 3 questions where your RAG surprised you — for better or worse. We'll use those to motivate Agentic RAG.</p></div>
+  </div>
+  <div class="sig"><span>AI Engineering · Class 3 — RAG: Give Your AI Its Own Library</span><span>Scaler Academy</span></div>
+</div></footer>
+
+<script>
+/* ============ scroll progress + nav ============ */
+const prog=document.getElementById('progress'),tnav=document.getElementById('topnav');
+addEventListener('scroll',()=>{const h=document.documentElement,sc=h.scrollTop,max=h.scrollHeight-h.clientHeight;prog.style.width=(sc/max*100)+'%';tnav.classList.toggle('show',sc>620);});
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:0,rootMargin:'0px 0px -8% 0px'});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ============ HERO vector map ============ */
+(function(){
+  const svg=document.getElementById('heroDots'); if(!svg) return;
+  const points=[
+    // food cluster (teal)
+    {l:'banana',x:80,y:90,c:'#10806f'}, {l:'mango',x:60,y:115,c:'#10806f'}, {l:'grape',x:100,y:75,c:'#10806f'},
+    // animal cluster (gold)
+    {l:'cat',x:280,y:80,c:'#e0972a'}, {l:'dog',x:300,y:105,c:'#e0972a'}, {l:'tiger',x:265,y:60,c:'#e0972a'},
+    // royalty (orange)
+    {l:'king',x:180,y:175,c:'#ff5b35'}, {l:'queen',x:215,y:155,c:'#ff5b35'},
+    // common (blue)
+    {l:'man',x:120,y:215,c:'#2b4a8b'}, {l:'woman',x:160,y:200,c:'#2b4a8b'},
+    // tech (purple)
+    {l:'laptop',x:60,y:240,c:'#7a4ca0'}, {l:'computer',x:90,y:255,c:'#7a4ca0'},
+  ];
+  let i=0;
+  function plot(){
+    if(i>=points.length){
+      // draw cluster circles after points
+      svg.innerHTML += '<circle cx="80" cy="93" r="35" fill="rgba(16,128,111,.08)" stroke="rgba(16,128,111,.3)" stroke-dasharray="3 3"/>'+
+                      '<circle cx="282" cy="82" r="35" fill="rgba(224,151,42,.08)" stroke="rgba(224,151,42,.3)" stroke-dasharray="3 3"/>'+
+                      '<circle cx="200" cy="170" r="32" fill="rgba(255,91,53,.08)" stroke="rgba(255,91,53,.3)" stroke-dasharray="3 3"/>';
+      return;
+    }
+    const p=points[i++];
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('r','5');
+    dot.setAttribute('fill',p.c); dot.setAttribute('opacity','0');
+    svg.appendChild(dot);
+    const text=document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x',p.x+8); text.setAttribute('y',p.y+4);
+    text.setAttribute('font-family','JetBrains Mono'); text.setAttribute('font-size','11');
+    text.setAttribute('fill','#1c1714'); text.setAttribute('opacity','0');
+    text.textContent=p.l;
+    svg.appendChild(text);
+    requestAnimationFrame(()=>{dot.style.transition='opacity .3s';text.style.transition='opacity .3s';dot.setAttribute('opacity','1');text.setAttribute('opacity','.85');});
+    setTimeout(plot,180);
+  }
+  setTimeout(plot,300);
+})();
+
+/* ============ vector arithmetic (16) ============ */
+(function(){
+  const eqs={
+    kmw:{html:'<span class="w">king</span> <span class="op">−</span> <span class="w">man</span> <span class="op">+</span> <span class="w">woman</span> <span class="eq-sign">≈</span> <span class="ans" id="arithAns">queen</span>'},
+    pfi:{html:'<span class="w">paris</span> <span class="op">−</span> <span class="w">france</span> <span class="op">+</span> <span class="w">india</span> <span class="eq-sign">≈</span> <span class="ans" id="arithAns">delhi</span>'},
+    dpi:{html:'<span class="w">tokyo</span> <span class="op">−</span> <span class="w">japan</span> <span class="op">+</span> <span class="w">germany</span> <span class="eq-sign">≈</span> <span class="ans" id="arithAns">berlin</span>'},
+    wda:{html:'<span class="w">walking</span> <span class="op">−</span> <span class="w">walk</span> <span class="op">+</span> <span class="w">run</span> <span class="eq-sign">≈</span> <span class="ans" id="arithAns">running</span>'}
+  };
+  const eq=document.getElementById('arithEq');
+  document.querySelectorAll('.varith .pick').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.varith .pick').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      const k=b.dataset.eq; eq.innerHTML=eqs[k].html;
+      const ans=document.getElementById('arithAns');
+      setTimeout(()=>ans.classList.add('show'),250);
+    });
+  });
+  // also fix the data-eq attribute for the third button (re-mapping label)
+  document.querySelectorAll('.varith .pick').forEach(b=>{
+    if(b.textContent.includes('delhi − india + japan')){
+      b.textContent='tokyo − japan + germany'; b.dataset.eq='dpi';
+    }
+  });
+})();
+
+/* ============ vector 2D map (16) ============ */
+(function(){
+  const svg=document.getElementById('vec2d'); if(!svg) return;
+  // base points
+  const pts={
+    king:{x:160,y:120}, queen:{x:240,y:90}, man:{x:140,y:200}, woman:{x:220,y:170},
+    paris:{x:380,y:80}, france:{x:340,y:160}, delhi:{x:500,y:90}, india:{x:460,y:170},
+    banana:{x:80,y:240}, grape:{x:110,y:255}, aeroplane:{x:520,y:260}
+  };
+  function clear(){svg.innerHTML='';drawDots();}
+  function drawDots(){
+    for(const k in pts){
+      const p=pts[k];
+      svg.innerHTML+=`<circle cx="${p.x}" cy="${p.y}" r="6" fill="var(--orange)" />`+
+                    `<text x="${p.x+10}" y="${p.y+4}" font-family="JetBrains Mono" font-size="12" fill="#1c1714">${k}</text>`;
+    }
+  }
+  function arrow(a,b,color){
+    const A=pts[a],B=pts[b];
+    svg.innerHTML+=`<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="${color}" stroke-width="2.5" marker-end="url(#ah)" />`;
+  }
+  function setup(){
+    svg.innerHTML='<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1c1714"/></marker></defs>';
+    drawDots();
+  }
+  setup();
+  document.querySelectorAll('[data-pair]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      setup();
+      const p=b.dataset.pair;
+      if(p==='royalty'){ arrow('king','queen','#ff5b35'); arrow('man','woman','#10806f'); }
+      else if(p==='capital'){ arrow('france','paris','#2b4a8b'); arrow('india','delhi','#7a4ca0'); }
+      else if(p==='food'){
+        svg.innerHTML+=`<circle cx="${pts.banana.x}" cy="${pts.banana.y}" r="42" fill="rgba(16,128,111,.12)" stroke="rgba(16,128,111,.4)" stroke-dasharray="3 3"/>`;
+        svg.innerHTML+=`<line x1="${pts.banana.x}" y1="${pts.banana.y}" x2="${pts.aeroplane.x}" y2="${pts.aeroplane.y}" stroke="#c23a78" stroke-width="2" stroke-dasharray="5 5"/>`;
+        svg.innerHTML+=`<text x="${(pts.banana.x+pts.aeroplane.x)/2-40}" y="${(pts.banana.y+pts.aeroplane.y)/2-8}" font-family="JetBrains Mono" font-size="11" fill="#c23a78" font-weight="700">far apart (cos ≈ 0.05)</text>`;
+      }
+      else if(p==='clear'){ setup(); }
+    });
+  });
+})();
+
+/* ============ similarity meter (16) ============ */
+(function(){
+  const A=document.getElementById('simA'),B=document.getElementById('simB');
+  const val=document.getElementById('simVal'),fill=document.getElementById('simFill'),verd=document.getElementById('simVerdict');
+  const quick=document.getElementById('simQuick');
+  // baked similarity for known pairs (key=normalized concat)
+  const baked={
+    'cat sleeping couch|kitten napping sofa':0.89,
+    'cat sleeping couch|dog running park':0.32,
+    'cat sleeping couch|stock market crash':0.04,
+    'love programming|enjoy coding':0.86,
+    'love programming|hate vegetables':0.08,
+    'love programming|i write software':0.71,
+    'flight to mumbai|plane to bombay':0.92,
+    'i am hungry|i want food':0.83,
+    'how to fix bug|debugging tips':0.79,
+  };
+  // small concept buckets — for any pair, score = overlap + bucket match
+  const buckets={
+    food:['eat','food','hungry','breakfast','lunch','dinner','meal','restaurant','recipe','cook','tasty','sweet','spicy','rice','dal','curry','biryani'],
+    animal:['cat','dog','kitten','puppy','tiger','lion','animal','pet','bird','fish'],
+    tech:['code','coding','program','programming','software','bug','debug','python','java','laptop','computer','API','LLM','AI'],
+    travel:['flight','plane','travel','journey','trip','vacation','airport','train','bombay','mumbai','delhi','bangalore'],
+    work:['office','meeting','job','work','career','salary','manager','team'],
+    sleep:['sleep','sleeping','nap','napping','rest','tired','bed','couch','sofa'],
+    money:['money','price','cost','stock','market','rupees','dollar','income','wealth'],
+  };
+  function norm(s){return s.toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();}
+  function tokens(s){return norm(s).split(' ').filter(w=>w.length>2);}
+  function bucketOf(w){for(const k in buckets){if(buckets[k].includes(w))return k;}return null;}
+  function score(a,b){
+    const k1=tokens(a).join(' '), k2=tokens(b).join(' ');
+    const key=k1+'|'+k2, key2=k2+'|'+k1;
+    if(baked[key]!==undefined)return baked[key];
+    if(baked[key2]!==undefined)return baked[key2];
+    const ta=tokens(a),tb=tokens(b);
+    if(!ta.length||!tb.length)return 0;
+    // overlap component
+    const setb=new Set(tb);
+    let overlap=0; ta.forEach(w=>{if(setb.has(w))overlap++;});
+    const jaccard=overlap/(new Set([...ta,...tb]).size);
+    // bucket component
+    const ba=new Set(ta.map(bucketOf).filter(Boolean));
+    const bb=new Set(tb.map(bucketOf).filter(Boolean));
+    let bucketHit=0; ba.forEach(x=>{if(bb.has(x))bucketHit++;});
+    const bucketScore=bucketHit?Math.min(0.75,bucketHit*0.4):0;
+    return Math.min(0.97,Math.max(0.02,jaccard*0.55+bucketScore+0.05));
+  }
+  function verdict(s){
+    if(s>=.85)return '🟢 Near-synonyms — same meaning, different words.';
+    if(s>=.65)return '🟢 Strongly related — same topic.';
+    if(s>=.40)return '🟡 Loosely related — shares some concepts.';
+    if(s>=.20)return '🟠 Distantly related — barely overlapping.';
+    return '🔴 Unrelated — totally different vector neighbourhoods.';
+  }
+  function update(){
+    const s=score(A.value,B.value);
+    val.textContent=s.toFixed(2);
+    fill.style.width=Math.max(2,s*100)+'%';
+    verd.textContent=verdict(s);
+  }
+  A.addEventListener('input',update); B.addEventListener('input',update);
+  // presets
+  const presets=[
+    {a:'A cat is sleeping on the couch.', b:'A kitten is napping on the sofa.', label:'synonyms'},
+    {a:'I love programming.', b:'I enjoy coding.', label:'paraphrase'},
+    {a:'Flight to Mumbai', b:'Plane to Bombay', label:'same city, different names'},
+    {a:'I am hungry', b:'I want food', label:'related concepts'},
+    {a:'I love programming', b:'I hate vegetables', label:'unrelated'},
+    {a:'The stock market crashed', b:'A cat is sleeping', label:'totally unrelated'},
+  ];
+  presets.forEach(p=>{
+    const b=document.createElement('button');
+    b.textContent=p.label;
+    b.onclick=()=>{A.value=p.a;B.value=p.b;update();};
+    quick.appendChild(b);
+  });
+  update();
+})();
+
+/* ============ chunking strategies sim (17) ============ */
+(function(){
+  const SOURCE = `# Bengaluru Overview
+
+## Tech Industry
+Bengaluru is known as India's Silicon Valley. Tech parks like Electronic City and Whitefield host thousands of tech companies. Major firms include Infosys, Wipro, and TCS.
+
+## Climate
+The city sits at 920 meters altitude. This gives it pleasantly cool weather year-round. Average temperatures rarely exceed 30 degrees.
+
+## Food
+Bengaluru's food scene is legendary. South Indian classics like masala dosa and idli thrive here. Filter coffee shops dot every street corner.`;
+
+  const PALETTE=[
+    {bg:'#dde6f7',br:'#b8c8ee',stripe:'#2b4a8b'},
+    {bg:'#fbeecd',br:'#ecd49b',stripe:'#e0972a'},
+    {bg:'#ece0f6',br:'#d4bce8',stripe:'#7a4ca0'},
+    {bg:'#d8f0eb',br:'#a9ddd2',stripe:'#10806f'},
+    {bg:'#ffe9e1',br:'#ffd2c5',stripe:'#ff5b35'},
+    {bg:'#fbe0ec',br:'#f2bcd4',stripe:'#c23a78'},
+  ];
+  const TOPIC_COL={
+    tech:   {bg:'#dde6f7',br:'#b8c8ee',stripe:'#2b4a8b'},
+    climate:{bg:'#d8f0eb',br:'#a9ddd2',stripe:'#10806f'},
+    food:   {bg:'#ffe9e1',br:'#ffd2c5',stripe:'#ff5b35'},
+    other:  {bg:'#ece0f6',br:'#d4bce8',stripe:'#7a4ca0'},
+  };
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  // ── FIXED · hard chop at every N chars ───────────────────────────
+  function fixedChunk(size){
+    const out=[];
+    for(let i=0;i<SOURCE.length;i+=size){
+      const start=i, end=Math.min(i+size,SOURCE.length);
+      const text=SOURCE.slice(start,end);
+      const splitStart = start>0 && /\w/.test(SOURCE[start-1]||'') && /\w/.test(text[0]||'');
+      const splitEnd   = end<SOURCE.length && /\w/.test(text[text.length-1]||'') && /\w/.test(SOURCE[end]||'');
+      out.push({text:text, isSplit: splitStart||splitEnd});
+    }
+    return out;
+  }
+
+  // ── RECURSIVE · paragraphs → sentences → words ──────────────────
+  function recursiveChunk(size){
+    const paras = SOURCE.split(/\n\n+/).map(p=>p.trim()).filter(Boolean);
+    const out=[];
+    for(const para of paras){
+      if(para.length<=size){ out.push(para); continue; }
+      const sents = para.match(/[^.!?]+[.!?]+/g) || [para];
+      let cur='';
+      for(const s of sents){
+        const candidate = cur ? cur+' '+s.trim() : s.trim();
+        if(candidate.length<=size){ cur=candidate; }
+        else{ if(cur) out.push(cur); cur=s.trim(); }
+      }
+      if(cur) out.push(cur);
+    }
+    return out;
+  }
+
+  // ── SEMANTIC · group adjacent same-topic sentences ──────────────
+  function detectTopic(s){
+    const t=s.toLowerCase();
+    if(/(silicon|infosys|wipro|tcs|tech park|electronic city|whitefield|tech compan|major firms)/.test(t)) return 'tech';
+    if(/(altitude|meter|weather|climate|temperature|cool|year-round|degrees|sits at)/.test(t)) return 'climate';
+    if(/(food|dosa|idli|coffee|south indian|filter|cuisine|scene|street corner|thrive)/.test(t)) return 'food';
+    return 'other';
+  }
+  function semanticChunk(){
+    const cleaned = SOURCE.replace(/^#+\s+.*$/gm,'').replace(/\s+/g,' ').trim();
+    const sents = cleaned.match(/[^.!?]+[.!?]+/g) || [];
+    const groups=[];
+    let curSents=[], curTopic=null;
+    for(const s of sents){
+      const t = detectTopic(s);
+      if(curTopic===null){ curSents.push(s.trim()); curTopic=t; }
+      else if(t===curTopic){ curSents.push(s.trim()); }
+      else{
+        groups.push({text:curSents.join(' '), topic:curTopic});
+        curSents=[s.trim()]; curTopic=t;
+      }
+    }
+    if(curSents.length) groups.push({text:curSents.join(' '), topic:curTopic});
+    return groups;
+  }
+
+  // ── STRUCTURE-AWARE · split on markdown headers ─────────────────
+  function structureChunk(){
+    const lines = SOURCE.split('\n');
+    const sections=[]; let cur=[];
+    for(const line of lines){
+      if(/^##\s+/.test(line) && cur.some(l=>l.trim())){
+        sections.push(cur.join('\n').trim());
+        cur=[line];
+      } else {
+        cur.push(line);
+      }
+    }
+    if(cur.some(l=>l.trim())) sections.push(cur.join('\n').trim());
+    return sections;
+  }
+
+  // ── RENDERERS ───────────────────────────────────────────────────
+  function renderFixed(size){
+    return fixedChunk(size).map((c,i)=>{
+      const col = PALETTE[i%PALETTE.length];
+      return `<div class="cchunk ${c.isSplit?'split':''}" style="background:${col.bg};border-color:${col.br}">
+        <div class="stripe" style="background:${col.stripe}"></div>
+        <div class="cbody">${esc(c.text)}</div>
+        <div class="meta">${c.text.length} chars${c.isSplit?'<br>mid-word ✂︎':''}</div>
+      </div>`;
+    }).join('');
+  }
+  function renderRecursive(size){
+    return recursiveChunk(size).map((c,i)=>{
+      const col = PALETTE[i%PALETTE.length];
+      return `<div class="cchunk" style="background:${col.bg};border-color:${col.br}">
+        <div class="stripe" style="background:${col.stripe}"></div>
+        <div class="cbody">${esc(c)}</div>
+        <div class="meta">${c.length} chars<br>clean cut ✓</div>
+      </div>`;
+    }).join('');
+  }
+  function renderSemantic(){
+    return semanticChunk().map(g=>{
+      const col = TOPIC_COL[g.topic];
+      return `<div class="cchunk" style="background:${col.bg};border-color:${col.br}">
+        <div class="stripe" style="background:${col.stripe}"></div>
+        <div class="cbody"><span class="topic-tag" style="background:${col.stripe}">${g.topic}</span>${esc(g.text)}</div>
+        <div class="meta">${g.text.length} chars<br>1 topic</div>
+      </div>`;
+    }).join('');
+  }
+  function renderStructure(){
+    return structureChunk().map((sec,i)=>{
+      const col = PALETTE[i%PALETTE.length];
+      const html = sec.split('\n').map(l=>{
+        if(/^#+\s+/.test(l)) return `<span class="header-line">${esc(l)}</span>`;
+        return esc(l);
+      }).join('\n');
+      const hcount = sec.split('\n').filter(l=>/^#+\s+/.test(l)).length;
+      return `<div class="cchunk" style="background:${col.bg};border-color:${col.br}">
+        <div class="stripe" style="background:${col.stripe}"></div>
+        <div class="cbody">${html}</div>
+        <div class="meta">${sec.length} chars<br>${hcount} header${hcount===1?'':'s'}</div>
+      </div>`;
+    }).join('');
+  }
+
+  const NOTICES = {
+    fixed:    `<strong>Cuts land at character N — no respect for words, sentences, or paragraphs.</strong> Chunks marked 🪓 were split <em>mid-word</em>; context gets fragmented. Cheap to write (one for-loop), but bad for retrieval. Prototypes only.`,
+    recursive:`<strong>Same character budget, far cleaner cuts.</strong> Splits at paragraph breaks first, then sentences, then words. Almost nothing fragments mid-thought. This is LangChain's <code>RecursiveCharacterTextSplitter</code> — the safe default for ~90% of RAG apps.`,
+    semantic: `<strong>Chunks shaped by meaning, not size.</strong> All <em>tech</em> sentences join into one chunk; all <em>climate</em> another; all <em>food</em> a third. Sizes vary wildly — that's the feature. Best when topic shifts matter more than uniform length. Slower (embed every sentence first).`,
+    structure:`<strong>Each <code>##</code> section becomes its own chunk — header attached to its content.</strong> Markdown, HTML, and code already have natural structure — use it. Unbeatable for docs, wikis, source code: the author already told you how to split.`,
+  };
+
+  let currentStrategy='fixed', currentSize=120;
+
+  function ctlHtml(){
+    if(currentStrategy==='fixed'||currentStrategy==='recursive'){
+      return `<label>Chunk size:</label>
+        <input type="range" min="40" max="240" value="${currentSize}" class="slider" id="cSize">
+        <b id="cSizeVal" style="font-family:'JetBrains Mono';color:var(--orange-deep);font-size:17px">${currentSize}</b>
+        <span style="font-size:12px;color:var(--ink-faint)">characters · try 80 to see the difference</span>`;
+    }
+    if(currentStrategy==='semantic'){
+      return `<span class="empty-ctl">⚙️ <strong>No size knob.</strong> Sentences are tagged by topic (tech · climate · food) and adjacent same-topic sentences are merged. Meaning sets the boundaries.</span>`;
+    }
+    return `<span class="empty-ctl">⚙️ <strong>No size knob.</strong> Splits on Markdown headers (<code>##</code>). Document structure sets the boundaries.</span>`;
+  }
+
+  function renderChunks(){
+    let html, stats;
+    if(currentStrategy==='fixed'){
+      const cs = fixedChunk(currentSize);
+      html = renderFixed(currentSize);
+      const splits = cs.filter(c=>c.isSplit).length;
+      const avg = Math.round(cs.reduce((a,b)=>a+b.text.length,0)/cs.length);
+      stats = `<div><b>${cs.length}</b>chunks</div><div><b>${avg}</b>avg chars</div><div><b style="color:${splits?'var(--pink)':'var(--teal)'}">${splits}</b>mid-word cuts 🪓</div>`;
+    } else if(currentStrategy==='recursive'){
+      const cs = recursiveChunk(currentSize);
+      html = renderRecursive(currentSize);
+      const avg = Math.round(cs.reduce((a,b)=>a+b.length,0)/cs.length);
+      stats = `<div><b>${cs.length}</b>chunks</div><div><b>${avg}</b>avg chars</div><div><b style="color:var(--teal)">0</b>mid-word cuts ✓</div>`;
+    } else if(currentStrategy==='semantic'){
+      const cs = semanticChunk();
+      html = renderSemantic();
+      const topics = [...new Set(cs.map(c=>c.topic))];
+      const sizes = cs.map(c=>c.text.length);
+      const range = sizes.length ? `${Math.min(...sizes)}-${Math.max(...sizes)}` : '–';
+      stats = `<div><b>${cs.length}</b>chunks</div><div><b>${topics.length}</b>topics detected</div><div><b>${range}</b>size range (variable)</div>`;
+    } else {
+      const cs = structureChunk();
+      html = renderStructure();
+      const avg = Math.round(cs.reduce((a,b)=>a+b.length,0)/cs.length);
+      stats = `<div><b>${cs.length}</b>chunks</div><div><b>${cs.length}</b>sections</div><div><b>${avg}</b>avg chars</div>`;
+    }
+    document.getElementById('stratChunks').innerHTML = html;
+    document.getElementById('stratStats').innerHTML = stats;
+    document.getElementById('stratNotice').innerHTML = `<div class="ico">💡</div><div><div class="ttl">What to notice</div><p>${NOTICES[currentStrategy]}</p></div>`;
+  }
+
+  function rebuildCtl(){
+    document.getElementById('stratCtl').innerHTML = ctlHtml();
+    const slider = document.getElementById('cSize');
+    if(slider){
+      slider.addEventListener('input', e=>{
+        currentSize = parseInt(e.target.value);
+        const v = document.getElementById('cSizeVal');
+        if(v) v.textContent = currentSize;
+        renderChunks();
+      });
+    }
+  }
+
+  document.getElementById('srcText').textContent = SOURCE;
+  document.querySelectorAll('.strat-tab').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      document.querySelectorAll('.strat-tab').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      currentStrategy = b.dataset.s;
+      rebuildCtl();
+      renderChunks();
+    });
+  });
+  rebuildCtl();
+  renderChunks();
+})();
+
+/* ============ RAG pipeline step-through (19) ============ */
+(function(){
+  const steps=[
+    {c:'s1',role:'1 · USER QUESTION',html:'<code>"How long do I have to return something?"</code>'},
+    {c:'s2',role:'2 · EMBED THE QUESTION',html:'Turn the question into a 384-number vector via <code>model.encode(question)</code>. We can\'t show 384 numbers, but think of it as the question\'s "coordinates".'},
+    {c:'s3',role:'3 · SEARCH THE VECTOR DB',html:'<code>db.similarity_search(query, k=3)</code> → finds the 3 nearest chunks: <span class="chunk-pill">refunds within 30 days...</span><span class="chunk-pill">shipping is free above ₹999</span><span class="chunk-pill">corporate orders contact sales@</span>'},
+    {c:'s4',role:'4 · STUFF INTO THE PROMPT',html:'The retrieved chunks become <code>{context}</code> in our prompt template. Question goes into <code>{question}</code>. One single string is sent to the LLM.'},
+    {c:'s5',role:'5 · LLM ANSWERS FROM CONTEXT',html:'GPT-4o-mini reads the prompt and replies: <em>"You can return items within 30 days of purchase."</em> ✅ Pulled from the chunk, not from memory.'},
+  ];
+  const wrap=document.getElementById('ragPipe'),st=document.getElementById('ragStatus');let i=0;
+  function next(){
+    if(i>=steps.length){st.textContent='✓ RAG complete · same loop runs every question.';return;}
+    const s=steps[i];
+    const d=document.createElement('div');
+    d.className='step '+s.c;
+    d.innerHTML=`<div class="role">${s.role}</div><div class="body">${s.html}</div>`;
+    wrap.appendChild(d);
+    requestAnimationFrame(()=>d.classList.add('in'));
+    i++;
+    st.textContent=i<steps.length?`step ${i} of ${steps.length}`:'✓ RAG complete · same loop runs every question.';
+  }
+  document.getElementById('ragNext').addEventListener('click',next);
+  document.getElementById('ragReset').addEventListener('click',()=>{wrap.innerHTML='';i=0;st.textContent='';});
+})();
+
+/* ============ reranker visualizer (20) ============ */
+(function(){
+  const before=[
+    {t:'Our shipping is fast and reliable for all returns.',s:0.78},
+    {t:'Refund policy: items can be returned within 30 days.',s:0.74},
+    {t:'Return shipping labels are emailed after request.',s:0.71},
+    {t:'For damaged or defective items, replacements are sent free of cost.',s:0.69},
+    {t:'Our return desk is at the warehouse in Pune.',s:0.66},
+  ];
+  // after rerank — cross-encoder cares about the actual intent
+  const after=[
+    {t:'For damaged or defective items, replacements are sent free of cost.',s:0.94,gold:true},
+    {t:'Refund policy: items can be returned within 30 days.',s:0.88},
+    {t:'Return shipping labels are emailed after request.',s:0.81},
+    {t:'Our return desk is at the warehouse in Pune.',s:0.62},
+    {t:'Our shipping is fast and reliable for all returns.',s:0.45},
+  ];
+  const beforeEl=document.getElementById('rerankBefore'),afterEl=document.getElementById('rerankAfter');
+  function renderBefore(){
+    beforeEl.innerHTML=before.map((d,i)=>`<div class="doc">${i+1}. ${d.t}<span class="sc">${d.s.toFixed(2)}</span></div>`).join('');
+    afterEl.innerHTML='<div style="color:var(--ink-faint);font-size:13px;text-align:center;padding:30px 10px">Press <em>Run</em> to see the cross-encoder rerank.</div>';
+  }
+  function renderAfter(){
+    afterEl.innerHTML=after.map((d,i)=>`<div class="doc ${d.gold?'gold':''}">${i+1}. ${d.t}<span class="sc">${d.s.toFixed(2)}</span></div>`).join('');
+  }
+  renderBefore();
+  document.getElementById('rerankRun').addEventListener('click',renderAfter);
+  document.getElementById('rerankReset').addEventListener('click',renderBefore);
+})();
+
+/* ============ hybrid showdown (20) ============ */
+(function(){
+  // query: "I want running shoes"
+  const docs=[
+    {t:'Adidas Ultraboost sneakers · Marathon running shoes',bm:8.4,vec:0.71},
+    {t:'Nike Air Zoom Pegasus trainers',bm:1.2,vec:0.83},
+    {t:'Puma casual footwear for everyday wear',bm:0.8,vec:0.42},
+    {t:'Asics Gel-Kayano stability trainers',bm:0.6,vec:0.78},
+    {t:'Reebok CrossFit gym shoes',bm:3.1,vec:0.55},
+    {t:'Woodland leather trekking boots',bm:0.4,vec:0.31},
+    {t:'Bata kids school shoes',bm:2.4,vec:0.22},
+  ];
+  // reciprocal rank fusion
+  function topByKey(key){return [...docs].sort((a,b)=>b[key]-a[key]).slice(0,4);}
+  function rrf(){
+    const ranks={};
+    [...docs].sort((a,b)=>b.bm-a.bm).forEach((d,i)=>{ranks[d.t]=(ranks[d.t]||0)+1/(60+i);});
+    [...docs].sort((a,b)=>b.vec-a.vec).forEach((d,i)=>{ranks[d.t]=(ranks[d.t]||0)+1/(60+i);});
+    return [...docs].sort((a,b)=>ranks[b.t]-ranks[a.t]).slice(0,4);
+  }
+  function render(){
+    const bm=topByKey('bm'),vec=topByKey('vec'),hy=rrf();
+    const fmt=(list,scoreKey)=>list.map((d,i)=>`<div class="h-doc ${i===0?'win':''}">${i+1}. ${d.t}<br><small style="color:var(--ink-faint);font-family:JetBrains Mono">score: ${(d[scoreKey]||'').toString().slice(0,4)}</small></div>`).join('');
+    document.getElementById('bmList').innerHTML=fmt(bm,'bm');
+    document.getElementById('vecList').innerHTML=fmt(vec,'vec');
+    document.getElementById('hyList').innerHTML=hy.map((d,i)=>`<div class="h-doc ${i===0?'win':''}">${i+1}. ${d.t}<br><small style="color:var(--ink-faint);font-family:JetBrains Mono">fused rank</small></div>`).join('');
+  }
+  // start empty
+  ['bmList','vecList','hyList'].forEach(id=>document.getElementById(id).innerHTML='<div style="color:var(--ink-faint);font-size:12.5px;padding:14px 4px;text-align:center">press ▶ Compare</div>');
+  document.getElementById('hybridRun').addEventListener('click',render);
+})();
+
+/* ============ PDF chat simulator (21) ============ */
+(function(){
+  const docs={
+    'hr':{
+      name:'📋 HR Policy',
+      preview:`Annual leave: 22 days/year for full-time employees, accrued monthly.
+Sick leave: 12 days/year, no carry-forward.
+Work from home: up to 2 days per week with manager approval.
+Maternity leave: 26 weeks paid as per Indian law.
+Paternity leave: 10 working days.
+Reimbursements: internet ₹1500/month, mobile ₹800/month.
+Notice period: 60 days for senior roles, 30 days for others.
+Probation: 6 months. Probation extension requires HR approval.`,
+      answers:{
+        'leave':'Full-time employees get 22 days of annual leave (accrued monthly) plus 12 days of sick leave per year. Sources: page 1.',
+        'wfh':'Yes — up to 2 days per week with your manager\'s approval. Sources: page 1.',
+        'work from home':'Yes — up to 2 days per week with your manager\'s approval. Sources: page 1.',
+        'maternity':'26 weeks of paid maternity leave, in line with Indian law. Sources: page 1.',
+        'paternity':'10 working days of paternity leave. Sources: page 1.',
+        'notice':'Notice period is 60 days for senior roles, 30 days for others. Sources: page 1.',
+        'reimbursement':'Internet: ₹1500/month. Mobile: ₹800/month. Sources: page 1.',
+        'internet':'Internet reimbursement is ₹1500/month. Sources: page 1.',
+        'probation':'Probation period is 6 months. Extensions require HR approval. Sources: page 1.',
+      },
+      ex:['How many leaves do I get?','Can I work from home?','What is the notice period?','What is the maternity policy?']
+    },
+    'fin':{
+      name:'💰 TCS Q3 Earnings',
+      preview:`Revenue: ₹62,613 cr, up 4.0% YoY in constant currency.
+Operating margin: 24.6%, up 50 bps QoQ.
+Net profit: ₹12,380 cr.
+TCV (Total Contract Value): $13.2 bn, highest in 7 quarters.
+Headcount: 612,724 employees, net addition of 5,370 this quarter.
+Attrition: 13.0% (LTM), down from 13.3%.
+Cash and equivalents: ₹58,200 cr.
+Dividend: ₹76/share interim declared.
+BFSI segment grew 3.8%, retail 2.1%, manufacturing 5.9%.`,
+      answers:{
+        'revenue':'Revenue was ₹62,613 cr, up 4.0% YoY in constant currency. Sources: page 1.',
+        'margin':'Operating margin was 24.6%, up 50 basis points quarter-on-quarter. Sources: page 1.',
+        'profit':'Net profit was ₹12,380 cr. Sources: page 1.',
+        'tcv':'TCV (Total Contract Value) hit $13.2 bn — the highest in 7 quarters. Sources: page 1.',
+        'headcount':'612,724 employees, with a net addition of 5,370 this quarter. Sources: page 1.',
+        'attrition':'Attrition (LTM) was 13.0%, down from 13.3%. Sources: page 1.',
+        'dividend':'Interim dividend of ₹76 per share was declared. Sources: page 1.',
+        'bfsi':'BFSI segment grew 3.8% this quarter. Sources: page 1.',
+      },
+      ex:['What was the revenue?','How was the operating margin?','What is the attrition rate?','How big is the latest TCV?']
+    },
+    'const':{
+      name:'📜 Indian Constitution (Part III)',
+      preview:`Article 14: Equality before law — the State shall not deny equality to any person.
+Article 15: Prohibition of discrimination on grounds of religion, race, caste, sex or place of birth.
+Article 19: Six fundamental freedoms — speech, assembly, association, movement, residence, profession.
+Article 21: Right to life and personal liberty — no person shall be deprived except by procedure established by law.
+Article 21A: Right to education for children aged 6-14.
+Article 25: Freedom of conscience and free profession of religion.
+Article 32: Right to constitutional remedies — Supreme Court can be approached for enforcement.`,
+      answers:{
+        'article 14':'Article 14 guarantees equality before law — the State shall not deny equality to any person. Sources: page 1.',
+        'article 15':'Article 15 prohibits discrimination on grounds of religion, race, caste, sex or place of birth. Sources: page 1.',
+        'article 19':'Article 19 grants six fundamental freedoms: speech, assembly, association, movement, residence, and profession. Sources: page 1.',
+        'article 21':'Article 21 protects the right to life and personal liberty — no person shall be deprived except by procedure established by law. Sources: page 1.',
+        'article 32':'Article 32 is the right to constitutional remedies — citizens can approach the Supreme Court for enforcement of Fundamental Rights. Sources: page 1.',
+        'right to education':'Article 21A guarantees the right to education for children aged 6 to 14. Sources: page 1.',
+        'religion':'Article 25 guarantees freedom of conscience and free profession of religion. Article 15 prohibits discrimination on grounds of religion. Sources: page 1.',
+        'freedom of speech':'Article 19 grants freedom of speech as one of six fundamental freedoms. Sources: page 1.',
+      },
+      ex:['What does Article 21 say?','Tell me about Article 19','What is the right to education?','Which article covers religion?']
+    }
+  };
+  let current='hr';
+  const picker=document.getElementById('pdfPicker'),preview=document.getElementById('pdfPreview');
+  const log=document.getElementById('pdfLog'),inp=document.getElementById('pdfIn'),send=document.getElementById('pdfSend'),exBox=document.getElementById('pdfExamples');
+
+  function pickDoc(k){
+    current=k;
+    picker.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+    preview.textContent=docs[k].preview;
+    log.innerHTML='';
+    addBot(`Indexed "${docs[k].name}" — 1 page, ~8 chunks. Ask me anything!`);
+    renderEx();
+  }
+  function addUser(t){const d=document.createElement('div');d.className='cmsg u';d.textContent=t;log.appendChild(d);requestAnimationFrame(()=>d.classList.add('show'));log.scrollTop=log.scrollHeight;}
+  function addBot(t){const d=document.createElement('div');d.className='cmsg b';d.innerHTML=t;log.appendChild(d);requestAnimationFrame(()=>d.classList.add('show'));log.scrollTop=log.scrollHeight;}
+  function addSrc(t){const d=document.createElement('div');d.className='cmsg src';d.textContent='🔎 retrieved: '+t;log.appendChild(d);requestAnimationFrame(()=>d.classList.add('show'));log.scrollTop=log.scrollHeight;}
+
+  function answer(q){
+    const lq=q.toLowerCase();
+    const a=docs[current].answers;
+    for(const k in a){
+      if(lq.includes(k))return {found:true,chunkKey:k,text:a[k]};
+    }
+    return {found:false};
+  }
+  function ask(){
+    const q=inp.value.trim(); if(!q)return;
+    addUser(q); inp.value='';
+    setTimeout(()=>{
+      const r=answer(q);
+      if(r.found){
+        // find a snippet from preview that contains the keyword
+        const lines=docs[current].preview.split('\n');
+        const hit=lines.find(l=>l.toLowerCase().includes(r.chunkKey))||lines[0];
+        addSrc('"'+hit.slice(0,90)+(hit.length>90?'…':'')+'"');
+        setTimeout(()=>addBot(r.text),500);
+      } else {
+        addBot("I couldn\'t find that in the document. 🤷 (This is RAG <em>refusing to hallucinate</em> — exactly what we want.)");
+      }
+    },350);
+  }
+  function renderEx(){
+    exBox.innerHTML='<span style="font-size:12px;color:var(--ink-faint);font-weight:700;margin-right:6px">Try:</span>'+
+      docs[current].ex.map(q=>`<button class="btn ghost small" data-q="${q}">${q}</button>`).join('');
+    exBox.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{inp.value=b.dataset.q;ask();}));
+  }
+
+  picker.innerHTML=Object.entries(docs).map(([k,d])=>`<button data-k="${k}" class="${k===current?'on':''}">${d.name}</button>`).join('');
+  picker.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>pickDoc(b.dataset.k)));
+  send.addEventListener('click',ask);
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')ask();});
+  pickDoc('hr');
+})();
+</script>
+</body>
+</html>
