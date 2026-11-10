@@ -1,0 +1,1250 @@
+<title>The Refund Bench</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Instrument+Serif:ital@0;1&family=Public+Sans:wght@400;500;700&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#F1F1EE; --surface:#FFFFFF; --surface-2:#E6E6E0;
+  --ink:#1A1A18; --ink-2:#585851; --ink-3:#86867E;
+  --rule:#D8D8D1; --rule-2:#BEBEB5;
+  --accent:#2B3A67; --accent-soft:#DFE3EE;
+  --up:#1B6B4C;   --up-soft:#D8EDE3;
+  --rej:#A52A38;  --rej-soft:#F7DEE0;
+  --esc:#5B4A9E;  --esc-soft:#E6E1F5;
+  --money:#8A5E12; --money-soft:#F6E9CE;
+  --code-bg:#1C1C1A; --code-ink:#E4E4DC; --code-dim:#87877D;
+  --display:"Instrument Serif",Georgia,"Times New Roman",serif;
+  --body:"Public Sans",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#131312; --surface:#1C1C1A; --surface-2:#252523;
+    --ink:#EDEDE6; --ink-2:#ACACA3; --ink-3:#83837B;
+    --rule:#2F2F2C; --rule-2:#434340;
+    --accent:#9CB2E0; --accent-soft:#1E2436;
+    --up:#4FC79A;   --up-soft:#132E24;
+    --rej:#FF8A90;  --rej-soft:#351A1D;
+    --esc:#AFA0EC;  --esc-soft:#221E38;
+    --money:#E0AE52; --money-soft:#2E2413;
+    --code-bg:#0C0C0B; --code-ink:#E4E4DC; --code-dim:#76766D;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#131312; --surface:#1C1C1A; --surface-2:#252523;
+  --ink:#EDEDE6; --ink-2:#ACACA3; --ink-3:#83837B;
+  --rule:#2F2F2C; --rule-2:#434340;
+  --accent:#9CB2E0; --accent-soft:#1E2436;
+  --up:#4FC79A;   --up-soft:#132E24;
+  --rej:#FF8A90;  --rej-soft:#351A1D;
+  --esc:#AFA0EC;  --esc-soft:#221E38;
+  --money:#E0AE52; --money-soft:#2E2413;
+  --code-bg:#0C0C0B; --code-ink:#E4E4DC; --code-dim:#76766D;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--body); font-size:16.5px; line-height:1.65;
+  padding-inline:20px; padding-block:0 72px;
+  -webkit-font-smoothing:antialiased;
+}
+.col{width:100%; max-width:720px; margin-inline:auto}
+.wide{width:100%; max-width:980px; margin-inline:auto}
+
+header{padding-block:56px 38px; border-bottom:3px double var(--ink); margin-bottom:8px}
+.eyebrow{
+  font-family:var(--mono); font-size:11px; font-weight:600;
+  letter-spacing:.15em; text-transform:uppercase; color:var(--accent);
+  margin:0 0 20px;
+}
+h1{
+  font-family:var(--display); font-weight:400; font-size:clamp(42px,9vw,74px);
+  line-height:.98; letter-spacing:-.01em; margin:0 0 20px; text-wrap:balance;
+}
+h1 em{font-style:italic; color:var(--accent)}
+.standfirst{font-size:19px; color:var(--ink-2); margin:0 0 26px; max-width:56ch}
+.meta{
+  font-family:var(--mono); font-size:11.5px; line-height:1.7; color:var(--ink-3);
+  display:flex; flex-wrap:wrap; gap:6px 22px;
+}
+.meta b{color:var(--ink-2); font-weight:400}
+
+section{padding-block:44px 8px}
+section + section{border-top:1px solid var(--rule)}
+h2{
+  font-family:var(--display); font-weight:400; font-size:clamp(28px,5.4vw,42px);
+  line-height:1.08; letter-spacing:-.005em; margin:0 0 10px; text-wrap:balance;
+}
+h2 em{font-style:italic}
+h3{
+  font-family:var(--body); font-weight:700; font-size:17px;
+  letter-spacing:-.005em; margin:34px 0 8px;
+}
+.kicker{
+  font-family:var(--mono); font-size:11px; font-weight:600;
+  letter-spacing:.15em; text-transform:uppercase; color:var(--ink-3);
+  margin:0 0 12px;
+}
+p{margin:0 0 16px}
+.lede{font-size:18px; color:var(--ink-2); margin-bottom:22px}
+strong{font-weight:700}
+code{
+  font-family:var(--mono); font-size:.86em;
+  background:var(--surface-2); padding:1px 5px; border-radius:3px; color:var(--ink);
+}
+.rs{font-family:var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600}
+ul,ol{margin:0 0 16px; padding-left:22px}
+li{margin-bottom:7px}
+a{color:var(--accent)}
+
+.v{
+  font-family:var(--mono); font-size:10px; font-weight:600;
+  letter-spacing:.09em; text-transform:uppercase;
+  padding:3px 8px; border-radius:2px; white-space:nowrap;
+  display:inline-block; vertical-align:2px;
+}
+.v.up{background:var(--up-soft); color:var(--up)}
+.v.rej{background:var(--rej-soft); color:var(--rej)}
+.v.esc{background:var(--esc-soft); color:var(--esc)}
+.v.drop{background:var(--surface-2); color:var(--ink-3)}
+
+.casefile{
+  background:var(--surface); border:1px solid var(--rule);
+  border-top:4px solid var(--accent); padding:0; margin:0 0 16px; border-radius:2px;
+}
+.casefile-head{
+  display:flex; flex-wrap:wrap; gap:4px 24px; padding:14px 26px;
+  border-bottom:1px solid var(--rule); background:var(--surface-2);
+  font-family:var(--mono); font-size:11px; color:var(--ink-2);
+}
+.casefile-head b{color:var(--ink); font-weight:600}
+.casefile-body{padding:24px 26px}
+.casefile-body p{font-size:17.5px; line-height:2.05; margin:0}
+mark{background:none; padding:0 1px; border-bottom:2.5px solid; color:inherit}
+mark.up{border-color:var(--up)}
+mark.rej{border-color:var(--rej)}
+mark.esc{border-color:var(--esc)}
+mark.drop{border-bottom:2.5px dotted var(--rule-2); color:var(--ink-3)}
+sup.gid{font-family:var(--mono); font-size:9.5px; font-weight:600; padding-left:2px}
+sup.up{color:var(--up)} sup.rej{color:var(--rej)} sup.esc{color:var(--esc)} sup.drop{color:var(--ink-3)}
+
+.tablewrap{overflow-x:auto; margin:0 0 16px; -webkit-overflow-scrolling:touch}
+table{border-collapse:collapse; width:100%; font-size:14.5px; min-width:480px}
+th{
+  font-family:var(--mono); font-size:10px; font-weight:600;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3);
+  text-align:left; padding:0 14px 8px 0; border-bottom:1.5px solid var(--rule-2);
+  vertical-align:bottom;
+}
+td{padding:11px 14px 11px 0; border-bottom:1px solid var(--rule); vertical-align:top; line-height:1.5}
+td:last-child,th:last-child{padding-right:0}
+.num{font-family:var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap}
+tr.total td{border-bottom:none; border-top:2px solid var(--ink); font-weight:700}
+
+figure{margin:28px 0 30px}
+figure svg{display:block; width:100%; height:auto; max-width:100%; color:var(--ink)}
+figcaption{font-size:14px; color:var(--ink-2); margin-top:14px; max-width:70ch; margin-inline:auto; line-height:1.55}
+.svgwrap{overflow-x:auto; -webkit-overflow-scrolling:touch}
+.svgwrap > svg{min-width:520px}
+
+.room,.ask{border-radius:2px; padding:18px 22px; margin:0 0 20px}
+.room{background:var(--accent-soft); border-left:3px solid var(--accent)}
+.ask{background:var(--money-soft); border-left:3px solid var(--money)}
+.room .tag,.ask .tag{
+  font-family:var(--mono); font-size:10px; font-weight:600;
+  letter-spacing:.13em; text-transform:uppercase;
+  display:block; margin-bottom:8px;
+}
+.room .tag{color:var(--accent)}
+.ask .tag{color:var(--money)}
+.room p,.ask p{margin:0 0 10px; font-size:15.5px}
+.room p:last-child,.ask p:last-child{margin-bottom:0}
+.ask q{font-style:italic; font-family:var(--display); font-size:19px; line-height:1.35; quotes:"“" "”"}
+
+pre{
+  background:var(--code-bg); color:var(--code-ink); border-radius:3px;
+  padding:20px 22px; overflow-x:auto; margin:0 0 6px;
+  font-family:var(--mono); font-size:12.5px; line-height:1.7;
+  -webkit-overflow-scrolling:touch;
+}
+pre code{background:none; padding:0; font-size:inherit; color:inherit}
+.c-dim{color:var(--code-dim)}
+.c-key{color:#CB9BE8}
+.c-str{color:#8FD1A0}
+.c-hi{background:rgba(255,190,90,.17); border-radius:2px; padding:1px 0}
+.marker{font-family:var(--mono); font-size:10.5px; font-weight:600; color:#F0B658; padding-right:10px}
+
+.annos{display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:2px; margin:18px 0 20px}
+.anno{background:var(--surface); padding:14px 16px; display:grid; grid-template-columns:32px 1fr; gap:12px; align-items:start}
+.anno .n{
+  font-family:var(--mono); font-size:11px; font-weight:600; color:var(--money);
+  background:var(--money-soft); border-radius:2px; text-align:center; padding:3px 0;
+}
+.anno .t{font-size:14.5px; line-height:1.5}
+.anno .t b{display:block; font-size:14.5px; margin-bottom:2px}
+
+.tally{display:grid; gap:10px; margin:0 0 18px}
+.trow{
+  display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px 18px; align-items:center;
+  background:var(--surface); border:1px solid var(--rule); border-radius:2px; padding:13px 16px;
+}
+.tclaim{font-size:15px; line-height:1.45; min-width:0}
+.tclaim .id{font-family:var(--mono); font-size:11px; color:var(--ink-3); font-weight:600; margin-right:7px}
+.tclaim .ev{display:block; font-size:12.5px; color:var(--ink-3); margin-top:4px; font-family:var(--mono)}
+.tvotes{display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end}
+.dots{display:flex; gap:4px}
+.dot{width:12px; height:22px; border-radius:1px}
+.dot.up{background:var(--up)} .dot.rej{background:var(--rej)} .dot.esc{background:var(--esc)}
+.conf{font-family:var(--mono); font-size:11.5px; color:var(--ink-3); font-variant-numeric:tabular-nums}
+.amt{font-family:var(--mono); font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; min-width:62px; text-align:right}
+@media (max-width:600px){ .trow{grid-template-columns:1fr} .tvotes{justify-content:flex-start} .amt{text-align:left; min-width:0} }
+
+.kv{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:2px; margin:0 0 22px}
+.kv > div{background:var(--surface); padding:14px 16px}
+.kv dt{font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin:0 0 5px}
+.kv dd{margin:0; font-size:14.5px; line-height:1.4}
+.kv dd .big{font-family:var(--display); font-weight:400; font-size:30px; letter-spacing:-.01em; display:block; line-height:1.05}
+
+.q{font-family:var(--display); font-weight:400; font-size:23px; line-height:1.3; margin:0 0 18px; padding:2px 0 2px 16px; border-left:3px solid var(--money); text-wrap:balance}
+.calc{
+  font-family:var(--mono); font-size:13px; line-height:2;
+  background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--accent);
+  border-radius:2px; padding:16px 20px; margin:0 0 20px; overflow-x:auto;
+  white-space:pre; color:var(--ink); font-variant-numeric:tabular-nums;
+}
+.calc b{color:var(--money); font-weight:600}
+.calc i{color:var(--ink-3); font-style:normal}
+.callout-ans{background:var(--money-soft); border-radius:2px; padding:15px 20px; margin:0 0 20px; font-size:15.5px; line-height:1.55}
+
+.stage{background:var(--surface); border:1px solid var(--rule); border-radius:2px; margin:0 0 14px; overflow:hidden}
+.stage.boom{border-color:var(--money); border-width:1.5px}
+.stage-head{display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:13px 18px; border-bottom:1px solid var(--rule); background:var(--surface-2)}
+.stage-n{font-family:var(--mono); font-size:11.5px; font-weight:600; width:26px; height:26px; flex:none; border-radius:50%; background:var(--accent); color:#FFF; display:grid; place-items:center}
+.stage.boom .stage-n{background:var(--money)}
+.stage-head h3{font-family:var(--body); font-weight:700; font-size:16px; margin:0; flex:1 1 auto}
+.stage-cost{font-family:var(--mono); font-size:11px; color:var(--ink-3); font-variant-numeric:tabular-nums; white-space:nowrap}
+.stage.boom .stage-cost{color:var(--money); font-weight:600}
+.stage-body{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--rule)}
+.io{background:var(--surface); padding:14px 18px}
+.io dt{font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); margin:0 0 6px}
+.io dd{margin:0; font-size:14px; line-height:1.5}
+.io .payload{font-family:var(--mono); font-size:11px; line-height:1.6; background:var(--surface-2); border-radius:2px; padding:9px 11px; margin-top:8px; overflow-x:auto; white-space:pre; color:var(--ink-2)}
+.stage-note{padding:13px 18px; border-top:1px solid var(--rule); font-size:14.5px; line-height:1.55; color:var(--ink-2)}
+.stage.boom .stage-note{background:var(--money-soft); color:var(--ink)}
+@media (max-width:640px){ .stage-body{grid-template-columns:1fr} }
+
+.prompt{margin:0 0 26px}
+.prompt h4{font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3); margin:0 0 8px; display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.prompt h4 span{font-family:var(--body); letter-spacing:0; text-transform:none; font-size:13px; font-weight:400}
+.why{font-size:14.5px; color:var(--ink-2); margin:10px 0 0; line-height:1.55}
+
+footer{border-top:3px double var(--ink); margin-top:40px; padding-top:22px; font-family:var(--mono); font-size:11.5px; color:var(--ink-3); line-height:1.8}
+@media (prefers-reduced-motion: no-preference){ html{scroll-behavior:smooth} }
+:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+</style>
+
+<header>
+  <div class="col">
+    <p class="eyebrow">Applied AI · Case study · Agentic system design</p>
+    <h1>The <em>Refund</em> Bench</h1>
+    <p class="standfirst">A customer types one angry paragraph. Inside it are four separate accusations, some true, some false, one unknowable. An agent must find them, judge each one against evidence, and decide how much money to give back — in under fifteen seconds, without ever paying twice.</p>
+    <div class="meta">
+      <span><b>Scale</b> 200 disputes/min at dinner peak</span>
+      <span><b>Budget</b> 14 LLM calls per dispute</span>
+      <span><b>Hard limit</b> ₹2,000 auto-approval cap</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <div class="col">
+    <p class="kicker">The hook</p>
+    <h2>Why does a serious court seat <em>three</em> judges?</h2>
+    <p class="lede">Not because three people are smarter than one. Because one judge can have a bad day, misread a document, or carry a blind spot — and there is no way to tell from the outside which day it was. So you seat three, let them rule independently, and count.</p>
+    <p>A <strong>2–1 split is information</strong>. It tells you the case was genuinely hard, in a way that a single confident ruling never could. A <strong>3–0 ruling is information too</strong> — it tells you this one was clear.</p>
+    <p>An LLM is a judge who has a different day every time you ask. Same question, same evidence, slightly different answer — because the model samples from a distribution rather than looking anything up. So do what the courts did: <strong>ask three times, independently, and count.</strong></p>
+    <p>This is <strong>self-consistency</strong> (Wang et al., 2022). When the model genuinely knows, the reasoning paths converge. When it is guessing, they scatter. The verdict you keep is the majority; the spread becomes your confidence. The cost is exact and brutal: K samples, K times the bill.</p>
+    <div class="ask">
+      <span class="tag">Ask the room</span>
+      <p><q>If the bench splits 2–1 on whether to refund ₹640, and you only get to keep one number — the verdict, or the fact that it was split — which do you keep?</q></p>
+      <p>The split. A 2–1 <span class="v up">upheld</span> and a 3–0 <span class="v up">upheld</span> are the same verdict and completely different risks. The whole system exists to keep that difference.</p>
+    </div>
+  </div>
+
+  <div class="wide">
+    <figure>
+      <div class="svgwrap">
+      <svg viewBox="0 0 880 300" role="img" aria-label="Two panels. On the left, three independently sampled rulings on a grievance backed by hard timestamps all converge on UPHELD. On the right, three rulings on a grievance with no evidence available scatter into one UPHELD and two ESCALATE, so the majority is ESCALATE with low confidence.">
+        <text x="20" y="26" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" letter-spacing="1.2" fill="currentColor">EVIDENCE IS HARD</text>
+        <text x="20" y="46" font-family="Public Sans, sans-serif" font-size="13" fill="currentColor" opacity=".62">“Delivered 85 minutes after ordering”</text>
+
+        <rect x="20" y="130" width="86" height="46" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="63" y="151" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor">grievance</text>
+        <text x="63" y="166" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity=".6">g1</text>
+
+        <g stroke="currentColor" stroke-width="1.4" fill="none" opacity=".75">
+          <path d="M106,153 C176,98 238,98 300,153"/>
+          <path d="M106,153 L300,153"/>
+          <path d="M106,153 C176,208 238,208 300,153"/>
+        </g>
+        <circle cx="203" cy="112" r="3.5" fill="currentColor"/>
+        <circle cx="203" cy="153" r="3.5" fill="currentColor"/>
+        <circle cx="203" cy="194" r="3.5" fill="currentColor"/>
+        <text x="203" y="102" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".55">judge 1</text>
+        <text x="203" y="172" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".55">judge 2</text>
+        <text x="203" y="214" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".55">judge 3</text>
+
+        <rect x="300" y="131" width="112" height="44" rx="2" fill="#1B6B4C"/>
+        <text x="356" y="158" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" letter-spacing=".6" fill="#FFFFFF">UPHELD</text>
+        <text x="356" y="200" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor">3 – 0</text>
+        <text x="356" y="218" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity=".6">confidence 0.98</text>
+        <text x="216" y="264" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="13" fill="currentColor" opacity=".68">the bench agrees — pay it, no human needed</text>
+
+        <line x1="440" y1="14" x2="440" y2="286" stroke="currentColor" stroke-width="1" opacity=".22"/>
+
+        <text x="462" y="26" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" letter-spacing="1.2" fill="currentColor">NO EVIDENCE EXISTS</text>
+        <text x="462" y="46" font-family="Public Sans, sans-serif" font-size="13" fill="currentColor" opacity=".62">“The raita leaked inside the bag”</text>
+
+        <rect x="462" y="130" width="86" height="46" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="505" y="151" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor">grievance</text>
+        <text x="505" y="166" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity=".6">g3</text>
+
+        <g stroke="currentColor" stroke-width="1.4" fill="none" opacity=".75">
+          <path d="M548,153 C614,153 666,84 730,84"/>
+          <path d="M548,153 L730,153"/>
+          <path d="M548,153 C614,153 666,222 730,222"/>
+        </g>
+
+        <rect x="730" y="64" width="126" height="40" rx="2" fill="none" stroke="#1B6B4C" stroke-width="1.5"/>
+        <text x="793" y="89" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" letter-spacing=".5" fill="#1B6B4C">UPHELD</text>
+        <rect x="730" y="133" width="126" height="40" rx="2" fill="#5B4A9E"/>
+        <text x="793" y="158" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" letter-spacing=".5" fill="#FFFFFF">ESCALATE</text>
+        <rect x="730" y="202" width="126" height="40" rx="2" fill="#5B4A9E"/>
+        <text x="793" y="227" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" letter-spacing=".5" fill="#FFFFFF">ESCALATE</text>
+
+        <text x="659" y="264" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="13" fill="currentColor" opacity=".68">split 2–1 → a human decides this one</text>
+      </svg>
+      </div>
+      <figcaption>Three independent rulings, temperature 0.5–0.8, no shared history between them. On the right, one judge would happily have approved a refund on a claim nothing can prove. The two dissenters are what send it to a human instead of to the payments API.</figcaption>
+    </figure>
+  </div>
+
+  <div class="col">
+    <div class="room">
+      <span class="tag">Production reality</span>
+      <p>Temperature is set per stage, not once. Verification samples need <strong>T &gt; 0</strong>, roughly 0.5–0.8 — at T = 0 all three judges return byte-identical answers and the bench is theatre. Push past 0.8 and rulings go incoherent. Synthesis runs at <strong>low temperature</strong>: that stage writes the customer-facing message and must not invent anything.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="kicker">The case</p>
+    <h2>One angry paragraph, four separate accusations</h2>
+    <p>Everything below follows this single dispute. Real ones carry 1–8 grievances; this one has four.</p>
+  </div>
+
+  <div class="col">
+    <div class="casefile">
+      <div class="casefile-head">
+        <span><b>DISPUTE</b> d7a41…c39</span>
+        <span><b>ORDER</b> ₹1,840</span>
+        <span><b>FILED</b> 21:52 IST</span>
+      </div>
+      <div class="casefile-body">
+        <p><mark class="up">Ordered at 8:15pm and the food showed up at 9:40pm.</mark><sup class="gid up">g1</sup> <mark class="drop">We had guests over, it was embarrassing.</mark><sup class="gid drop">✕</sup> <mark class="up">Two of the four were missing completely.</mark><sup class="gid up">g2</sup> <mark class="esc">The raita had leaked all over the inside of the bag.</mark><sup class="gid esc">g3</sup> <mark class="rej">And the delivery guy was rude when I asked him about it.</mark><sup class="gid rej">g4</sup> <mark class="drop">Honestly the worst experience I've had on this app — refund everything.</mark><sup class="gid drop">✕</sup></p>
+      </div>
+    </div>
+    <p style="font-family:var(--mono); font-size:11.5px; color:var(--ink-3); margin-bottom:28px">
+      <span class="v up">upheld</span> &nbsp;<span class="v rej">rejected</span> &nbsp;<span class="v esc">escalate</span> &nbsp;<span class="v drop">not a grievance</span>
+    </p>
+
+    <h3>Two sentences were thrown away, and that is the hardest part</h3>
+    <p>“We had guests over, it was embarrassing” is context and feeling — there is nothing to check it against. “The worst experience I've had” is an opinion, and “refund everything” is a demand, not a claim. None of them can be true or false, so none of them enter the pipeline.</p>
+    <p>Which forces the question the entire system rests on, and it has to be answered before a line of code is written: <strong>what counts as a grievance?</strong></p>
+    <div class="ask">
+      <span class="tag">Ask the room</span>
+      <p><q>Is “the delivery guy was rude” a grievance?</q></p>
+      <p>Yes — and this is where half the room gets it wrong. It is a <em>claim about an event</em>, so it belongs in the pipeline. It is not an opinion like “the food was mediocre.” The fact that you may have no evidence for it does not disqualify it at extraction — that gets decided at <strong>judgement</strong>, not at <strong>extraction</strong>. Confusing those two stages is the most common design error in this system.</p>
+    </div>
+    <p>So the working definition, and it goes verbatim into the prompt: <strong>a grievance is a statement about something that happened to this order, which evidence could in principle confirm or contradict.</strong> “Arrived at 9:40pm” qualifies. “It was embarrassing” does not.</p>
+
+    <h3>One sentence needed repair before it could be judged</h3>
+    <p>“Two of <em>the four</em> were missing” cannot be judged on its own — four of what? The extraction prompt demands every grievance be <strong>self-contained</strong>, with references resolved against the order:</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:42%">As the customer wrote it</th><th>As extracted</th></tr></thead>
+        <tbody>
+          <tr><td>“Two of the four were missing completely.”</td><td>“2 of the 4 Hyderabadi Biryani units ordered were not delivered.”</td></tr>
+          <tr><td>“The delivery guy was rude when I asked <em>him</em> about <em>it</em>.”</td><td>“The delivery partner behaved rudely when asked about the missing items.”</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="room">
+      <span class="tag">Production reality</span>
+      <p>A rule that says “do not use pronouns” tells the model what <em>not</em> to do without telling it what to do instead. Name the operation — this is <strong>co-reference resolution</strong>, a task the model already knows by name — and give it the order's line items to resolve against. A prohibition produces refusals; a procedure produces work.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="kicker">The bench rules</p>
+    <h2>Four grievances, twelve rulings, one cheque</h2>
+    <p>Each grievance goes to the bench <strong>three times, independently</strong> — no shared history, no chaining. Each judge sees the grievance <em>and the evidence snapshot</em>. Twelve calls.</p>
+  </div>
+
+  <div class="col">
+    <div class="tally">
+      <div class="trow">
+        <div class="tclaim"><span class="id">g1</span>Order was delivered 85 minutes after it was placed.
+          <span class="ev">evidence · placed 20:15 · delivered 21:40 · SLA 45 min</span></div>
+        <div class="tvotes"><div class="dots"><span class="dot up"></span><span class="dot up"></span><span class="dot up"></span></div><span class="v up">upheld</span><span class="conf">0.98</span><span class="amt" style="color:var(--up)">₹49</span></div>
+      </div>
+      <div class="trow">
+        <div class="tclaim"><span class="id">g2</span>2 of the 4 Hyderabadi Biryani units ordered were not delivered.
+          <span class="ev">evidence · billed 4 · pickup weight 1.2 kg vs expected 2.4 kg</span></div>
+        <div class="tvotes"><div class="dots"><span class="dot up"></span><span class="dot up"></span><span class="dot up"></span></div><span class="v up">upheld</span><span class="conf">0.91</span><span class="amt" style="color:var(--up)">₹640</span></div>
+      </div>
+      <div class="trow">
+        <div class="tclaim"><span class="id">g3</span>The raita container leaked inside the delivery bag.
+          <span class="ev">evidence · none — no field records packaging condition</span></div>
+        <div class="tvotes"><div class="dots"><span class="dot up"></span><span class="dot esc"></span><span class="dot esc"></span></div><span class="v esc">escalate</span><span class="conf">0.35</span><span class="amt" style="color:var(--esc)">₹60 ?</span></div>
+      </div>
+      <div class="trow">
+        <div class="tclaim"><span class="id">g4</span>The delivery partner behaved rudely when asked about the missing items.
+          <span class="ev">evidence · customer rated this partner 5★ at handover, 21:41</span></div>
+        <div class="tvotes"><div class="dots"><span class="dot rej"></span><span class="dot rej"></span><span class="dot rej"></span></div><span class="v rej">rejected</span><span class="conf">0.88</span><span class="amt" style="color:var(--rej)">₹0</span></div>
+      </div>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Outcome</th><th>Grievances</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+          <tr><td><span class="v up">upheld</span></td><td>g1 late delivery, g2 missing items</td><td class="num" style="color:var(--up)">₹689</td></tr>
+          <tr><td><span class="v esc">escalate</span></td><td>g3 leaked raita</td><td class="num" style="color:var(--esc)">₹60 held</td></tr>
+          <tr><td><span class="v rej">rejected</span></td><td>g4 rude partner</td><td class="num">₹0</td></tr>
+          <tr class="total"><td>Auto-approved now</td><td>under the ₹2,000 cap, so no human needed</td><td class="num">₹689</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><strong>g4 is the one that earns the system its keep.</strong> A plausible, sympathetic, entirely human-sounding accusation — and the evidence flatly contradicts it: the same customer gave this partner five stars at the door, one minute after handover. A tired support agent at 10pm approves that. The bench does not.</p>
+    <p><strong>g3 is the one that shows why you sample three times.</strong> One judge was willing to approve ₹60 on a claim nothing can prove. Two admitted there was nothing to go on. Majority rules, confidence drops to 0.35, and it goes to a human. With a single call you would have had a coin-flip chance of paying out on an unprovable claim — <em>every time</em>, at 200 disputes a minute.</p>
+
+    <div class="ask">
+      <span class="tag">Ask the room</span>
+      <p><q>Which mistake costs more — refunding ₹640 that you did not owe, or refusing ₹640 that you did?</q></p>
+      <p>The refusal, by a long way. A wrong refund costs you ₹640, once. A wrong refusal costs you a customer — and in food delivery that is thousands of rupees of lifetime value, plus a one-star review. <strong>The errors are asymmetric, so the system should be too.</strong> Which is why the three verdicts are not symmetric either: when unsure, the design never rejects, it escalates.</p>
+    </div>
+
+    <div class="room">
+      <span class="tag">Production reality</span>
+      <p><strong>Do not trust the confidence score.</strong> It is a number the model generated, not a calibrated probability. Show it to your ops team, log it, chart it — but never branch a payout on it. Branch on the <em>vote split</em>, which you computed yourself and can defend.</p>
+      <p><strong>The synthesis prompt must say “treat all verdicts as final.”</strong> Without that line, the model re-litigates the bench's ruling while writing the summary — quietly turning a 1–2 <span class="v esc">escalate</span> into an <span class="v up">upheld</span> because the complaint <em>reads</em> sympathetic. One sentence in the prompt is what makes the majority actually be the majority.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="kicker">Architecture</p>
+    <h2>Four stages, one of which <em>explodes</em></h2>
+    <p>The pipeline has exactly four logical components. Three of them are a single LLM call each, no matter what you feed them. The fourth is <em>N × K</em> of them.</p>
+  </div>
+
+  <div class="wide">
+    <figure>
+      <div class="svgwrap">
+      <svg viewBox="0 0 980 400" role="img" aria-label="Pipeline diagram. Dispute intake with an evidence snapshot feeds one sequential grievance-extraction call, which fans out into grievance groups of three independent judge samples each, each group reduced by a majority ruling, all feeding one settlement call and then the ledger.">
+        <defs>
+          <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <rect x="14" y="168" width="112" height="56" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="70" y="191" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="currentColor">1 · INTAKE</text>
+        <text x="70" y="208" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity=".6">+ evidence</text>
+
+        <line x1="126" y1="196" x2="146" y2="196" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+
+        <rect x="152" y="168" width="136" height="56" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="220" y="191" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="currentColor">2 · EXTRACT</text>
+        <text x="220" y="208" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity=".6">1 call · sequential</text>
+
+        <g stroke="currentColor" stroke-width="1.5" fill="none">
+          <path d="M288,196 C308,196 306,80 326,80" marker-end="url(#ar2)"/>
+          <path d="M288,196 L326,200" marker-end="url(#ar2)"/>
+          <path d="M288,196 C308,196 306,320 326,320" marker-end="url(#ar2)"/>
+        </g>
+
+        <g font-family="IBM Plex Mono, monospace">
+          <rect x="332" y="40" width="234" height="80" rx="3" fill="none" stroke="currentColor" stroke-width="1" opacity=".45" stroke-dasharray="4 3"/>
+          <text x="344" y="60" font-size="10.5" font-weight="600" fill="currentColor">grievance g1</text>
+          <rect x="344" y="70" width="64" height="32" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><text x="376" y="91" text-anchor="middle" font-size="9.5" fill="currentColor">j1</text>
+          <rect x="414" y="70" width="64" height="32" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><text x="446" y="91" text-anchor="middle" font-size="9.5" fill="currentColor">j2</text>
+          <rect x="484" y="70" width="64" height="32" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><text x="516" y="91" text-anchor="middle" font-size="9.5" fill="currentColor">j3</text>
+
+          <rect x="332" y="160" width="234" height="80" rx="3" fill="none" stroke="currentColor" stroke-width="1" opacity=".45" stroke-dasharray="4 3"/>
+          <text x="344" y="180" font-size="10.5" font-weight="600" fill="currentColor">grievance g2</text>
+          <rect x="344" y="190" width="64" height="32" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><text x="376" y="211" text-anchor="middle" font-size="9.5" fill="currentColor">j1</text>
+          <rect x="414" y="190" width="64" height="32" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><text x="446" y="211" text-anchor="middle" font-size="9.5" fill="currentColor">j2</text>
+          <rect x="484" y="190" width="64" height="32" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><text x="516" y="211" text-anchor="middle" font-size="9.5" fill="currentColor">j3</text>
+
+          <rect x="332" y="280" width="234" height="80" rx="3" fill="none" stroke="currentColor" stroke-width="1" opacity=".45" stroke-dasharray="4 3"/>
+          <text x="344" y="300" font-size="10.5" font-weight="600" fill="currentColor">grievance g<tspan font-size="9">N</tspan></text>
+          <rect x="344" y="310" width="64" height="32" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><text x="376" y="331" text-anchor="middle" font-size="9.5" fill="currentColor">j1</text>
+          <rect x="414" y="310" width="64" height="32" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><text x="446" y="331" text-anchor="middle" font-size="9.5" fill="currentColor">j2</text>
+          <rect x="484" y="310" width="64" height="32" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><text x="516" y="331" text-anchor="middle" font-size="9.5" fill="currentColor">j3</text>
+        </g>
+
+        <text x="449" y="140" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="12.5" fill="currentColor" opacity=".72">independent · no shared history · same evidence · T &gt; 0</text>
+        <text x="449" y="266" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".55">⋮</text>
+        <text x="449" y="382" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="currentColor">3 · JUDGE — N × K calls, all parallel</text>
+
+        <g stroke="currentColor" stroke-width="1.5" fill="none">
+          <line x1="566" y1="80" x2="588" y2="80" marker-end="url(#ar2)"/>
+          <line x1="566" y1="200" x2="588" y2="200" marker-end="url(#ar2)"/>
+          <line x1="566" y1="320" x2="588" y2="320" marker-end="url(#ar2)"/>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="9" font-weight="600">
+          <rect x="594" y="64" width="62" height="32" rx="16" fill="#2B3A67"/><text x="625" y="84" text-anchor="middle" fill="#FFFFFF">RULE</text>
+          <rect x="594" y="184" width="62" height="32" rx="16" fill="#2B3A67"/><text x="625" y="204" text-anchor="middle" fill="#FFFFFF">RULE</text>
+          <rect x="594" y="304" width="62" height="32" rx="16" fill="#2B3A67"/><text x="625" y="324" text-anchor="middle" fill="#FFFFFF">RULE</text>
+        </g>
+
+        <g stroke="currentColor" stroke-width="1.5" fill="none">
+          <path d="M656,80 C684,80 682,196 700,196" marker-end="url(#ar2)"/>
+          <path d="M656,200 L700,197" marker-end="url(#ar2)"/>
+          <path d="M656,320 C684,320 682,196 700,196" marker-end="url(#ar2)"/>
+        </g>
+
+        <rect x="706" y="168" width="132" height="56" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="772" y="191" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="currentColor">4 · SETTLE</text>
+        <text x="772" y="208" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity=".6">1 call · low T</text>
+
+        <line x1="838" y1="196" x2="864" y2="196" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+        <path d="M878,178 a24,10 0 0,1 48,0 v36 a24,10 0 0,1 -48,0 z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M878,178 a24,10 0 0,0 48,0" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="902" y="240" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity=".6">ledger</text>
+      </svg>
+      </div>
+      <figcaption>Stage 2 must finish before stage 3 can start — you cannot fan out until you know how many grievances there are. That single sequential call is why wall-clock time is set by the fan-out that follows it, not by the number of stages.</figcaption>
+    </figure>
+  </div>
+
+  <div class="col">
+    <h3>Walk it stage by stage</h3>
+    <p>Same dispute, one stage at a time. Watch the <strong>cost</strong> on the right — that is the whole story.</p>
+  </div>
+
+  <div class="col">
+    <div class="stage">
+      <div class="stage-head"><span class="stage-n">1</span><h3>Intake &amp; evidence snapshot</h3><span class="stage-cost">0 LLM calls · ~200 ms</span></div>
+      <div class="stage-body">
+        <div class="io"><dt>In</dt><dd>The complaint text and the order id.</dd></div>
+        <div class="io"><dt>Does</dt><dd>Hashes the complaint, then <strong>freezes a copy of the evidence</strong> — order lines, delivery timestamps, GPS trail, pickup weight, partner rating. No model touched.</dd></div>
+        <div class="io"><dt>Out</dt><dd><div class="payload">dispute_id: d7a41…c39
+status:     RECEIVED
+evidence:   snapshot @ 21:52</div></dd></div>
+      </div>
+      <div class="stage-note"><strong>Why freeze the evidence?</strong> Because the order record keeps changing — the partner's rating moves, the restaurant edits its bill, a reconciliation job runs overnight. If you re-read evidence during a retry you can get a <em>different verdict on the same dispute</em>. Money decisions must be reproducible, so you judge against a frozen copy and keep it.</div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="stage-n">2</span><h3>Extract grievances</h3><span class="stage-cost">1 LLM call · ~1.5 s</span></div>
+      <div class="stage-body">
+        <div class="io"><dt>In</dt><dd>The complaint text plus the order's line items, in one prompt.</dd></div>
+        <div class="io"><dt>Does</dt><dd>Keeps checkable accusations, drops feelings and demands, resolves references against the order, records where each sat in the text.</dd></div>
+        <div class="io"><dt>Out</dt><dd><div class="payload">[
+ {"grievance_id":"g2",
+  "text":"2 of the 4 Hyderabadi
+   Biryani units ordered were
+   not delivered.",
+  "category":"MISSING_ITEM",
+  "span_start":112,
+  "span_end":152},
+ … g1, g3, g4
+]</div></dd></div>
+      </div>
+      <div class="stage-note"><strong>This is the barrier.</strong> Until this returns you do not know whether the dispute has one grievance or eight — so you cannot start the parallel work, and you cannot even size it. One call, and everything waits on it.</div>
+    </div>
+
+    <div class="stage boom">
+      <div class="stage-head"><span class="stage-n">3</span><h3>Judge by voting</h3><span class="stage-cost">12 calls · ~4.5 s</span></div>
+      <div class="stage-body">
+        <div class="io"><dt>In</dt><dd>4 grievances + the frozen evidence.</dd></div>
+        <div class="io"><dt>Does</dt><dd>Sends every grievance to <strong>K = 3 judges</strong>, each its own request, none aware of the others. Then counts — in plain code, not another LLM call.</dd></div>
+        <div class="io"><dt>Out</dt><dd><div class="payload">g1 → U,U,U → UPHELD    ₹49
+g2 → U,U,U → UPHELD   ₹640
+g3 → U,E,E → ESCALATE  ₹60?
+g4 → R,R,R → REJECTED    ₹0</div></dd></div>
+      </div>
+      <div class="stage-note"><strong>This is the stage that explodes.</strong> 4 grievances × 3 judges = 12 calls. A long complaint with 8 grievances = 24. Every extra grievance, and every extra judge, lands here and nowhere else.</div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="stage-n">4</span><h3>Settle</h3><span class="stage-cost">1 LLM call · ~1 s</span></div>
+      <div class="stage-body">
+        <div class="io"><dt>In</dt><dd>The complaint plus the four final rulings and amounts.</dd></div>
+        <div class="io"><dt>Does</dt><dd>One call at low temperature, writing the message the customer reads. Forbidden from changing any ruling. The <em>amount</em> is computed in code, never by the model.</dd></div>
+        <div class="io"><dt>Out</dt><dd><div class="payload">status:  SETTLED
+refund:  ₹689
+held:    ₹60 → agent queue
+message: "We've refunded…"</div></dd></div>
+      </div>
+      <div class="stage-note"><strong>The model writes the words; the code writes the cheque.</strong> Never let an LLM produce the number that goes to your payments API — let it produce prose about a number your code already computed and can prove.</div>
+    </div>
+  </div>
+
+  <div class="col">
+    <h3>The same thing, against a clock</h3>
+  </div>
+
+  <div class="wide">
+    <figure>
+      <div class="svgwrap">
+      <svg viewBox="0 0 900 300" role="img" aria-label="Timeline of one dispute. Intake is near-instant, extraction runs to about 1.5 seconds, judging runs from 1.5 to 6 seconds as three successive waves of four parallel calls, and settlement runs to about 7 seconds. A dashed barrier at 1.5 seconds marks where judging can first begin.">
+        <text x="78" y="72" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="currentColor">1 INTAKE</text>
+        <text x="78" y="112" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="currentColor">2 EXTRACT</text>
+        <text x="78" y="160" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="currentColor">3 JUDGE</text>
+        <text x="78" y="208" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="currentColor">4 SETTLE</text>
+
+        <rect x="86" y="56" width="20" height="22" fill="#2B3A67"/>
+        <text x="116" y="72" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".7">0 calls</text>
+
+        <rect x="86" y="96" width="155" height="22" fill="#2B3A67"/>
+        <text x="251" y="112" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".7">1 call</text>
+
+        <rect x="241" y="138" width="465" height="34" fill="#8A5E12"/>
+        <g stroke="#FFFFFF" stroke-width="1.2" opacity=".42">
+          <line x1="396" y1="138" x2="396" y2="172"/><line x1="551" y1="138" x2="551" y2="172"/>
+        </g>
+        <text x="473" y="160" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#FFFFFF">12 calls · 4 in flight · 3 waves</text>
+
+        <rect x="706" y="192" width="103" height="22" fill="#2B3A67"/>
+        <text x="819" y="208" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".7">1 call</text>
+
+        <line x1="241" y1="44" x2="241" y2="232" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" opacity=".78"/>
+        <text x="249" y="38" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="currentColor">BARRIER — judging cannot begin until extraction returns</text>
+
+        <line x1="86" y1="250" x2="860" y2="250" stroke="currentColor" stroke-width="1" opacity=".4"/>
+        <g font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".65">
+          <line x1="86" y1="250" x2="86" y2="256" stroke="currentColor" opacity=".5"/><text x="86" y="272" text-anchor="middle">0s</text>
+          <line x1="292" y1="250" x2="292" y2="256" stroke="currentColor" opacity=".5"/><text x="292" y="272" text-anchor="middle">2s</text>
+          <line x1="499" y1="250" x2="499" y2="256" stroke="currentColor" opacity=".5"/><text x="499" y="272" text-anchor="middle">4s</text>
+          <line x1="705" y1="250" x2="705" y2="256" stroke="currentColor" opacity=".5"/><text x="705" y="272" text-anchor="middle">6s</text>
+          <line x1="860" y1="250" x2="860" y2="256" stroke="currentColor" opacity=".5"/><text x="860" y="272" text-anchor="middle">7.5s</text>
+        </g>
+        <text x="473" y="294" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="13" fill="currentColor" opacity=".75">Stage 3 takes 62% of the clock and 86% of the calls.</text>
+      </svg>
+      </div>
+      <figcaption>The white hairlines inside stage 3 are the waves: 12 calls going out four at a time is 3 rounds, not one burst. Raise the parallelism and that band shortens; add grievances or raise K and it lengthens. The three blue bars never move.</figcaption>
+    </figure>
+  </div>
+
+  <div class="col">
+    <h3>What “explodes” actually means</h3>
+    <p>Change the input and only one segment responds. Each bar is the same four stages, drawn to the same scale.</p>
+  </div>
+
+  <div class="wide">
+    <figure>
+      <div class="svgwrap">
+      <svg viewBox="0 0 900 250" role="img" aria-label="Three stacked bars comparing call budgets. Four grievances with K equals three totals fourteen calls; four grievances with K equals five totals twenty-two; eight grievances with K equals three totals twenty-six. The extraction and settlement segments stay one call wide in every bar while the judging segment grows.">
+        <text x="182" y="42" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor">4 grievances · K=3</text>
+        <rect x="190" y="26" width="26" height="30" fill="#2B3A67"/>
+        <rect x="216" y="26" width="312" height="30" fill="#8A5E12"/>
+        <rect x="528" y="26" width="26" height="30" fill="#2B3A67"/>
+        <text x="566" y="46" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">14 calls</text>
+
+        <text x="182" y="106" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor">4 grievances · K=5</text>
+        <rect x="190" y="90" width="26" height="30" fill="#2B3A67"/>
+        <rect x="216" y="90" width="520" height="30" fill="#8A5E12"/>
+        <rect x="736" y="90" width="26" height="30" fill="#2B3A67"/>
+        <text x="774" y="110" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">22 calls</text>
+
+        <text x="182" y="170" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor">8 grievances · K=3</text>
+        <rect x="190" y="154" width="26" height="30" fill="#2B3A67"/>
+        <rect x="216" y="154" width="624" height="30" fill="#8A5E12"/>
+        <text x="528" y="174" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#FFFFFF">stage 3 · judging</text>
+        <rect x="840" y="154" width="26" height="30" fill="#2B3A67"/>
+        <text x="528" y="204" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">26 calls</text>
+
+        <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor">
+          <rect x="190" y="222" width="13" height="13" fill="#2B3A67"/>
+          <text x="210" y="233" opacity=".8">stages 1, 2 and 4 — always exactly 1 call each, whatever you feed them</text>
+        </g>
+      </svg>
+      </div>
+      <figcaption>The blue slivers at both ends are identical in all three bars. Adding grievances or raising K stretches only the middle. That asymmetry is why every operational lever — batch size, worker cap, retry policy, the partial-settlement rule — is aimed at stage 3 and ignores the rest.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="kicker">Number crunching</p>
+    <h2>14 calls, and where they go</h2>
+    <p>The formula fits in your head, which is the point of writing it down:</p>
+    <div class="calc">calls = <b>1</b><i> (extract)</i>  +  <b>N × K</b><i> (judge)</i>  +  <b>1</b><i> (settle)</i>
+
+      = 1 + (4 × 3) + 1  =  <b>14 calls per dispute</b></div>
+    <p>Notice what is <em>not</em> in the formula: the vote. Counting three rulings is a <code>Counter()</code>, not a model call. Neither is the refund amount — that is a price lookup against the order.</p>
+
+    <div class="kv">
+      <div><dt>Average load</dt><dd><span class="big">20/min</span>disputes across the day</dd></div>
+      <div><dt>Dinner peak</dt><dd><span class="big">200/min</span>8–10 pm, ten times average</dd></div>
+      <div><dt>Peak call rate</dt><dd><span class="big">2,800</span>LLM calls per minute</dd></div>
+    </div>
+    <p>That last number is the one your provider cares about: <span class="rs">200 × 14 = 2,800</span> calls a minute, sustained for two hours every single evening. Size on the average and you will discover your rate limit during Friday dinner, which is the worst possible time to discover it.</p>
+
+    <h3>Where “4.5 seconds” comes from</h3>
+    <p class="q">You have 12 calls to make. Each takes about 1–2 seconds. How long until you are done?</p>
+    <p><strong>One at a time:</strong></p>
+    <div class="calc">12 calls × 1.5 sec  =  <b>18 seconds</b></div>
+    <p>Far too slow — there is an angry customer watching a spinner. So you run several at once. <strong>“4-way parallelism” means 4 at a time</strong> — four phone lines, each handling one call, all working simultaneously:</p>
+    <div class="calc">Line A:  call 1   call 5   call  9   <b>3 calls</b>
+Line B:  call 2   call 6   call 10   <b>3 calls</b>
+Line C:  call 3   call 7   call 11   <b>3 calls</b>
+Line D:  call 4   call 8   call 12   <b>3 calls</b>
+                                     <i>────────</i>
+                                     <i>12 calls ✓</i></div>
+  </div>
+
+  <div class="wide">
+    <figure>
+      <div class="svgwrap">
+      <svg viewBox="0 0 940 300" role="img" aria-label="Two arrangements drawn to the same time scale. Twelve calls on one line stretches across eighteen seconds. The same twelve split across four lines of three finishes at four and a half seconds, a quarter of the way along.">
+        <defs>
+          <pattern id="callsR" width="65" height="30" patternUnits="userSpaceOnUse" patternTransform="translate(100,0)">
+            <rect x="0" y="0" width="61" height="30" fill="#8A5E12"/>
+          </pattern>
+        </defs>
+
+        <text x="100" y="34" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" letter-spacing=".08em" fill="currentColor">ONE LINE — 12 calls back to back</text>
+        <rect x="100" y="44" width="780" height="28" fill="url(#callsR)"/>
+        <text x="886" y="63" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">18 s</text>
+
+        <text x="100" y="108" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" letter-spacing=".08em" fill="currentColor">FOUR LINES — 3 calls each, all running at once</text>
+        <text x="92" y="132" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".7">A</text>
+        <rect x="100" y="116" width="195" height="20" fill="url(#callsR)"/>
+        <text x="92" y="158" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".7">B</text>
+        <rect x="100" y="142" width="195" height="20" fill="url(#callsR)"/>
+        <text x="92" y="184" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".7">C</text>
+        <rect x="100" y="168" width="195" height="20" fill="url(#callsR)"/>
+        <text x="92" y="210" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".7">D</text>
+        <rect x="100" y="194" width="195" height="20" fill="url(#callsR)"/>
+
+        <line x1="295" y1="110" x2="295" y2="238" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="309" y="162" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">all four done at 4.5 s</text>
+        <text x="309" y="182" font-family="Public Sans, sans-serif" font-size="13" fill="currentColor" opacity=".72">— four times faster, same 12 calls</text>
+
+        <line x1="100" y1="238" x2="880" y2="238" stroke="currentColor" stroke-width="1" opacity=".4"/>
+        <g font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".65">
+          <line x1="100" y1="238" x2="100" y2="244" stroke="currentColor" opacity=".5"/><text x="100" y="260" text-anchor="middle">0s</text>
+          <line x1="295" y1="238" x2="295" y2="244" stroke="currentColor" opacity=".5"/><text x="295" y="260" text-anchor="middle">4.5s</text>
+          <line x1="490" y1="238" x2="490" y2="244" stroke="currentColor" opacity=".5"/><text x="490" y="260" text-anchor="middle">9s</text>
+          <line x1="880" y1="238" x2="880" y2="244" stroke="currentColor" opacity=".5"/><text x="880" y="260" text-anchor="middle">18s</text>
+        </g>
+        <text x="490" y="288" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="13" fill="currentColor" opacity=".75">Both arrangements hold exactly 12 calls. Only the shape changed.</text>
+      </svg>
+      </div>
+      <figcaption>Each block is one LLM call, and both rows use the same clock. The four-line version isn't doing less work — it finishes a quarter of the way along because the same 12 blocks are stacked four deep instead of laid end to end.</figcaption>
+    </figure>
+  </div>
+
+  <div class="col">
+    <div class="calc">12 calls ÷ 4 lines  =  <b>3 calls per line</b>
+
+3 × 1 sec   =  <b>3 seconds</b>    <i>← if calls run fast</i>
+3 × 2 sec   =  <b>6 seconds</b>    <i>← if calls run slow</i>
+                <i>→ call it 4.5 seconds typical</i></div>
+    <div class="callout-ans">The <strong>3</strong> here is <strong>3 calls per line</strong> — not 3 seconds. Seconds only appear once you multiply by how long a single call takes. Skipping that multiplication is why this line looks like it came from nowhere.</div>
+
+    <h3>Why not more lines?</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Lines</th><th class="num">Calls per line</th><th class="num">Time</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td class="num">12</td><td class="num">12–24 s</td><td>customer already gone</td></tr>
+          <tr><td class="num"><strong>4</strong></td><td class="num"><strong>3</strong></td><td class="num"><strong>3–6 s</strong></td><td>the design's choice</td></tr>
+          <tr><td class="num">12</td><td class="num">1</td><td class="num">1–2 s</td><td>lovely — for one dispute</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Twelve lines per dispute looks free until you multiply by concurrency. At peak there are roughly <strong>25 disputes in flight at once</strong>. Four lines each is 100 simultaneous requests; twelve lines each is 300. <strong>The parallelism you can afford per dispute is set by your total rate limit divided by your concurrency</strong> — never by what one dispute would like.</p>
+
+    <h3>7 seconds of work, 15 seconds of promise</h3>
+    <div class="calc">intake          <i>0.2 sec</i>
+extraction      <i>1.5 sec</i>
+judging         <i>4.5 sec</i>   <b>← the part above</b>
+settlement      <i>1.0 sec</i>
+                <i>────────</i>
+                <b>~7.2 sec</b></div>
+    <p>So why does the requirement say <strong>p50 &lt; 15 seconds</strong>? Because 7 seconds is an <strong>estimate of the work</strong> and 15 is a <strong>promise to the customer</strong>. The gap absorbs queue wait, 429 retries, the next complaint having 8 grievances instead of 4, and your provider having a slow evening. Set the SLA equal to the estimate and you miss it half the time by definition.</p>
+    <div class="kv">
+      <div><dt>Work, typical</dt><dd><span class="big">~7 s</span>what the pipeline costs</dd></div>
+      <div><dt>p50 promise</dt><dd><span class="big">&lt; 15 s</span>half of disputes</dd></div>
+      <div><dt>p90 promise</dt><dd><span class="big">&lt; 30 s</span>nine in ten</dd></div>
+    </div>
+    <div class="ask">
+      <span class="tag">Ask the room</span>
+      <p><q>The fact-checking system we designed last week allowed 90 seconds. This one allows 15. Same architecture — what changed?</q></p>
+      <p>The person on the other end. A journalist submitting an article will accept “come back in two minutes.” A customer who just got the wrong dinner will not — every extra second on that spinner is a support ticket you are about to receive anyway. <strong>The architecture is identical; the latency budget is a product decision, not an engineering one.</strong></p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="kicker">Capacity estimation</p>
+    <h2>35 KB a dispute, 380 GB a year</h2>
+    <p class="lede">The question is narrower than it looks. Not “how big is our data” — but: <em>when one dispute settles, which rows did we just write?</em></p>
+    <p>Four tables. Count the rows in each.</p>
+
+    <h3>Table 1 — <code>disputes</code>, one row</h3>
+    <p>Id, complaint hash, order id, customer id, status, final amount, timestamps.</p>
+    <div class="calc">1 row × 1 KB  =  <b>1 KB</b></div>
+
+    <h3>Table 2 — <code>grievances</code>, four rows</h3>
+    <p>One per grievance. Text, category, character span, final ruling, vote split, confidence, amount, reasoning.</p>
+    <div class="calc">4 rows × 1.5 KB  =  <b>6 KB</b></div>
+
+    <h3>Table 3 — <code>evidence_snapshots</code>, one row</h3>
+    <p>The frozen copy — order lines, timestamps, GPS trail, weights, ratings, as they stood at 21:52.</p>
+    <div class="calc">1 row × 3 KB  =  <b>3 KB</b></div>
+
+    <h3>Table 4 — <code>judge_rulings</code>, twelve rows</h3>
+    <p>This is the one people forget. You made 12 judging calls and you keep <strong>every single ruling</strong>, not just the winners — the raw JSON each judge returned, around 2 KB:</p>
+    <div class="calc">{"ruling":"ESCALATE","confidence":0.31,
+ "reasoning":"No field in the evidence records
+  packaging condition on arrival…"}</div>
+    <div class="calc">12 rows × 2 KB  =  <b>24 KB</b></div>
+    <p><em>Why keep all 12?</em> Because when a customer escalates, or a regulator asks, or your own ops lead asks why ₹640 left the company — “the bench ruled 3–0” is only credible if you can produce the three rulings. Throw them away and you can never explain a payout again.</p>
+
+    <h3>Add it up</h3>
+    <div class="calc">  1 KB   <i>disputes</i>
++  6 KB   <i>grievances</i>
++  3 KB   <i>evidence_snapshots</i>
++ 24 KB   <i>judge_rulings</i>
+<i>───────</i>
+  34 KB   ≈  <b>35 KB per dispute</b></div>
+    <p><strong>Raw rulings are 69% of it.</strong> Same shape as the call budget, same reason: K-sampling dominates both.</p>
+
+    <h3>Scale it to a day, then a year</h3>
+    <div class="calc">35 KB × 30,000 disputes/day  =  1,050,000 KB
+1,050,000 KB ÷ 1,000         =  1,050 MB
+1,050 MB ÷ 1,000             =  <b>~1 GB per day</b>
+
+1 GB × 365 days              ≈  <b>380 GB per year</b></div>
+
+    <div class="callout-ans">And here the answer is <em>different</em> from the fact-checking system, which landed at 51 GB a year and could piggyback on any existing cluster. <strong>380 GB a year is big enough that you must now make a decision</strong> rather than shrug.</div>
+
+    <p>That decision is a <strong>retention policy</strong>, and the four tables want different ones:</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Table</th><th class="num">Share</th><th>Keep it how long, and why</th></tr></thead>
+        <tbody>
+          <tr><td><code>judge_rulings</code></td><td class="num">69%</td><td><strong>90 days hot, then cold storage.</strong> You need it while the dispute can still be escalated. After that it is audit material, not working data.</td></tr>
+          <tr><td><code>grievances</code></td><td class="num">17%</td><td><strong>7 years.</strong> This is the financial record of why money moved. Statutory.</td></tr>
+          <tr><td><code>evidence_snapshots</code></td><td class="num">9%</td><td><strong>7 years.</strong> Useless without it — the ruling means nothing if you cannot show what it was ruled against.</td></tr>
+          <tr><td><code>disputes</code></td><td class="num">3%</td><td><strong>7 years.</strong> Tiny, and it is the index into everything else.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Move the 69% to cold storage after 90 days and your hot footprint drops from 380 GB to about <span class="rs">150 GB</span> a year — which <em>can</em> sit on a cluster you already run.</p>
+    <div class="ask">
+      <span class="tag">Ask the room</span>
+      <p><q>We just decided storage is cheap and then spent a whole slide on retention. Why?</q></p>
+      <p>Because storage is cheap and <em>queries</em> are not. 380 GB of raw JSON in your hot path slows every dashboard and every scan that touches the table. Retention is rarely about the disk bill — it is about keeping the working set small enough to stay fast.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="kicker">Production shape</p>
+    <h2>Submission is synchronous. The work is not.</h2>
+    <p>Think of a dry cleaner. You hand over a shirt, they write ticket #47, you leave — thirty seconds. The cleaning takes two days. You come back with the ticket and ask if it is ready.</p>
+    <p>Nobody would accept the alternative: <em>standing at the counter for two days</em> because the only way to get your shirt back is to still be there when it is done. That is what a synchronous design is, and at 200 disputes a minute it fails four different ways at once — held-open connections timing out, needing every server and every LLM credit simultaneously, losing all work on a crash, and having nowhere to put a burst.</p>
+  </div>
+
+  <div class="wide">
+    <figure>
+      <div class="svgwrap">
+      <svg viewBox="0 0 980 400" role="img" aria-label="Production architecture. The app posts a dispute to a thin API which stores it and enqueues the id. A bounded pool of worker nodes polls the queue and runs fourteen LLM calls per dispute against one or more providers. Both the API and the workers write to a shared ledger below, the workers checkpointing after every stage. The app polls the API for status.">
+        <defs>
+          <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <rect x="14" y="110" width="86" height="56" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="57" y="135" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="currentColor">APP</text>
+        <text x="57" y="151" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor" opacity=".6">spinner…</text>
+
+        <line x1="100" y1="126" x2="132" y2="126" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar3)"/>
+        <text x="116" y="96" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor" opacity=".75">POST dispute</text>
+        <line x1="132" y1="152" x2="100" y2="152" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ar3)"/>
+        <text x="116" y="190" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor" opacity=".75">GET status</text>
+
+        <rect x="138" y="110" width="112" height="56" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="194" y="135" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="currentColor">REST API</text>
+        <text x="194" y="151" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor" opacity=".6">thin</text>
+
+        <line x1="250" y1="138" x2="292" y2="138" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar3)"/>
+        <text x="271" y="190" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor" opacity=".75">enqueue id</text>
+
+        <rect x="298" y="116" width="182" height="44" rx="22" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="389" y="135" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="currentColor">KAFKA / SQS FIFO</text>
+        <text x="389" y="150" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor" opacity=".6">dispute ids</text>
+
+        <line x1="480" y1="138" x2="516" y2="138" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar3)"/>
+        <text x="498" y="190" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor" opacity=".75">poll</text>
+
+        <rect x="534" y="92" width="176" height="52" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity=".35"/>
+        <rect x="528" y="101" width="176" height="52" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity=".6"/>
+        <rect x="522" y="110" width="176" height="52" rx="2" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/>
+        <text x="610" y="132" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="currentColor">WORKER NODE</text>
+        <text x="610" y="148" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor" opacity=".6">1 dispute at a time</text>
+
+        <line x1="698" y1="138" x2="752" y2="138" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar3)"/>
+        <text x="725" y="120" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="currentColor">14×</text>
+
+        <rect x="758" y="78" width="208" height="120" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="862" y="104" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="currentColor">LLM PROVIDERS</text>
+        <rect x="772" y="118" width="58" height="30" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/><text x="801" y="138" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor">GPT</text>
+        <rect x="834" y="118" width="58" height="30" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/><text x="863" y="138" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor">Claude</text>
+        <rect x="896" y="118" width="58" height="30" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/><text x="925" y="138" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor">Kimi</text>
+        <text x="862" y="180" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor" opacity=".65">429 → retry, backoff + jitter</text>
+
+        <path d="M194,170 V318 H376" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar3)"/>
+        <text x="288" y="308" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor" opacity=".75">store + freeze evidence</text>
+
+        <path d="M610,170 V318 H472" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar3)"/>
+        <text x="542" y="308" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor" opacity=".75">checkpoint after every stage</text>
+
+        <path d="M382,282 a42,12 0 0,1 84,0 v58 a42,12 0 0,1 -84,0 z" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M382,282 a42,12 0 0,0 84,0" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="424" y="322" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="currentColor">LEDGER</text>
+        <text x="424" y="378" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor" opacity=".65">disputes · grievances · evidence · rulings</text>
+      </svg>
+      </div>
+      <figcaption>The counter clerk (REST API) takes the complaint, writes it down, drops the ticket on the pile, and hands you a receipt in 50 ms. Workers pull from the pile when they have capacity. The ledger is how the app answers “is it ready yet?” — and how a crashed worker finds its place again.</figcaption>
+    </figure>
+  </div>
+
+  <div class="col">
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:30%">In the diagram</th><th>In the dry cleaner</th></tr></thead>
+        <tbody>
+          <tr><td><strong>APP</strong></td><td>You, standing at the counter</td></tr>
+          <tr><td><strong>REST API</strong></td><td>The clerk. Writes the ticket, never cleans anything</td></tr>
+          <tr><td><code>dispute_id</code></td><td>Ticket #47</td></tr>
+          <tr><td><strong>KAFKA / SQS</strong></td><td>The pile of bags waiting to be worked</td></tr>
+          <tr><td><strong>WORKER NODE</strong></td><td>The back-office person handling one ticket</td></tr>
+          <tr><td><strong>LLM PROVIDERS</strong></td><td>The specialist shops they send each item out to — 14 errands per ticket</td></tr>
+          <tr><td><strong>LEDGER</strong></td><td>The book recording which ticket is at what stage</td></tr>
+          <tr><td><strong>GET status</strong> (dashed)</td><td>You phoning to ask “is #47 ready?”</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>The pile is the part people skip, and it is doing real work.</strong> Two hundred disputes land in a minute and you can process forty at a time. Without a pile you would have to reject a hundred and sixty of them. With a pile, everyone gets a ticket, nothing is dropped, and the last person simply waits longer.</p>
+
+    <h3>The 429, and why jitter matters</h3>
+    <p><code>429</code> is the HTTP status for <strong>“Too Many Requests.”</strong> At 2,800 calls a minute you will meet it every evening. Three separate ideas in the response:</p>
+    <ul>
+      <li><strong>Retry</strong> — don't give up, send it again shortly.</li>
+      <li><strong>Exponential backoff</strong> — wait longer each time: 1 s, then 2, then 4, then 8. Retrying instantly just adds to the flood that refused you.</li>
+      <li><strong>Jitter</strong> — add a random offset to every wait. Without it, forty workers refused at the same instant all wait exactly 2 s, all return at the same instant, and all get refused again — locked in step forever. Backoff lowers the pressure; jitter spreads it out. You need both.</li>
+    </ul>
+
+    <h3>Visibility timeout — the trap that pays twice</h3>
+    <p>When a worker takes a message off SQS, the message is <em>not</em> deleted. It is hidden for N seconds. Finish and acknowledge within N and it is removed; let N pass in silence and SQS assumes you died and <strong>puts it back on the pile for someone else.</strong></p>
+    <p>Now set N to 10 seconds on a job that takes 30:</p>
+    <div class="calc"><i>t=0s </i>  Worker A takes dispute d7a41…c39
+<i>t=10s</i>  A is at grievance 2 of 4 — but N expired
+        SQS assumes A died, requeues the dispute
+<i>t=11s</i>  Worker B picks up the SAME dispute, starts over
+<i>t=20s</i>  SQS does it again → Worker C starts it too
+<i>t=30s</i>  Three workers settled the same dispute
+        <b>The customer was refunded ₹689 three times.</b></div>
+    <p>Nobody crashed. The work was fine. <strong>The deadline was just shorter than the job.</strong> In a fact-checking system that bug costs you API credits; here it wires real money out of the company, three times, silently.</p>
+    <p>Three fixes: set the timeout above your p99; heartbeat with <code>ChangeMessageVisibility</code> while you work; or use Kafka, which has no such timeout and lets a consumer hold its partition until it is genuinely done.</p>
+    <div class="room">
+      <span class="tag">Production reality</span>
+      <p>The API does two things — write the row, then enqueue the id. If the write succeeds and the enqueue fails, you have a dispute stored that no worker will ever touch, stuck on <code>RECEIVED</code> forever while a customer refreshes. Fix it with a <strong>transactional outbox</strong>, or run CDC off the disputes table so the database write <em>is</em> the queue event.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="kicker">The agentic loop</p>
+    <h2>Twenty lines, five landmines</h2>
+    <p>The pseudocode is the happy path. The annotations are where the money lives.</p>
+  </div>
+
+  <div class="col">
+<pre><code><span class="marker">1</span><span class="c-hi">dispute_id = hash(complaint_text + order_id)</span>
+
+<span class="marker">1</span><span class="c-hi"><span class="c-key">if</span> ledger.get(dispute_id).status == SETTLED:</span>
+<span class="marker"> </span><span class="c-hi">    <span class="c-key">return</span> ledger.get(dispute_id).settlement  <span class="c-dim"># never pay twice</span></span>
+
+<span class="marker">2</span>evidence = evidence_service.snapshot(order_id)
+<span class="marker"> </span>ledger.save(dispute_id, evidence, status=INTAKE)
+
+<span class="marker">3</span>grievances = grievance_extractor.run(complaint_text, evidence.line_items)
+<span class="marker"> </span>ledger.save(dispute_id, grievances, status=JUDGING)
+
+<span class="marker">4</span>judging_tasks = []
+<span class="marker"> </span><span class="c-key">for</span> g <span class="c-key">in</span> grievances:
+<span class="marker"> </span>    <span class="c-key">for</span> judge_index <span class="c-key">in</span> range(K):
+<span class="marker"> </span>        judging_tasks.append((g, evidence, judge_index))
+
+<span class="marker"> </span>rulings = parallel_execute(judge_grievance, judging_tasks,
+<span class="marker"> </span>                          batch_size=BATCH_SIZE)
+
+<span class="marker">5</span>verdicts = bench.tally(rulings)
+<span class="marker">5</span><span class="c-hi">amount   = pricing.compute(verdicts, evidence)   <span class="c-dim"># code, not LLM</span></span>
+<span class="marker">5</span><span class="c-hi"><span class="c-key">if</span> amount &gt; AUTO_APPROVE_CAP:  <span class="c-key">return</span> escalate(dispute_id)</span>
+<span class="marker"> </span>ledger.save(dispute_id, verdicts, amount, status=TALLIED)
+
+<span class="marker"> </span>message = settlement_writer.run(complaint_text, verdicts, amount)
+<span class="marker"> </span>payments.refund(dispute_id, amount)   <span class="c-dim"># idempotency key = dispute_id</span>
+<span class="marker"> </span>ledger.save(dispute_id, message, status=SETTLED)</code></pre>
+
+    <div class="annos">
+      <div class="anno"><span class="n">1</span><span class="t"><b>Idempotency is not an optimisation here — it is the product</b>The complaint's own text is its key. In the fact-checker, a duplicate run wasted API credits. Here it <em>wires money out of the company twice</em>. The same key is also passed to the payments API, so even a double call at that layer settles once.</span></div>
+      <div class="anno"><span class="n">2</span><span class="t"><b>Evidence is frozen once, before any judging</b>All K judges on all N grievances see the identical snapshot. Re-fetch per call and a retry can legitimately produce a different verdict on the same dispute — which is indefensible when someone asks why.</span></div>
+      <div class="anno"><span class="n">3</span><span class="t"><b>Grievances are persisted before judging begins</b>For resumption and for the customer-facing “here's what we checked.” A crashed worker must not re-extract.</span></div>
+      <div class="anno"><span class="n">4</span><span class="t"><b>The K judges share nothing</b>No conversation history between them. If judge 2 could see judge 1's ruling it would anchor on it — and you would be counting one opinion three times instead of three opinions once.</span></div>
+      <div class="anno"><span class="n">5</span><span class="t"><b>The bench counts, the pricing table calculates, the cap decides</b>Three things the model never touches. It rules on facts; it does not do arithmetic and it does not sign cheques.</span></div>
+    </div>
+
+    <h3>Being pessimistic on purpose</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:26%">Failure</th><th>Response</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Worker dies mid-dispute</strong></td><td>State checkpoints per stage and judging is idempotent per grievance, so the job resumes where it stopped instead of re-judging from scratch.</td></tr>
+          <tr><td><strong>Provider returns 429</strong></td><td>Exponential backoff with jitter. At 2,800 calls a minute this is a daily event, not an incident.</td></tr>
+          <tr><td><strong>Some grievances never resolve</strong></td><td>Default to <span class="v esc">escalate</span> — never to <span class="v rej">rejected</span>. If ≥ 60% resolved and the settled amount is under the cap, pay that part now and send the remainder to an agent. A partial refund plus an honest note beats an error screen.</td></tr>
+          <tr><td><strong>The total exceeds ₹2,000</strong></td><td>Stop. A human approves. No confidence score, no unanimous bench, no amount of model certainty overrides this — it is a hard ceiling in code, checked before the payments call.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="ask">
+      <span class="tag">Ask the room</span>
+      <p><q>The bench is unanimous, confidence 0.99, and the refund comes to ₹4,500. Ship it?</q></p>
+      <p>No. And the reason is not that the model might be wrong — it is that <strong>an unbounded automated payout is an unbounded loss when something eventually goes wrong</strong>: a prompt injection in the complaint text, a pricing bug, a bad deploy. The cap does not express distrust of the model. It caps your blast radius. Every agent that can spend money needs one.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="kicker">The prompts</p>
+    <h2>Three prompts, and the one line in each that does the work</h2>
+  </div>
+
+  <div class="col">
+    <div class="prompt">
+      <h4>1 · Extraction <span>— the hardest one to get right</span></h4>
+<pre><code>You are a precise dispute-intake assistant.
+
+Given a customer complaint and the order's line items,
+extract every atomic, checkable grievance.
+
+Rules:
+- A grievance is a statement about something that happened
+  to THIS order, which evidence could confirm or contradict
+- Exclude feelings, opinions, demands, and rhetorical questions
+- Do NOT judge whether the grievance is true — only extract it
+- Each grievance must be self-contained: resolve pronouns and
+  vague references against the order's line items
+- Assign one category from the enum below
+- Return ONLY a JSON array, no preamble, no markdown fences
+
+Categories: LATE_DELIVERY | MISSING_ITEM | WRONG_ITEM |
+            QUALITY | PACKAGING | PARTNER_CONDUCT | BILLING
+
+Schema:
+[{ "grievance_id": "&lt;uuid&gt;",
+   "text": "&lt;the grievance as a standalone sentence&gt;",
+   "category": "&lt;one of the above&gt;",
+   "span_start": &lt;char offset&gt;, "span_end": &lt;char offset&gt; }]
+
+Complaint:  {{complaint_text}}
+Order:      {{line_items_json}}</code></pre>
+      <p class="why"><strong>“Do NOT judge — only extract.”</strong> Without it the model helpfully pre-filters: it silently drops “the delivery guy was rude” because it senses there is no evidence for it, and the grievance never reaches the bench that would have <em>rejected</em> it on the 5★ rating. Extraction and judgement are separate stages, and the prompt has to say so. <strong>The spans</strong> are what let the reply underline the exact sentence that was rejected.</p>
+    </div>
+
+    <div class="prompt">
+      <h4>2 · Judging <span>— run K times per grievance</span></h4>
+<pre><code>You are an impartial claims adjudicator.
+Rule on the following grievance using ONLY the evidence given.
+
+Grievance: {{grievance_text}}
+Evidence:  {{evidence_snapshot_json}}
+
+Rulings:
+- UPHELD:   the evidence supports the grievance
+- REJECTED: the evidence contradicts the grievance
+- ESCALATE: the evidence is silent or ambiguous on this point
+
+Rules:
+- Do not hedge — pick the single best ruling
+- Rule ONLY on the evidence provided. Do not reason about what
+  is typical, likely, or fair
+- If the evidence does not speak to this grievance, the ruling
+  is ESCALATE — never REJECTED
+- Return ONLY valid JSON, no preamble, no markdown fences
+
+Schema:
+{ "ruling": "UPHELD" | "REJECTED" | "ESCALATE",
+  "confidence": &lt;float 0.0 to 1.0&gt;,
+  "evidence_cited": "&lt;which field(s) decided it&gt;",
+  "reasoning": "&lt;one to three sentences&gt;" }</code></pre>
+      <p class="why"><strong>“Silent evidence means ESCALATE, never REJECTED.”</strong> This single line is the asymmetry from earlier, written into the prompt. Absence of proof is not proof of absence — and the cheaper mistake is sending a case to a human, not refusing an honest customer. <strong><code>evidence_cited</code></strong> earns its place too: it forces the model to name the field it used, which makes a bad ruling debuggable instead of mysterious.</p>
+    </div>
+
+    <div class="prompt">
+      <h4>3 · Settlement <span>— once, at low temperature</span></h4>
+<pre><code>You are a customer-support writer for a food delivery app.
+
+Below is a customer's complaint, the final ruling on each
+grievance, and the refund amount already calculated.
+
+Write a 3-4 sentence reply that:
+- States the refund amount and when it will arrive
+- Names what was resolved and what a colleague will look into
+- Acknowledges the experience without grovelling
+
+Rules:
+- Do NOT re-adjudicate any ruling — treat all rulings as final
+- Do NOT state, recalculate, or negotiate any amount other
+  than the one given
+- Never blame the restaurant or the delivery partner
+- Plain language. No apology more than once.
+
+Complaint: {{complaint_text}}
+Rulings:   {{verdicts_json}}
+Amount:    {{refund_amount}}</code></pre>
+      <p class="why"><strong>“Treat all rulings as final”</strong> is the most valuable sentence across all three prompts. Without it the model re-litigates the bench while writing — a sympathetic complaint quietly turns a 1–2 <span class="v esc">escalate</span> into an <span class="v up">upheld</span> in the prose, and now your message promises a refund your ledger says you are not paying. <strong>“Do not state any amount other than the one given”</strong> is the same defence pointed at the number.</p>
+    </div>
+
+    <h3>What the customer actually receives</h3>
+    <div class="casefile">
+      <div class="casefile-head"><span><b>OUTBOUND</b> d7a41…c39</span><span><b>SETTLED</b> 21:52:07 IST</span></div>
+      <div class="casefile-body">
+        <p style="font-size:16.5px; line-height:1.8">We've refunded <span class="rs">₹689</span> to your original payment method — <span class="rs">₹640</span> for the two biryanis that weren't delivered and <span class="rs">₹49</span> for the delivery fee, since the order arrived well past its estimated time. It should reflect within 3 working days. On the spilled raita, we don't have enough from the order record to settle it automatically, so a colleague will review it and write to you within 24 hours.</p>
+      </div>
+    </div>
+    <p style="font-size:14.5px; color:var(--ink-2)">Note what the message does <em>not</em> do: it doesn't mention g4 at all. Silently dropping a rejected grievance is a deliberate product choice — telling a customer “we checked and you're wrong about the delivery partner” wins you nothing. <strong>The bench's ruling is for your ledger; the customer gets the outcome.</strong></p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="kicker">Judgement calls</p>
+    <h2>Four decisions people get wrong</h2>
+  </div>
+  <div class="col">
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:21%">Decision</th><th style="width:29%">Tempting answer</th><th>What it should be</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>How to batch</strong></td>
+            <td>Put all 4 grievances in one prompt, ask for 4 rulings.</td>
+            <td>No. Lost-in-the-middle is real, and a dropped grievance is a refund you silently didn't pay. Use the provider's <em>batch API</em> — separate prompts in one request, one output each. Nothing gets skipped.</td>
+          </tr>
+          <tr>
+            <td><strong>Batch API vs threads</strong></td>
+            <td>Batch endpoints are cheaper, so use them.</td>
+            <td>Check the SLA first. OpenAI and Azure batch endpoints carry a <strong>24-hour completion window</strong>. For a customer watching a spinner that is unusable — use parallel calls across threads and pay list price. Batch APIs belong to your overnight re-scoring jobs.</td>
+          </tr>
+          <tr>
+            <td><strong>Caching rulings</strong></td>
+            <td>“Order was late” appears in thousands of disputes — cache the ruling.</td>
+            <td><strong>Never.</strong> And this is the sharpest lesson in the system. Caching needs two properties: a homogeneous corpus <em>and</em> context-free claims. “ISRO is in Bengaluru” is context-free — true regardless of the article. “Order was late” is <em>not</em> — it is true for this order and false for the next one. Homogeneity alone is a trap.</td>
+          </tr>
+          <tr>
+            <td><strong>Reasoning models</strong></td>
+            <td>Money is involved, so use the thinking model.</td>
+            <td>Overkill. The grievances are <em>atomic</em> by construction and the evidence is handed over pre-fetched — “was 21:40 more than 45 minutes after 20:15” has no reasoning chain to walk. Atomicity plus evidence does the work reasoning would have done, at a fraction of the cost and latency you cannot spare.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="ask">
+      <span class="tag">Ask the room</span>
+      <p><q>Last week we said caching depends on whether the corpus is homogeneous. This week the corpus <em>is</em> homogeneous and the answer is still no. Did we get it wrong last week?</q></p>
+      <p>No — the test was incomplete, and this system is what exposes it. Caching needs homogeneity <strong>and</strong> context-independence. Fact-checking claims are context-free but the corpus is long-tailed. Refund grievances repeat constantly but each one is bound to its own order. Neither caches — for opposite reasons. <em>That</em> is the lesson worth carrying out of both case studies.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="kicker">Where it goes next</p>
+    <h2>Two extensions worth the money</h2>
+
+    <h3>Seat judges from different courts</h3>
+    <p>Three samples from one model share that model's blind spots. If a model systematically reads pickup-weight evidence badly, asking it three times gives you three confident wrong rulings, and the vote launders them into consensus. Seat one GPT judge, one Claude judge, one Kimi judge and the failures stop correlating — the same idea as a random forest, transferred intact.</p>
+    <p>Then weight them. If one model is measurably better on timestamp arithmetic and another on free-text quality complaints, weight their votes by <em>category</em>. The weights come from your own evals and stay somewhat subjective — but a weighted bench across different models is a strictly better estimator than an unweighted bench of one model three times.</p>
+
+    <h3>Give the judges a tool, not a snapshot</h3>
+    <p>Today all evidence is fetched up front in stage 1 — which means you fetch everything that <em>might</em> be relevant for every dispute, and a grievance about packaging still carries the full GPS trail in its prompt. Give the judge a tool call instead and it fetches only what that grievance needs: <code>get_delivery_timeline()</code> for g1, <code>get_pickup_weight()</code> for g2.</p>
+    <p>The architecture does not move. The fan-out, the bench, the checkpointing, the cap, the 60% rule — all of it still holds. Only the inside of <code>judge_grievance</code> changes. That is the sign the decomposition was right.</p>
+    <div class="room">
+      <span class="tag">Production reality</span>
+      <p>The moment judges fetch their own evidence you have <strong>lost reproducibility</strong> — two runs can see different data. So a tool-using version must log every tool call and its response into the snapshot as it goes. You are not removing the frozen evidence; you are building it lazily.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="kicker">Where else this shape fits</p>
+    <h2>Six places to seat a bench</h2>
+    <p>Dispute resolution is one instance of a general pattern: <em>when the cost of being wrong exceeds the cost of asking again, ask again and count.</em></p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:32%">Use case</th><th>What the bench protects you from</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Insurance claim triage</strong></td><td>The same shape with a bigger cap and a longer clock. Split benches route to a human assessor.</td></tr>
+          <tr><td><strong>Loan document verification</strong></td><td>One model misreading one figure on one payslip and approving credit against it.</td></tr>
+          <tr><td><strong>Content moderation appeals</strong></td><td>Inconsistency — the same post restored on Monday and removed on Tuesday.</td></tr>
+          <tr><td><strong>Invoice / PO matching</strong></td><td>A line item silently skipped in a 40-row invoice, which reconciliation finds three months later.</td></tr>
+          <tr><td><strong>Code review risk scoring</strong></td><td>A P0 change scored as cosmetic because one sample skimmed the diff.</td></tr>
+          <tr><td><strong>Financial data extraction</strong></td><td>Tokenisation on numbers. “₹20,000.00” read as “₹2,000,000” because a decimal fell on a token boundary. Three judges catch it; one does not.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="ask">
+      <span class="tag">Close the session</span>
+      <p><q>You now have two systems — a fact checker and a refund adjudicator. Different domains, different numbers, different latency budgets. What is actually the same?</q></p>
+      <p><code>1 + N×K + 1</code>. A sequential barrier followed by a fan-out. A vote computed in code. A third verdict that means “a human decides.” Checkpoint after every stage, key everything by a content hash, back off with jitter, and never let the model near the arithmetic. <strong>Everything else was a parameter.</strong></p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="col">
+    Teaching case study. Built on the agentic system-design pattern from Arpit Bhayani's Applied AI Masterclass, session 1.<br>
+    Self-consistency: Wang et al., 2022. The dispute, the order and all figures are invented for teaching; the ₹ amounts are internally consistent so the arithmetic can be checked live.
+  </div>
+</footer>
+
+</main>

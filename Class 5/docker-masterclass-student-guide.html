@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dockerize Everything — ML • LLM • Agents | Student Revision Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#132437;
+  --paper:#F6F8FA;
+  --card:#FFFFFF;
+  --cargo:#E8622C;
+  --teal:#0E7C7B;
+  --crane:#F2B705;
+  --sea:#1D63ED;
+  --plum:#7A3E9D;
+  --line:#DDE5EC;
+  --muted:#5B6B7A;
+  --code-bg:#0F1B28;
+  --code-ink:#DCE7F2;
+  --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);line-height:1.65}
+h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;line-height:1.2}
+code,pre{font-family:'JetBrains Mono',monospace}
+a{color:var(--sea)}
+:focus-visible{outline:3px solid var(--sea);outline-offset:2px;border-radius:4px}
+
+.hero{background:var(--ink);color:#EAF2FA;padding:56px 24px 40px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:auto 0 0 0;height:6px;
+  background:repeating-linear-gradient(90deg,var(--cargo) 0 60px,var(--teal) 60px 120px,var(--crane) 120px 180px,var(--sea) 180px 240px)}
+.hero-inner{max-width:1080px;margin:0 auto}
+.hero .kicker{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.78rem;letter-spacing:.14em;
+  color:var(--crane);border:1px solid rgba(242,183,5,.4);padding:4px 12px;border-radius:999px;margin-bottom:18px}
+.hero h1{font-size:clamp(1.9rem,4.5vw,3.2rem);font-weight:700}
+.hero h1 .accent{color:var(--cargo)}
+.hero p.sub{margin-top:14px;max-width:720px;color:#B9C9D8;font-size:1.05rem}
+.hero .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.hero .chip{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:999px;
+  padding:6px 14px;font-size:.85rem;font-weight:500}
+
+.route{position:sticky;top:0;z-index:50;background:var(--card);border-bottom:1px solid var(--line);
+  box-shadow:0 2px 10px rgba(19,36,55,.06)}
+.route-inner{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:0;overflow-x:auto;padding:10px 16px}
+.port{flex:1;min-width:148px;display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--muted);
+  padding:8px 10px;border-radius:10px;transition:background .2s}
+.port:hover{background:#EEF3F8}
+.port .box{width:34px;height:26px;border-radius:5px;display:grid;place-items:center;font-size:.72rem;
+  font-family:'JetBrains Mono',monospace;font-weight:600;color:#fff;flex-shrink:0;
+  box-shadow:inset 0 -6px 0 rgba(0,0,0,.15)}
+.port .lbl{display:flex;flex-direction:column}
+.port .lbl b{font-size:.82rem;color:var(--ink);font-family:'Space Grotesk',sans-serif}
+.port .lbl span{font-size:.72rem}
+.port:not(:last-child)::after{content:"→";margin-left:auto;color:var(--line);font-size:1rem}
+.p0 .box{background:var(--sea)}.p1 .box{background:var(--teal)}.p2 .box{background:var(--cargo)}
+.p3 .box{background:var(--plum)}.p4 .box{background:var(--crane);color:var(--ink)}
+.p5 .box{background:var(--ink)}
+#progressbar{height:4px;background:linear-gradient(90deg,var(--cargo),var(--crane));width:0%;transition:width .15s}
+
+main{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+section{margin-bottom:64px;scroll-margin-top:96px}
+.sec-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:8px;flex-wrap:wrap}
+.sec-head .tag{font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:600;color:#fff;
+  padding:5px 12px;border-radius:6px;letter-spacing:.08em;margin-top:6px}
+.sec-head h2{font-size:clamp(1.5rem,3vw,2.1rem);flex:1;min-width:250px}
+.sec-goal{color:var(--muted);margin-bottom:24px;max-width:820px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px 26px;margin-bottom:20px}
+.card h3{font-size:1.15rem;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.card h4{font-size:1rem;margin:18px 0 8px}
+.card p{margin-bottom:10px}
+.card ul,.card ol{margin:6px 0 12px 22px}
+.card li{margin-bottom:6px}
+.card > *:last-child{margin-bottom:0}
+
+.why{border-left:4px solid var(--cargo);background:#FFF6F1}
+.why h3::before{content:"🎯"}
+.why em{color:var(--cargo);font-style:normal;font-weight:600}
+.analogy{border-left:4px solid var(--teal);background:#F0FAF9}
+.analogy h3::before{content:"🧠"}
+.wow{border-left:4px solid var(--crane);background:#FFFBEC}
+.wow h3::before{content:"⚡"}
+.trap{border-left:4px solid #D64545;background:#FDF3F3}
+.trap h3::before{content:"🪤"}
+
+.decode{background:#F4F7FB;border:1px dashed #B9C9D8;border-radius:10px;padding:14px 18px;margin:-8px 0 18px}
+.decode .d-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.85rem;color:var(--sea);
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
+.decode .d-title::before{content:"🔍 "}
+.decode dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;font-size:.9rem}
+.decode dt{font-family:'JetBrains Mono',monospace;font-size:.82rem;background:#fff;border:1px solid var(--line);
+  border-radius:6px;padding:2px 8px;color:var(--ink);white-space:nowrap;height:fit-content}
+.decode dd{color:#3D4F60}
+@media(max-width:600px){.decode dl{grid-template-columns:1fr}.decode dd{margin-bottom:8px;padding-left:8px}}
+
+.plain{background:#FBF7EF;border-left:4px solid #C98F2A;border-radius:10px;padding:14px 18px;margin:-8px 0 18px;font-size:.94rem}
+.plain b:first-child::before{content:"💬 "}
+
+.codeblock{position:relative;background:var(--code-bg);border-radius:12px;margin:14px 0 18px;overflow:hidden}
+.codeblock .cb-head{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 14px;background:rgba(255,255,255,.06);font-family:'JetBrains Mono',monospace;
+  font-size:.74rem;color:#8FA6BC;letter-spacing:.05em}
+.codeblock pre{padding:16px 18px;overflow-x:auto;color:var(--code-ink);font-size:.86rem;line-height:1.6}
+.codeblock .cmt{color:#6B8AA6}
+.codeblock .kw{color:#F2B705}
+.codeblock .str{color:#7EE0A3}
+.copybtn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#DCE7F2;
+  font-family:'JetBrains Mono',monospace;font-size:.72rem;padding:4px 12px;border-radius:6px;cursor:pointer;transition:background .2s}
+.copybtn:hover{background:rgba(255,255,255,.2)}
+
+table{width:100%;border-collapse:collapse;margin:12px 0 18px;font-size:.92rem;background:var(--card)}
+th{background:var(--ink);color:#EAF2FA;text-align:left;padding:10px 14px;font-family:'Space Grotesk',sans-serif;font-size:.85rem}
+td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td code{background:#EEF3F8;padding:2px 7px;border-radius:5px;font-size:.82rem;white-space:nowrap}
+
+.check{list-style:none;margin-left:0 !important}
+.check li{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;margin-bottom:2px !important}
+.check li:hover{background:#EEF3F8}
+.check input{margin-top:5px;accent-color:var(--teal);width:16px;height:16px;flex-shrink:0}
+.check li.done label{text-decoration:line-through;color:var(--muted)}
+.check label{cursor:pointer}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+
+/* revision-only components */
+.howto{background:linear-gradient(135deg,#132437,#1C3247);color:#EAF2FA;border:none}
+.howto h3{color:#fff}
+.howto .passes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+@media(max-width:700px){.howto .passes{grid-template-columns:1fr}}
+.howto .pass{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:14px 16px}
+.howto .pass b{display:block;font-family:'Space Grotesk',sans-serif;color:var(--crane);margin-bottom:4px}
+.howto .pass span{font-size:.9rem;color:#C3D2E0}
+
+.searchwrap{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.searchwrap input{flex:1;min-width:220px;font-family:'JetBrains Mono',monospace;font-size:.88rem;
+  padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+.searchwrap input:focus{border-color:var(--sea)}
+.hitcount{font-size:.82rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+
+.flip{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:760px){.flip{grid-template-columns:1fr}}
+.fc{background:#fff;border:1px solid var(--line);border-left:4px solid var(--sea);border-radius:10px;
+  padding:16px 18px;cursor:pointer;transition:box-shadow .18s,transform .18s;text-align:left;width:100%;
+  font:inherit;color:inherit}
+.fc:hover{box-shadow:0 6px 18px rgba(19,36,55,.08);transform:translateY(-2px)}
+.fc .q{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.98rem;display:flex;gap:8px}
+.fc .q::before{content:"Q";font-family:'JetBrains Mono',monospace;color:var(--sea);font-size:.8rem;margin-top:3px}
+.fc .a{display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);font-size:.93rem;color:#3D4F60}
+.fc.open .a{display:block}
+.fc .hint{font-size:.74rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:10px}
+.fc.open .hint{display:none}
+
+.tree{background:var(--code-bg);border-radius:12px;padding:20px 22px;color:var(--code-ink);
+  font-family:'JetBrains Mono',monospace;font-size:.84rem;line-height:1.9;overflow-x:auto;white-space:pre}
+.tree .y{color:#7EE0A3}.tree .n{color:#FF9C7A}.tree .h{color:var(--crane)}
+
+.iq{border-left:4px solid var(--plum);background:#F9F4FC}
+.iq h3::before{content:"🎓"}
+.iq ol{margin-left:20px}
+.iq li{margin-bottom:12px}
+.iq li b{display:block;font-family:'Space Grotesk',sans-serif;margin-bottom:2px}
+
+.gloss dl{display:grid;grid-template-columns:max-content 1fr;gap:10px 20px;font-size:.93rem}
+.gloss dt{font-family:'Space Grotesk',sans-serif;font-weight:600;color:var(--teal)}
+@media(max-width:640px){.gloss dl{grid-template-columns:1fr}.gloss dd{margin-bottom:8px}}
+
+.pill{position:fixed;right:18px;bottom:18px;z-index:60;background:var(--ink);color:#EAF2FA;
+  border-radius:999px;padding:10px 18px;font-family:'JetBrains Mono',monospace;font-size:.78rem;
+  box-shadow:0 8px 24px rgba(19,36,55,.25);display:flex;gap:10px;align-items:center}
+.pill b{color:var(--crane)}
+.pill button{background:none;border:1px solid rgba(255,255,255,.25);color:#EAF2FA;border-radius:999px;
+  font-size:.72rem;padding:3px 10px;cursor:pointer;font-family:inherit}
+.pill button:hover{background:rgba(255,255,255,.12)}
+
+footer{background:var(--ink);color:#8FA6BC;text-align:center;padding:28px;font-size:.85rem}
+footer b{color:var(--crane)}
+
+@media print{
+  .route,.pill,.copybtn,.searchwrap{display:none !important}
+  body{background:#fff}
+  .fc .a{display:block !important}
+  .fc .hint{display:none}
+  section{page-break-inside:auto}
+  .card{page-break-inside:avoid;border:1px solid #ccc}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <span class="kicker">FUTURE WITH SHIVANK · STUDENT REVISION GUIDE</span>
+    <h1>Dockerize Everything:<br><span class="accent">ML → LLM → Agents</span></h1>
+    <p class="sub">Everything from the masterclass, rebuilt for revision. Three real projects, every command decoded word by word, and one tiffin-delivery analogy you'll never forget. 🍱 Read it, run it, then test yourself at the bottom.</p>
+    <div class="meta">
+      <span class="chip">🔰 No prior Docker needed</span>
+      <span class="chip">💻 macOS (Apple Silicon ready)</span>
+      <span class="chip">🐳 Docker Desktop + Compose</span>
+      <span class="chip">✅ Battle-tested code</span>
+      <span class="chip">🧪 30 self-test questions</span>
+    </div>
+  </div>
+</div>
+
+<nav class="route">
+  <div class="route-inner">
+    <a class="port p0" href="#port0"><span class="box">P0</span><span class="lbl"><b>Setup + Analogy</b><span>Mental model</span></span></a>
+    <a class="port p1" href="#port1"><span class="box">P1</span><span class="lbl"><b>ML Project</b><span>Dockerfile</span></span></a>
+    <a class="port p2" href="#port2"><span class="box">P2</span><span class="lbl"><b>LLM Project</b><span>Compose</span></span></a>
+    <a class="port p3" href="#port3"><span class="box">P3</span><span class="lbl"><b>Agentic Project</b><span>Microservices</span></span></a>
+    <a class="port p4" href="#port4"><span class="box">P4</span><span class="lbl"><b>Cheatsheet</b><span>Debug + fixes</span></span></a>
+    <a class="port p5" href="#revise"><span class="box">P5</span><span class="lbl"><b>Self-test</b><span>Flashcards</span></span></a>
+  </div>
+  <div id="progressbar"></div>
+</nav>
+
+<main>
+
+<div class="card howto">
+  <h3>📖 How to use this guide</h3>
+  <p>This is a revision document, not a video transcript. It works best if you go through it three times, with your terminal open beside it.</p>
+  <div class="passes">
+    <div class="pass"><b>Pass 1 — Read</b><span>Skim top to bottom without typing anything. Goal: recognise the vocabulary. Image, container, volume, compose, service name.</span></div>
+    <div class="pass"><b>Pass 2 — Build</b><span>Rebuild all three projects from scratch, copying commands from here. Tick the self-check boxes as you go.</span></div>
+    <div class="pass"><b>Pass 3 — Recall</b><span>Close this page. Try the flashcards and interview questions at the bottom from memory. Whatever you miss, that's your revision list.</span></div>
+  </div>
+  <p style="margin-top:14px;font-size:.92rem;color:#C3D2E0">Every command block has a <b>Copy</b> button. Every command block is followed by a decoder that explains each flag — don't skip those, they're where the marks are.</p>
+</div>
+
+<!-- ================= PORT 0 ================= -->
+<section id="port0">
+  <div class="sec-head">
+    <span class="tag" style="background:var(--sea)">PORT 0</span>
+    <h2>The Dabbawala Analogy + Mac Setup</h2>
+  </div>
+  <p class="sec-goal"><b>What you'll get:</b> a rock-solid mental model of Docker before you write a single command, plus a working setup on your Mac. By the end of Port 0 you should have run <code>hello-world</code> and be able to explain what actually happened.</p>
+
+  <div class="card why">
+    <h3>Why Docker exists at all</h3>
+    <p>You've said it, or you will: <em>"But it works on my machine!"</em> The code crashes on your teammate's laptop, crashes on staging, and let's not talk about production.</p>
+    <p>Mumbai's dabbawalas deliver 200,000 lunch boxes every single day with Six Sigma accuracy — without an app. How? They <em>standardised the packaging and the delivery system</em>. It doesn't matter where a tiffin comes from or where it's going; the system is identical. <em>Docker is the dabbawala system for software.</em></p>
+    <p>In this guide you'll dockerize three real projects — a classic ML model, an LLM-powered RAG app, and a multi-agent system. Same skill, three difficulty levels.</p>
+  </div>
+
+  <div class="card analogy">
+    <h3>The Master Analogy — The Tiffin System 🍱</h3>
+    <p>Come back to this table every time a new term confuses you. If you memorise one thing from the whole session, memorise this:</p>
+    <table>
+      <tr><th>Docker Concept</th><th>Tiffin World</th><th>One-line meaning</th></tr>
+      <tr><td><b>Dockerfile</b></td><td>Recipe card 📝</td><td>Step-by-step written instructions for how to prepare the meal.</td></tr>
+      <tr><td><b>Image</b></td><td>Master tiffin (sealed, ready) 🍱</td><td>The packed box produced from the recipe — frozen in time, ready to ship.</td></tr>
+      <tr><td><b>Container</b></td><td>One delivered tiffin 🚚</td><td>A running copy of the image. One image can produce a hundred tiffins.</td></tr>
+      <tr><td><b>Docker Hub</b></td><td>Central kitchen / warehouse 🏭</td><td>Where ready-made boxes for every recipe live — Python's, Ubuntu's, Redis's.</td></tr>
+      <tr><td><b>Port mapping</b></td><td>The building's gate number 🚪</td><td>The box lives in flat 8000 inside the building, but deliveries come through gate 8000 — <code>-p 8000:8000</code>.</td></tr>
+      <tr><td><b>Volume</b></td><td>The steel box that comes back ♻️</td><td>Delete the container, the data survives — like the reusable steel dabba.</td></tr>
+      <tr><td><b>docker compose</b></td><td>Ordering a full thali 🍽️</td><td>One order gets you dal, rice, sabzi, roti — all containers together.</td></tr>
+    </table>
+    <h4>⭐ The most important rule in this entire guide</h4>
+    <p style="font-size:1.05rem"><b>"An image is a photograph, not a mirror."</b> When you build an image, Docker takes a <i>photo</i> of your code at that moment. If you edit your code afterwards, the photo does NOT update by itself — you must take a new photo (rebuild). Forgetting this causes 90% of beginner confusion, so it's repeated throughout.</p>
+  </div>
+
+  <div class="card">
+    <h3>🖼️ VM vs Docker — the one diagram to hold in your head</h3>
+    <p>Picture two kinds of housing:</p>
+    <ul>
+      <li><b>Virtual Machine = a standalone bungalow.</b> Every app gets an entire house: its own kitchen, bathroom, and security guard (a full operating system). Heavy, slow to start, expensive.</li>
+      <li><b>Docker = apartment flats.</b> One building (the host operating system's core) is shared, but every flat (container) has its own lock, its own belongings, its own privacy. Lightweight, starts in seconds.</li>
+    </ul>
+    <p><b>The punchline:</b> a VM takes minutes to boot; a container takes milliseconds. That's why at Swiggy/Zomato scale you don't run VMs — you run containers. Traffic spike? Open 50 new flats in seconds.</p>
+  </div>
+
+  <div class="card">
+    <h3>💻 Mac setup — do this first</h3>
+    <p>Open <b>Terminal</b> (press <code>Cmd + Space</code>, type "Terminal", press Enter). If the terminal is new to you: it's just a way to talk to your computer with text instead of clicks. You type a command, press Enter, the computer replies.</p>
+    <div class="codeblock">
+      <div class="cb-head"><span>Terminal — install &amp; verify</span><button class="copybtn">Copy</button></div>
+      <pre>brew install --cask docker
+
+docker --version
+docker compose version
+docker run hello-world</pre>
+    </div>
+    <div class="decode">
+      <div class="d-title">Command decoder — what each piece means</div>
+      <dl>
+        <dt>brew</dt><dd>Homebrew — the "app store for your terminal" on Mac. It downloads and installs software for you. No Homebrew? Download the .dmg from docker.com/products/docker-desktop instead.</dd>
+        <dt>--cask</dt><dd>Tells brew this is a full desktop application (with an icon), not just a command-line tool.</dd>
+        <dt>docker --version</dt><dd>Asks Docker "which version are you?" If it answers, Docker is installed correctly.</dd>
+        <dt>docker compose version</dt><dd>Checks the second tool you'll use — Compose — which manages multiple containers at once. It comes bundled with Docker Desktop.</dd>
+        <dt>docker run hello-world</dt><dd>"Run a container from the image called hello-world." Docker looks for it on your Mac, doesn't find it, downloads it from Docker Hub, and runs it. Your first tiffin, delivered from the central kitchen.</dd>
+      </dl>
+    </div>
+    <p><b>⚠️ The step most people miss:</b> after installing, <b>open the Docker Desktop app once</b> (Cmd+Space → "Docker" → Enter). A whale 🐳 icon appears in the menu bar at the top of the screen. Docker commands only work while that whale is there — the app runs the Docker "engine" in the background. No whale = every command fails with <i>"Cannot connect to the Docker daemon"</i>. ("Daemon" is just an old Unix word for a background program.)</p>
+    <p>When <code>hello-world</code> prints <i>"Hello from Docker!"</i> — you have just pulled an image from Docker Hub and turned it into a running container. First tiffin delivered. 🎉</p>
+  </div>
+
+  <div class="card trap">
+    <h3>Two Mac traps to know before they hit you</h3>
+    <h4>Trap 1: Apple Silicon chips speak a different language</h4>
+    <p>M-series Macs (M1/M2/M3/M4) use the <b>ARM64</b> chip architecture; most cloud servers use <b>AMD64 (x86)</b>. Think of it as two languages: an image "written in AMD64" may not run on an ARM Mac. Sometimes an image downloads fine but refuses to start, or prints a platform warning.</p>
+    <div class="codeblock">
+      <div class="cb-head"><span>The fix when you hit a platform error</span><button class="copybtn">Copy</button></div>
+      <pre>docker run --platform linux/amd64 &lt;image-name&gt;</pre>
+    </div>
+    <div class="decode">
+      <div class="d-title">Command decoder</div>
+      <dl>
+        <dt>--platform linux/amd64</dt><dd>"Pretend to be an AMD64 machine." Your Mac translates on the fly (via Rosetta). Like watching a dubbed movie — slightly slower, but it works.</dd>
+      </dl>
+    </div>
+    <h4>Trap 2: zsh and the stuck <code>quote&gt;</code> prompt</h4>
+    <p>The Mac terminal uses a shell called <b>zsh</b>. If you paste a command that has a <code>#</code> comment at the end AND that comment contains an apostrophe (like <i>you'll</i>), zsh gets confused and shows <code>quote&gt;</code>, waiting forever. <b>Fix: press Ctrl+C and re-type the command without the comment.</b> Remember this one — it saves ten minutes the first time it happens.</p>
+  </div>
+
+  <div class="card">
+    <h3>✅ Self-check — Port 0</h3>
+    <ul class="check">
+      <li><input type="checkbox" id="c01"><label for="c01">Docker Desktop is running (whale 🐳 steady in my menu bar)</label></li>
+      <li><input type="checkbox" id="c02"><label for="c02"><code>docker run hello-world</code> succeeded on my machine</label></li>
+      <li><input type="checkbox" id="c03"><label for="c03">I can recite 3 mappings from the tiffin analogy without looking</label></li>
+      <li><input type="checkbox" id="c04"><label for="c04">I can explain "an image is a photograph, not a mirror" to someone else</label></li>
+      <li><input type="checkbox" id="c05"><label for="c05">I can say the difference between a VM and a container in one sentence</label></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= PORT 1 : ML ================= -->
+<section id="port1">
+  <div class="sec-head">
+    <span class="tag" style="background:var(--teal)">PORT 1</span>
+    <h2>Dockerize an ML Project — "QuickBite ETA" 🛵</h2>
+  </div>
+  <p class="sec-goal"><b>What you'll build:</b> a sklearn model (a food-delivery ETA predictor) served via FastAPI, packed into a container. This is where the <b>core fundamentals</b> live: Dockerfile anatomy, layers, caching, port mapping, .dockerignore.</p>
+
+  <div class="card why">
+    <h3>The situation you're solving</h3>
+    <p>Imagine you're an ML engineer at a Zomato-style startup. You've built a model that predicts <em>how many minutes until an order arrives</em> — distance, restaurant prep time, rider availability, rain as inputs; ETA as output.</p>
+    <p>The model runs beautifully on your laptop. Then DevOps says: <em>"Ship it to the server."</em> The server has Python 3.9; you have 3.12. Different sklearn version. Don't even ask about NumPy. Welcome to dependency hell 🔥 — and Docker is the air conditioning.</p>
+  </div>
+
+  <div class="card">
+    <h3>📁 Project structure</h3>
+    <p>Build the skeleton first:</p>
+    <div class="codeblock">
+      <div class="cb-head"><span>Terminal</span><button class="copybtn">Copy</button></div>
+      <pre>mkdir quickbite-eta &amp;&amp; cd quickbite-eta
+touch train.py app.py requirements.txt Dockerfile .dockerignore</pre>
+    </div>
+    <div class="decode">
+      <div class="d-title">Command decoder</div>
+      <dl>
+        <dt>mkdir</dt><dd>"Make directory" — creates a new folder.</dd>
+        <dt>&amp;&amp;</dt><dd>"Then" — run the next command only if the first one succeeded.</dd>
+        <dt>cd</dt><dd>"Change directory" — step inside that folder.</dd>
+        <dt>touch</dt><dd>Creates empty files with these names. You'll fill them in next.</dd>
+      </dl>
+    </div>
+    <div class="codeblock">
+      <div class="cb-head"><span>requirements.txt</span><button class="copybtn">Copy</button></div>
+      <pre>scikit-learn==1.5.2
+pandas==2.2.3
+fastapi==0.115.6
+uvicorn==0.34.0
+joblib==1.4.2</pre>
+    </div>
+    <div class="plain"><b>In plain words:</b> this file is your shopping list. Python doesn't come with these tools built in, so you list exactly which extra packages you need and <i>exactly which version</i> of each. <b>scikit-learn</b> trains the model, <b>pandas</b> handles data tables, <b>FastAPI</b> turns Python functions into a web API, <b>uvicorn</b> is the web server that actually runs FastAPI, and <b>joblib</b> saves/loads the trained model to a file. Pinning versions with <code>==</code> is like writing "1 cup of rice" in a recipe instead of "some rice" — you get the same dish every time.</div>
+  </div>
+
+  <div class="card">
+    <h3>🤖 train.py — a 60-second model</h3>
+    <div class="codeblock">
+      <div class="cb-head"><span>train.py</span><button class="copybtn">Copy</button></div>
+      <pre><span class="kw">import</span> pandas <span class="kw">as</span> pd, numpy <span class="kw">as</span> np, joblib
+<span class="kw">from</span> sklearn.ensemble <span class="kw">import</span> RandomForestRegressor
+
+np.random.seed(42)
+n = 5000
+df = pd.DataFrame({
+    <span class="str">"distance_km"</span>: np.random.uniform(0.5, 12, n),
+    <span class="str">"prep_time_min"</span>: np.random.uniform(5, 30, n),
+    <span class="str">"rider_available"</span>: np.random.randint(0, 2, n),
+    <span class="str">"is_raining"</span>: np.random.randint(0, 2, n),
+})
+<span class="cmt"># ETA = base + distance*3 + prep + rain penalty + rider penalty + noise</span>
+df[<span class="str">"eta_min"</span>] = (8 + df.distance_km*3 + df.prep_time_min*0.7
+                 + df.is_raining*9 + (1-df.rider_available)*6
+                 + np.random.normal(0, 2, n))
+
+X, y = df.drop(columns=[<span class="str">"eta_min"</span>]), df[<span class="str">"eta_min"</span>]
+model = RandomForestRegressor(n_estimators=60, random_state=42).fit(X, y)
+joblib.dump(model, <span class="str">"eta_model.pkl"</span>)
+<span class="kw">print</span>(<span class="str">"Model saved: eta_model.pkl ✅"</span>)</pre>
+    </div>
+    <div class="plain"><b>In plain words:</b> you invent 5,000 fake food orders (so the demo is fast and needs no real dataset). For each order you compute a "true" delivery time with a simple formula: rain adds ~9 minutes, no rider available adds ~6, every km adds ~3. Then you train a RandomForest — think of it as <i>60 junior analysts each making a guess, and you take their average</i> — to learn that pattern. Finally <code>joblib.dump</code> saves the trained brain into a single file, <code>eta_model.pkl</code>, so the API can load it later without retraining. The <code>seed(42)</code> line means "use the same randomness every time" so your results match everyone else's.</div>
+  </div>
+
+  <div class="card">
+    <h3>🚀 app.py — FastAPI serving</h3>
+    <div class="codeblock">
+      <div class="cb-head"><span>app.py</span><button class="copybtn">Copy</button></div>
+      <pre><span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel
+<span class="kw">import</span> joblib, pandas <span class="kw">as</span> pd
+
+app = FastAPI(title=<span class="str">"QuickBite ETA"</span>)
+model = joblib.load(<span class="str">"eta_model.pkl"</span>)
+
+<span class="kw">class</span> Order(BaseModel):
+    distance_km: <span class="kw">float</span>
+    prep_time_min: <span class="kw">float</span>
+    rider_available: <span class="kw">int</span>
+    is_raining: <span class="kw">int</span>
+
+<span class="kw">@app.get</span>(<span class="str">"/"</span>)
+<span class="kw">def</span> health():
+    <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"QuickBite ETA is live 🛵"</span>}
+
+<span class="kw">@app.post</span>(<span class="str">"/predict"</span>)
+<span class="kw">def</span> predict(order: Order):
+    X = pd.DataFrame([order.model_dump()])
+    eta = <span class="kw">round</span>(<span class="kw">float</span>(model.predict(X)[0]), 1)
+    <span class="kw">return</span> {<span class="str">"eta_minutes"</span>: eta, <span class="str">"message"</span>: <span class="kw">f</span><span class="str">"Your food arrives in {eta} min 🍔"</span>}</pre>
+    </div>
+    <div class="plain"><b>In plain words:</b> this file is the <i>counter window</i> of your shop. An "API" is just a way for programs to talk to each other over the network — you send a request, you get a response. FastAPI lets you say "when someone sends order details to the address <code>/predict</code>, run this Python function." The <code>Order</code> class is the order form: it declares exactly which fields a request must contain and their types — send text where a number belongs and FastAPI politely rejects it <i>for free</i>. At startup you load the saved model brain from <code>eta_model.pkl</code> once; then every request is: read form → ask model → return the answer as JSON (the universal "key: value" text format APIs speak). The <code>/</code> route is a health check — a doorbell to confirm the shop is open.</div>
+  </div>
+
+  <div class="card analogy">
+    <h3>Dockerfile anatomy — learning to read the recipe</h3>
+    <p>This is the <b>most important block</b> in the guide. A Dockerfile is a plain text file (no extension!) with instructions Docker executes top to bottom to produce an image. Map every line to the tiffin analogy:</p>
+    <div class="codeblock">
+      <div class="cb-head"><span>Dockerfile</span><button class="copybtn">Copy</button></div>
+      <pre><span class="cmt"># 1. Base image = rent a ready-made kitchen (from Docker Hub)</span>
+<span class="kw">FROM</span> python:3.12-slim
+
+<span class="cmt"># 2. Set up your counter inside that kitchen</span>
+<span class="kw">WORKDIR</span> /app
+
+<span class="cmt"># 3. Copy ONLY the shopping list first (caching trick — explained below)</span>
+<span class="kw">COPY</span> requirements.txt .
+<span class="kw">RUN</span> pip install --no-cache-dir -r requirements.txt
+
+<span class="cmt"># 4. NOW copy the rest of your code</span>
+<span class="kw">COPY</span> . .
+
+<span class="cmt"># 5. Train the model INSIDE the image (baked in at build time)</span>
+<span class="kw">RUN</span> python train.py
+
+<span class="cmt"># 6. Declare which window the food comes out of (documentation)</span>
+<span class="kw">EXPOSE</span> 8000
+
+<span class="cmt"># 7. What runs the moment the tiffin is opened</span>
+<span class="kw">CMD</span> [<span class="str">"uvicorn"</span>, <span class="str">"app:app"</span>, <span class="str">"--host"</span>, <span class="str">"0.0.0.0"</span>, <span class="str">"--port"</span>, <span class="str">"8000"</span>]</pre>
+    </div>
+    <div class="decode">
+      <div class="d-title">Line-by-line decoder</div>
+      <dl>
+        <dt>FROM python:3.12-slim</dt><dd>Don't start from an empty computer — start from a ready-made image that already has Linux + Python 3.12 installed. "slim" = the lightweight version. Docker downloads it from Docker Hub automatically.</dd>
+        <dt>WORKDIR /app</dt><dd>"From now on, work inside the folder /app" (inside the container). Creates it if missing. Like choosing which counter you'll cook on.</dd>
+        <dt>COPY requirements.txt .</dt><dd>Copy one file from your Mac into the image. The <code>.</code> means "into the current folder" (which is /app because of WORKDIR).</dd>
+        <dt>RUN pip install ...</dt><dd>RUN executes a command <i>while building</i> the image. pip is Python's package installer; <code>-r requirements.txt</code> means "install everything on this list". <code>--no-cache-dir</code> tells pip not to keep downloaded files around — smaller image.</dd>
+        <dt>COPY . .</dt><dd>"Copy everything in the current folder on my Mac → into /app in the image." (Everything except what .dockerignore excludes.)</dd>
+        <dt>RUN python train.py</dt><dd>Trains the model during the build, so the finished image already contains eta_model.pkl. The container never needs to train anything.</dd>
+        <dt>EXPOSE 8000</dt><dd>A label saying "this app listens on port 8000". It's documentation — it doesn't open anything by itself (that's <code>-p</code>'s job later).</dd>
+        <dt>CMD [...]</dt><dd>The one command that runs when a container starts. Here: start the uvicorn web server, serving the <code>app</code> object from <code>app.py</code>. <code>--host 0.0.0.0</code> means "accept connections from outside the container, not just from inside" — without it, port mapping silently fails. A classic gotcha.</dd>
+      </dl>
+    </div>
+    <h4>🔑 The caching trick — why requirements.txt goes first</h4>
+    <p>Picture a stack of layers (like a stack of parathas 🫓). Docker turns each instruction into a <b>layer</b> and caches it. When you rebuild, Docker checks each layer top-down: "did anything this layer depends on change?" If not, it reuses the cached layer instantly. But the moment one layer changes, <b>every layer below it must rebuild too</b>.</p>
+    <p>Now the logic clicks: if you did <code>COPY . .</code> first and installed dependencies after, then <i>every tiny code edit</i> would invalidate the copy layer — and force the slow 2-minute pip install to re-run below it. By copying only <code>requirements.txt</code> first, the pip layer only rebuilds when the shopping list itself changes.</p>
+    <p><b>The rule to remember:</b> if the shopping list hasn't changed, why go back to the store? Code changes daily; dependencies change monthly. <em>Rarely-changing things at the top, frequently-changing things at the bottom.</em> This one trick makes builds 10x faster.</p>
+  </div>
+
+  <div class="card">
+    <h3>🙈 .dockerignore</h3>
+    <div class="codeblock">
+      <div class="cb-head"><span>.dockerignore</span><button class="copybtn">Copy</button></div>
+      <pre>__pycache__/
+*.pyc
+venv/
+.venv/
+.git/
+.env
+*.ipynb
+eta_model.pkl
+data/raw/</pre>
+    </div>
+    <div class="plain"><b>In plain words:</b> when Docker sees <code>COPY . .</code>, it grabs <i>everything</i> in the folder — unless it's listed here. Same idea as .gitignore. You exclude: Python's junk cache files, virtual environments (can be 500MB!), git history, secrets (.env), and notebooks. You also exclude <code>eta_model.pkl</code> — if you ever trained locally, you do NOT want that stale local file copied in; the image trains its own fresh copy in step 5. "Only the food goes into the tiffin — not your diary and house keys."</div>
+  </div>
+
+  <div class="card wow">
+    <h3>Milestone #1 — Build, run, predict</h3>
+    <div class="codeblock">
+      <div class="cb-head"><span>Terminal — the big moment</span><button class="copybtn">Copy</button></div>
+      <pre>docker build -t quickbite-eta:v1 .
+
+docker images
+
+docker run -d -p 8000:8000 --name eta-service quickbite-eta:v1
+
+curl -X POST http://localhost:8000/predict \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"distance_km": 4.5, "prep_time_min": 15, "rider_available": 1, "is_raining": 1}'</span></pre>
+    </div>
+    <div class="decode">
+      <div class="d-title">Command decoder — slow down and read every line here</div>
+      <dl>
+        <dt>docker build</dt><dd>"Follow the Dockerfile recipe and produce an image."</dd>
+        <dt>-t quickbite-eta:v1</dt><dd>"Tag" — give the image a name and a version label (name:version). Without it you get an unmemorable ID like a7f3c9.</dd>
+        <dt>.</dt><dd>The lonely dot means "the recipe and files are in THIS folder." Forgetting the dot is the #1 first-day error.</dd>
+        <dt>docker images</dt><dd>List all images (master tiffins) stored on your machine.</dd>
+        <dt>docker run</dt><dd>"Create and start a container from this image."</dd>
+        <dt>-d</dt><dd>"Detached" — run in the background and give my terminal back. Without -d, the logs take over your terminal until you press Ctrl+C (which also stops the container!).</dd>
+        <dt>-p 8000:8000</dt><dd>Port mapping, format <b>host:container</b> — "connect gate 8000 of my Mac to flat 8000 inside the container." Traffic to localhost:8000 gets forwarded inside.</dd>
+        <dt>--name eta-service</dt><dd>A friendly name so you can say "eta-service" in later commands instead of a random ID.</dd>
+        <dt>curl</dt><dd>A terminal tool for sending web requests — a browser without the window.</dd>
+        <dt>-X POST</dt><dd>The request type. GET = "give me something", POST = "here's data, process it."</dd>
+        <dt>-H "Content-Type..."</dt><dd>A header telling the server "the data I'm sending is JSON."</dd>
+        <dt>-d '{...}'</dt><dd>The data itself — one order, as JSON. The backslash <code>\</code> at line ends just means "command continues on the next line."</dd>
+      </dl>
+    </div>
+    <p>The response comes back as <code>{"eta_minutes": 41.2, ...}</code>. Now open <b>http://localhost:8000/docs</b> in your browser: FastAPI auto-generates a clickable "Swagger" page where you can test the API with buttons instead of curl. Flip <code>is_raining</code> to 1 and watch the ETA climb. 🌧️</p>
+    <p><b>Notice what you did NOT do on your Mac:</b> no Python environment, no pip install, no version checking. Everything lives inside the box. And this exact box will run on AWS, on a Windows laptop, anywhere — <em>identically</em>.</p>
+  </div>
+
+  <div class="card">
+    <h3>🛠️ Peek inside the container + your everyday commands</h3>
+    <div class="codeblock">
+      <div class="cb-head"><span>Terminal — daily-driver commands</span><button class="copybtn">Copy</button></div>
+      <pre>docker ps
+docker ps -a
+docker logs -f eta-service
+docker exec -it eta-service bash
+docker stop eta-service
+docker rm eta-service</pre>
+    </div>
+    <div class="decode">
+      <div class="d-title">Command decoder</div>
+      <dl>
+        <dt>docker ps</dt><dd>List <b>running</b> containers only. Comes from "process status".</dd>
+        <dt>docker ps -a</dt><dd>List ALL containers, including dead/exited ones. ⚠️ Memorise this: if a container crashed, plain <code>ps</code> hides it and you'll think it never existed. <code>-a</code> = "all".</dd>
+        <dt>docker logs -f eta-service</dt><dd>Show everything the container has printed. <code>-f</code> = "follow" — keep streaming new lines live (Ctrl+C to stop watching; the container keeps running).</dd>
+        <dt>docker exec -it ... bash</dt><dd>"Execute a command inside a running container." The command here is <code>bash</code> — a shell — so you get a terminal INSIDE the box. <code>-it</code> = interactive + terminal, i.e. "let me type." Try <code>ls</code> and <code>cat app.py</code> inside, then <code>exit</code> to come back out.</dd>
+        <dt>docker stop / rm</dt><dd>stop = pause the delivery (container still exists, restartable). rm = remove the stopped container entirely. The image is untouched — you can always run a fresh one.</dd>
+      </dl>
+    </div>
+    <p><code>docker exec</code> is the moment it clicks: you are standing inside a tiny, separate Linux world living inside your Mac.</p>
+  </div>
+
+  <div class="card trap">
+    <h3>The photograph rule in action — try this deliberately</h3>
+    <p>Edit the message string in <code>app.py</code>, then restart the container. <b>Nothing changes.</b> Why? The container runs the image — the photograph — and the photo was taken before your edit. The fix is always:</p>
+    <div class="codeblock">
+      <div class="cb-head"><span>After ANY code edit</span><button class="copybtn">Copy</button></div>
+      <pre>docker build -t quickbite-eta:v1 .
+docker rm -f eta-service
+docker run -d -p 8000:8000 --name eta-service quickbite-eta:v1</pre>
+    </div>
+    <p>Rebuild → remove old container (<code>rm -f</code> = force-remove even if running) → run fresh. Losing ten minutes to a stale image is a rite of passage. Do it once here on purpose and you'll never lose those ten minutes again.</p>
+  </div>
+
+  <div class="card">
+    <h3>✅ Self-check — Port 1</h3>
+    <ul class="check">
+      <li><input type="checkbox" id="c11"><label for="c11">Image built: quickbite-eta shows up in <code>docker images</code></label></li>
+      <li><input type="checkbox" id="c12"><label for="c12"><code>/predict</code> works for me via both curl and Swagger</label></li>
+      <li><input type="checkbox" id="c13"><label for="c13">I can explain layer caching in one sentence</label></li>
+      <li><input type="checkbox" id="c14"><label for="c14">I stepped inside with <code>docker exec</code> and came back out</label></li>
+      <li><input type="checkbox" id="c15"><label for="c15">I can answer: "I edited my code, why doesn't the container see it?"</label></li>
+      <li><input type="checkbox" id="c16"><label for="c16">I can explain why <code>--host 0.0.0.0</code> is required in the CMD</label></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= PORT 2 : LLM ================= -->
+<section id="port2">
+  <div class="sec-head">
+    <span class="tag" style="background:var(--cargo)">PORT 2</span>
+    <h2>Dockerize an LLM Project — "ScalerGPT" RAG bot 📚</h2>
+  </div>
+  <p class="sec-goal"><b>What you'll build:</b> a RAG chatbot (FastAPI + OpenAI API + ChromaDB). New concepts: <b>secrets/env vars, docker compose, volumes, multi-container networking, startup readiness</b>. This code is battle-tested — it includes fixes for two real bugs that show up every time.</p>
+
+  <div class="card why">
+    <h3>What changes at level 2</h3>
+    <p>This time the model isn't yours — it's OpenAI's. LLM projects bring three problems classic ML didn't have:</p>
+    <p>1️⃣ <em>Secrets</em> — bake your API key into the image and you've written your PIN on your ATM card.<br>
+    2️⃣ <em>Multiple services</em> — an app plus a vector database. Two boxes, one order.<br>
+    3️⃣ <em>State</em> — the database's data must survive even after its container dies.</p>
+    <p>The three solutions you'll learn here: <em>.env files, docker compose, and volumes.</em></p>
+  </div>
+
+  <div class="card analogy">
+    <h3>RAG in 60 seconds</h3>
+    <p><b>RAG = Retrieval Augmented Generation</b> — an open-book exam for the LLM. Instead of answering from memory (where it hallucinates), the model is handed the relevant pages from <i>your</i> notes and told "answer using only this."</p>
+    <ul>
+      <li><b>Embedding:</b> turning text into a list of numbers such that similar meanings get similar numbers. It's how the machine "feels" that <i>"container"</i> and <i>"Docker box"</i> are related even though they share no words.</li>
+      <li><b>Vector database (Chroma):</b> a library that stores those numbers and can instantly find "the 3 most similar passages to this question."</li>
+      <li><b>The pipeline:</b> question → find relevant chunks (retrieve) → paste them into the prompt (augment) → let the LLM write the answer (generate).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>📁 Project structure</h3>
+    <div class="codeblock">
+      <div class="cb-head"><span>Terminal</span><button class="copybtn">Copy</button></div>
+      <pre>mkdir scalergpt &amp;&amp; cd scalergpt
+mkdir docs
+touch app.py ingest.py requirements.txt Dockerfile docker-compose.yml .env.example .dockerignore .gitignore</pre>
+    </div>
+    <div class="codeblock">
+      <div class="cb-head"><span>requirements.txt</span><button class="copybtn">Copy</button></div>
+      <pre>fastapi==0.115.6
+uvicorn==0.34.0
+openai==1.59.7
+chromadb-client==0.6.3
+python-dotenv==1.0.1</pre>
+    </div>
+    <div class="plain"><b>In plain words:</b> note it's <code>chromadb-client</code> — the <i>thin client</i> — not the full <code>chromadb</code> package. The full package IS the database (heavy); the client just <i>talks</i> to a database running elsewhere. Since Chroma will live in its own container, your app only needs the phone, not the whole telephone exchange. This keeps the app image small — the #1 problem with LLM images is size. Drop some <code>.txt</code> or <code>.md</code> notes into <code>docs/</code> — they become the bot's knowledge.</div>
+  </div>
+
+  <div class="card trap">
+    <h3>Secrets 101 — the ATM PIN rule</h3>
+    <p><b>The golden rule:</b> <i>"Image = ATM card (safe to share). Env var = PIN (inject at runtime, never write it on the card)."</i></p>
+    <p>An <b>environment variable</b> is a named value the operating system hands to a program when it starts — like a sticky note passed to the chef as they walk in, rather than printed in the recipe book everyone can read. A <b>.env file</b> is simply a text file of such notes, one per line.</p>
+    <div class="codeblock">
+      <div class="cb-head"><span>.env.example → copy to .env and add your real key</span><button class="copybtn">Copy</button></div>
+      <pre><span class="cmt"># Copy this file:  cp .env.example .env   — then paste your real key.</span>
+OPENAI_API_KEY=sk-paste-your-real-key-here</pre>
+    </div>
+    <ul>
+      <li>No quotes, no spaces around the <code>=</code>. Get a key at platform.openai.com/api-keys. The whole demo costs less than one US cent.</li>
+      <li>Add <code>.env</code> to BOTH <code>.dockerignore</code> AND <code>.gitignore</code>. You ship a safe <code>.env.example</code> template instead; each person copies it to <code>.env</code> locally.</li>
+      <li>If you ever write <code>ENV OPENAI_API_KEY=sk-...</code> in a Dockerfile, anyone can read it back with <code>docker history</code>. This is a favourite interview question.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>🧠 app.py — RAG with a retry loop ✅ fixed version</h3>
+    <p>This is the corrected code. The naive version crashes at startup — the next card explains exactly why, because that bug is the best lesson in the whole guide.</p>
+    <div class="codeblock">
+      <div class="cb-head"><span>app.py</span><button class="copybtn">Copy</button></div>
+      <pre><span class="kw">import</span> os, sys, time
+<span class="kw">import</span> chromadb
+<span class="kw">from</span> chromadb.utils <span class="kw">import</span> embedding_functions
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, HTTPException
+<span class="kw">from</span> openai <span class="kw">import</span> OpenAI
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel
+
+app = FastAPI(title=<span class="str">"ScalerGPT"</span>)
+
+<span class="cmt"># Fail LOUDLY and clearly if the key is missing - not with a cryptic traceback</span>
+API_KEY = os.getenv(<span class="str">"OPENAI_API_KEY"</span>, <span class="str">""</span>).strip()
+<span class="kw">if not</span> API_KEY <span class="kw">or</span> API_KEY.startswith(<span class="str">"sk-paste"</span>):
+    sys.exit(<span class="str">"[ScalerGPT] OPENAI_API_KEY missing. Put a real key in .env"</span>)
+
+llm = OpenAI(api_key=API_KEY)
+
+<span class="cmt"># The thin client has no built-in embedder - we must supply one explicitly</span>
+openai_ef = embedding_functions.OpenAIEmbeddingFunction(
+    api_key=API_KEY, model_name=<span class="str">"text-embedding-3-small"</span>)
+
+CHROMA_HOST = os.getenv(<span class="str">"CHROMA_HOST"</span>, <span class="str">"localhost"</span>)
+CHROMA_PORT = <span class="kw">int</span>(os.getenv(<span class="str">"CHROMA_PORT"</span>, <span class="str">"8000"</span>))
+
+<span class="kw">def</span> connect_to_chroma(retries=30, delay=2):
+    <span class="cmt"># Chroma takes a few seconds to boot. depends_on only waits for its</span>
+    <span class="cmt"># container to START, not to be READY - so we knock politely and retry.</span>
+    <span class="kw">for</span> attempt <span class="kw">in</span> <span class="kw">range</span>(1, retries + 1):
+        <span class="kw">try</span>:
+            client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
+            client.heartbeat()
+            <span class="kw">print</span>(<span class="kw">f</span><span class="str">"[ScalerGPT] Connected to chroma at {CHROMA_HOST}:{CHROMA_PORT}"</span>, flush=<span class="kw">True</span>)
+            <span class="kw">return</span> client
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            <span class="kw">print</span>(<span class="kw">f</span><span class="str">"[ScalerGPT] Waiting for chroma ({attempt}/{retries}): {type(e).__name__}"</span>, flush=<span class="kw">True</span>)
+            time.sleep(delay)
+    sys.exit(<span class="kw">f</span><span class="str">"[ScalerGPT] Could not reach chroma at {CHROMA_HOST}:{CHROMA_PORT}"</span>)
+
+chroma = connect_to_chroma()
+collection = chroma.get_or_create_collection(name=<span class="str">"notes"</span>, embedding_function=openai_ef)
+
+<span class="kw">class</span> Question(BaseModel):
+    query: <span class="kw">str</span>
+
+<span class="kw">@app.get</span>(<span class="str">"/"</span>)
+<span class="kw">def</span> health():
+    <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ScalerGPT is live 📚"</span>, <span class="str">"docs_indexed"</span>: collection.count(),
+            <span class="str">"chroma_host"</span>: CHROMA_HOST, <span class="str">"chroma_port"</span>: CHROMA_PORT}
+
+<span class="kw">@app.post</span>(<span class="str">"/ask"</span>)
+<span class="kw">def</span> ask(q: Question):
+    <span class="kw">if</span> collection.count() == 0:
+        <span class="kw">raise</span> HTTPException(status_code=400,
+            detail=<span class="str">"No documents indexed. Run: docker compose exec app python ingest.py"</span>)
+    <span class="cmt"># 1. RETRIEVE - find the 3 most relevant chunks</span>
+    hits = collection.query(query_texts=[q.query], n_results=3)
+    documents = hits.get(<span class="str">"documents"</span>) <span class="kw">or</span> [[]]
+    context = <span class="str">"\n\n---\n\n"</span>.join(documents[0])
+    <span class="cmt"># 2. AUGMENT - paste those chunks into the prompt</span>
+    system_prompt = (<span class="str">"You are ScalerGPT, a helpful teaching assistant. "</span>
+        <span class="str">"Answer using ONLY the context below. If it does not contain the answer, "</span>
+        <span class="kw">f</span><span class="str">"say you don't know.\n\nCONTEXT:\n{context}"</span>)
+    <span class="cmt"># 3. GENERATE - let the LLM write the final answer</span>
+    resp = llm.chat.completions.create(model=<span class="str">"gpt-4o-mini"</span>,
+        messages=[{<span class="str">"role"</span>: <span class="str">"system"</span>, <span class="str">"content"</span>: system_prompt},
+                  {<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: q.query}])
+    <span class="kw">return</span> {<span class="str">"question"</span>: q.query, <span class="str">"answer"</span>: resp.choices[0].message.content,
+            <span class="str">"sources_used"</span>: <span class="kw">len</span>(documents[0])}</pre>
+    </div>
+    <div class="plain"><b>In plain words:</b> at startup the app does three checks: (1) is the API key present? — if not, exit with a human-readable message instead of a scary traceback; (2) set up the <i>embedder</i> — the machine that converts text to numbers (the thin client doesn't include one, so you hand it OpenAI's); (3) <b>knock on Chroma's door politely</b> — try to connect, and if refused, wait 2 seconds and knock again, up to 30 times, printing progress so you can watch it in the logs. Then <code>/ask</code> is the three-step RAG dance: find the 3 most relevant passages, paste them into the instructions, let GPT write the answer. The <code>if count() == 0</code> guard gives a helpful "you forgot to ingest" message instead of a confusing empty answer.</div>
+    <p>You'll also need <code>ingest.py</code> — it reads every file in <code>docs/</code>, splits them into paragraph chunks, and loads them into Chroma, using the same retry pattern.</p>
+  </div>
+
+  <div class="card trap">
+    <h3>The bug that WILL bite you: started ≠ ready</h3>
+    <p>Here's the exact sequence, because you will hit it:</p>
+    <ol>
+      <li>You run <code>docker compose up -d</code>. Then <code>docker compose ps</code> shows… <b>only chroma</b>. The app has vanished.</li>
+      <li>Lesson 1: <code>ps</code> hides dead containers. <code>docker compose ps -a</code> reveals the app: <b>Exited (1)</b>.</li>
+      <li>Lesson 2: <code>docker compose logs app</code> shows the reason: <i>"Connection refused… Could not connect to a Chroma server."</i></li>
+      <li>Lesson 3 (the real one): the compose file says <code>depends_on: chroma</code> — so why did it fail? Because <b><code>depends_on</code> only waits for chroma's container to START, not for the database inside it to be READY.</b> Chroma needs a few seconds to boot. The app knocked immediately, got no answer, and gave up.</li>
+    </ol>
+    <p><b>Analogy:</b> the restaurant unlocked its door (container started) but the chef hasn't tied his apron yet (service not ready). If you shout your order at the locked kitchen and storm out, that's a crash. The retry loop in app.py is the polite customer who waits and knocks again. (The alternative fix — a compose <code>healthcheck</code> + <code>depends_on: condition: service_healthy</code> — is in the practice challenges.)</p>
+  </div>
+
+  <div class="card analogy">
+    <h3>docker-compose.yml — the thali order system ✅ fixed version</h3>
+    <p>So far you ordered tiffins one at a time — <code>docker run</code> this, <code>docker run</code> that. Compose says: <em>write one menu, then just say "serve the thali."</em> The file format is YAML — a way of writing structured settings where <b>indentation shows what belongs to what</b>, like a neatly indented shopping list. (Careful: YAML is picky — use spaces, never tabs.)</p>
+    <div class="codeblock">
+      <div class="cb-head"><span>docker-compose.yml</span><button class="copybtn">Copy</button></div>
+      <pre><span class="kw">services</span>:
+  <span class="kw">app</span>:
+    build: .
+    container_name: scalergpt-app
+    ports:
+      - <span class="str">"8000:8000"</span>
+    env_file: .env
+    environment:
+      - CHROMA_HOST=chroma
+      - CHROMA_PORT=8000     <span class="cmt"># INTERNAL port - see the port trap below!</span>
+    depends_on:
+      - chroma
+    restart: unless-stopped
+
+  <span class="kw">chroma</span>:
+    image: chromadb/chroma:0.6.3
+    container_name: scalergpt-chroma
+    ports:
+      - <span class="str">"8001:8000"</span>
+    volumes:
+      - chroma_data:/chroma/chroma
+    restart: unless-stopped
+
+<span class="kw">volumes</span>:
+  chroma_data:</pre>
+    </div>
+    <div class="decode">
+      <div class="d-title">Line-by-line decoder</div>
+      <dl>
+        <dt>services:</dt><dd>The menu. Each entry below is one container you want.</dd>
+        <dt>build: .</dt><dd>"Build this service's image from the Dockerfile in this folder" (the app's Dockerfile is the same 6-liner as Port 1, minus the training step).</dd>
+        <dt>image: chromadb/chroma:0.6.3</dt><dd>Don't build — download this ready-made image from Docker Hub. You never write a Dockerfile for Chroma; someone already packed that tiffin.</dd>
+        <dt>env_file: .env</dt><dd>"At startup, hand this container all the sticky notes from .env" — the PIN gets injected at runtime, never baked into the image.</dd>
+        <dt>environment:</dt><dd>More sticky notes, written directly here (fine for non-secrets like hostnames).</dd>
+        <dt>CHROMA_HOST=chroma</dt><dd>Not an IP address — the <b>service name</b>! Compose creates a private network where every service is reachable by its name, like flats on an intercom. The app dials "chroma" and Docker connects the call.</dd>
+        <dt>depends_on:</dt><dd>"Start chroma before me." ⚠️ Start — not ready. That's why app.py retries.</dd>
+        <dt>restart: unless-stopped</dt><dd>"If I crash, bring me back automatically" — unless a human explicitly stopped me. A free safety net.</dd>
+        <dt>volumes: (on chroma)</dt><dd>"Mount the storage box named chroma_data at the path /chroma/chroma inside the container" — that's where Chroma keeps its data, so the data now lives OUTSIDE the disposable container.</dd>
+        <dt>volumes: (bottom)</dt><dd>Declares the storage box itself so Docker creates and tracks it.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="card trap">
+    <h3>The port trap: published vs internal</h3>
+    <p>Look at chroma's line: <code>"8001:8000"</code>. Two different numbers — this is where everyone gets burned:</p>
+    <ul>
+      <li>Chroma listens on port <b>8000 inside its own container</b> (the flat number).</li>
+      <li>You publish it as <b>8001 on the Mac</b> (the street gate) — only so YOU can poke it from outside for debugging, and because the app already took the Mac's 8000.</li>
+      <li>The app container is <b>already inside the building</b> — it's a neighbour, not a street visitor. Neighbours use flat numbers. So the app must use <code>CHROMA_PORT=8000</code>.</li>
+    </ul>
+    <p><b>Setting <code>CHROMA_PORT=8001</code> is the single most common bug in this setup</b> — it produces "connection refused" and an exited app container. Say it twice: <em>containers talking to containers use INTERNAL ports. Only your Mac uses the published port.</em></p>
+  </div>
+
+  <div class="card wow">
+    <h3>Milestone #2 — Serve the thali</h3>
+    <div class="codeblock">
+      <div class="cb-head"><span>Terminal</span><button class="copybtn">Copy</button></div>
+      <pre>cp .env.example .env         <span class="cmt"># then put your REAL key inside .env</span>
+
+docker compose up -d --build
+
+docker compose ps -a
+docker compose logs app
+
+docker compose exec app python ingest.py
+
+curl -X POST http://localhost:8000/ask \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"query": "What is Docker?"}'</span></pre>
+    </div>
+    <div class="decode">
+      <div class="d-title">Command decoder</div>
+      <dl>
+        <dt>docker compose up</dt><dd>"Read docker-compose.yml and make reality match it" — create the network, the volume, and all containers, in dependency order.</dd>
+        <dt>-d</dt><dd>Detached — background, same as before.</dd>
+        <dt>--build</dt><dd>"Rebuild my images first if code changed." ⚠️ Make this a habit: after ANY file edit, <code>up -d --build</code>. Without it, Compose happily reuses the old photograph and your edit never arrives. This single mistake costs most people 15 minutes.</dd>
+        <dt>docker compose ps -a</dt><dd>List this project's containers <b>including dead ones</b>. Expect both "Up". If app says "Exited", read its logs.</dd>
+        <dt>docker compose logs app</dt><dd>The app's diary. You want to see: <i>[ScalerGPT] Connected to chroma at chroma:8000</i> — you may first see a few "Waiting for chroma (1/30)" lines. That's the retry loop doing its job!</dd>
+        <dt>docker compose exec app python ingest.py</dt><dd>"Inside the already-running <b>app</b> container, execute <code>python ingest.py</code>." This is how you run one-off jobs (migrations, imports) in production — you don't start a new container, you step into the live one.</dd>
+      </dl>
+    </div>
+    <p>Then open <b>http://localhost:8000/docs</b> and ask questions from the Swagger UI. The test worth doing: ask <em>"What is the capital of France?"</em> — ScalerGPT says it doesn't know, because the answer isn't in your docs. <b>That's proof the answers are grounded in YOUR documents, not the model's memory.</b></p>
+  </div>
+
+  <div class="card wow">
+    <h3>Milestone #2.5 — The volume magic trick</h3>
+    <div class="codeblock">
+      <div class="cb-head"><span>Destroy everything. Data survives.</span><button class="copybtn">Copy</button></div>
+      <pre>docker compose down
+docker compose up -d
+curl http://localhost:8000/</pre>
+    </div>
+    <div class="decode">
+      <div class="d-title">Command decoder</div>
+      <dl>
+        <dt>docker compose down</dt><dd>The opposite of up: stop and DELETE all containers and the network. The thali is cleared. But volumes survive by default.</dd>
+        <dt>docker compose up -d</dt><dd>Brand-new containers from scratch.</dd>
+        <dt>curl http://localhost:8000/</dt><dd><code>docs_indexed</code> is STILL &gt; 0 — you never re-ingested, yet the data is there. It lives in the volume, not the container. ♻️</dd>
+        <dt>docker compose down -v</dt><dd>Know it, don't run it casually: <code>-v</code> also deletes volumes. THIS is how you actually lose the data. The steel dabba goes to the scrapyard.</dd>
+      </dl>
+    </div>
+    <p><b>The takeaway:</b> containers die all the time — deployments, crashes, scaling. Volumes are the steel box that comes back after every delivery. <em>Container = disposable. Volume = permanent.</em></p>
+  </div>
+
+  <div class="card">
+    <h3>✅ Self-check — Port 2</h3>
+    <ul class="check">
+      <li><input type="checkbox" id="c21"><label for="c21">Both services show "Up" in <code>docker compose ps -a</code></label></li>
+      <li><input type="checkbox" id="c22"><label for="c22">I ingested docs and got a grounded answer from <code>/ask</code></label></li>
+      <li><input type="checkbox" id="c23"><label for="c23">I proved the volume works: <code>down</code> → <code>up</code> → data still there</label></li>
+      <li><input type="checkbox" id="c24"><label for="c24">I can explain why my API key must never go in the Dockerfile</label></li>
+      <li><input type="checkbox" id="c25"><label for="c25">I can explain the difference between the published port and the internal port</label></li>
+      <li><input type="checkbox" id="c26"><label for="c26">I can explain why <code>depends_on</code> alone didn't save me</label></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= PORT 3 : AGENTS ================= -->
+<section id="port3">
+  <div class="sec-head">
+    <span class="tag" style="background:var(--plum)">PORT 3</span>
+    <h2>Dockerize an Agentic Project — "DeskBuddy" 🤖</h2>
+  </div>
+  <p class="sec-goal"><b>What you'll build:</b> a 3-container agentic system — an <b>agent service</b> (LLM + tool-calling loop), a <b>tools service</b> (separate microservice), and <b>Redis</b> (conversation memory). New concepts: microservice separation, private networking (no published port!), and one compose file running it all.</p>
+
+  <div class="card why">
+    <h3>What an agent actually is</h3>
+    <p>An agent is an LLM that doesn't just answer — it <em>does things</em>. It thinks, picks up a tool, checks the result, and keeps going.</p>
+    <p>Think of the architecture as an office: the <em>agent = the manager</em> (decides what needs doing), <em>tools = the departments</em> (they do the actual work), and <em>Redis = the office register</em> (remembers who said what).</p>
+    <p>Why three separate boxes? Because in production, the tools team is different from the agent team. You update the tools without touching the agent. That's <em>microservices</em> — and without Docker, microservices are just a slide in a deck.</p>
+  </div>
+
+  <div class="card analogy">
+    <h3>What is Redis, in 30 seconds?</h3>
+    <p>Redis is a super-fast "sticky-note board" database: you store values under names (<i>key → value</i>) and read them back in microseconds. Here it remembers each conversation: key = the session ID, value = the message history. Why not a Python variable? Because containers die and restart — a variable dies with them. Redis in its own container (with a volume) means the agent can crash, restart, and still remember you. Someone already packed the Redis tiffin: you just write <code>image: redis:7-alpine</code>.</p>
+  </div>
+
+  <div class="card">
+    <h3>📁 Structure + the tools service</h3>
+    <div class="codeblock">
+      <div class="cb-head"><span>Terminal</span><button class="copybtn">Copy</button></div>
+      <pre>mkdir deskbuddy &amp;&amp; cd deskbuddy
+mkdir agent tools
+touch docker-compose.yml .env.example
+touch agent/app.py agent/requirements.txt agent/Dockerfile
+touch tools/app.py tools/requirements.txt tools/Dockerfile</pre>
+    </div>
+    <div class="plain"><b>In plain words:</b> two subfolders = two separate services, each with its OWN code, OWN requirements, OWN Dockerfile. This is the microservice idea made physically visible in the folder structure. Redis needs no folder — it's a ready-made image.</div>
+    <div class="codeblock">
+      <div class="cb-head"><span>tools/app.py — two simple tools</span><button class="copybtn">Copy</button></div>
+      <pre><span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel
+<span class="kw">import</span> datetime
+
+app = FastAPI(title=<span class="str">"DeskBuddy Tools"</span>)
+
+<span class="kw">class</span> Calc(BaseModel):
+    expression: <span class="kw">str</span>
+
+<span class="kw">@app.post</span>(<span class="str">"/calculator"</span>)
+<span class="kw">def</span> calculator(c: Calc):
+    <span class="kw">try</span>:
+        <span class="cmt"># demo only - never use eval in production!</span>
+        <span class="kw">return</span> {<span class="str">"result"</span>: <span class="kw">eval</span>(c.expression, {<span class="str">"__builtins__"</span>: {}})}
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        <span class="kw">return</span> {<span class="str">"error"</span>: <span class="kw">str</span>(e)}
+
+<span class="kw">@app.get</span>(<span class="str">"/datetime"</span>)
+<span class="kw">def</span> now():
+    <span class="kw">return</span> {<span class="str">"now"</span>: datetime.datetime.now().isoformat()}</pre>
+    </div>
+    <div class="plain"><b>In plain words:</b> the tools service is just another tiny FastAPI app with two endpoints: a calculator (evaluates a math expression) and a clock. Nothing AI about it — it's a plain worker department. Why does an LLM need a calculator at all? Because LLMs predict text; they're famously unreliable at arithmetic. Giving them a calculator is like giving an eloquent manager an actual accountant. Its Dockerfile is the same 6 lines as always, ending in uvicorn on port 7000. <b>⚠️ Note the comment:</b> <code>eval</code> is fine for a classroom demo and dangerous in production — it can execute arbitrary code. In a real service you'd use a safe expression parser instead.</div>
+  </div>
+
+  <div class="card">
+    <h3>🧠 The agent — the think → act → observe loop</h3>
+    <div class="codeblock">
+      <div class="cb-head"><span>agent/app.py — the heart of it</span><button class="copybtn">Copy</button></div>
+      <pre>r = redis.Redis(host=os.getenv(<span class="str">"REDIS_HOST"</span>, <span class="str">"redis"</span>), port=6379, decode_responses=<span class="kw">True</span>)
+TOOLS_URL = os.getenv(<span class="str">"TOOLS_URL"</span>, <span class="str">"http://tools:7000"</span>)
+
+<span class="kw">@app.post</span>(<span class="str">"/chat"</span>)
+<span class="kw">def</span> chat(req: Chat):
+    key = <span class="kw">f</span><span class="str">"history:{req.session_id}"</span>
+    history = [json.loads(m) <span class="kw">for</span> m <span class="kw">in</span> r.lrange(key, 0, -1)]   <span class="cmt"># load memory</span>
+    history.append({<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: req.message})
+
+    <span class="kw">for</span> _ <span class="kw">in</span> <span class="kw">range</span>(5):                                  <span class="cmt"># the agent loop</span>
+        resp = llm.chat.completions.create(
+            model=<span class="str">"gpt-4o-mini"</span>, messages=history, tools=TOOL_DEFS)
+        msg = resp.choices[0].message
+        <span class="kw">if not</span> msg.tool_calls:                            <span class="cmt"># no tool needed?</span>
+            <span class="kw">break</span>                                         <span class="cmt"># then we're done</span>
+        history.append(msg.model_dump(exclude_none=<span class="kw">True</span>))
+        <span class="kw">for</span> tc <span class="kw">in</span> msg.tool_calls:                        <span class="cmt"># run each requested tool</span>
+            result = call_tool(tc.function.name, json.loads(tc.function.arguments))
+            history.append({<span class="str">"role"</span>: <span class="str">"tool"</span>, <span class="str">"tool_call_id"</span>: tc.id,
+                            <span class="str">"content"</span>: json.dumps(result)})
+
+    <span class="cmt"># save memory back to redis, return final answer</span></pre>
+    </div>
+    <div class="plain"><b>In plain words:</b> the loop is the whole magic of "agents", and it's just 10 lines. Each cycle: (1) show the LLM the full conversation plus a menu of available tools (<code>TOOL_DEFS</code> describes each tool's name and inputs — the menu card); (2) the LLM either answers in words — done, break — or replies "please run calculator with 23*47 for me"; (3) you actually call the tools service over HTTP, paste the result back into the conversation, and go around again so the LLM can see what happened. Max 5 laps so a confused model can't loop forever (a "safety fuse"). Memory: before the loop you load this session's history from Redis; after, you save it back — that's how a follow-up like "now double it" works.</div>
+    <p><b>Look at the two addresses:</b> <code>http://tools:7000</code> and <code>host="redis"</code>. Again — service names, not IPs. By project 3 this should feel natural.</p>
+  </div>
+
+  <div class="card analogy">
+    <h3>The full thali — 3-service compose</h3>
+    <div class="codeblock">
+      <div class="cb-head"><span>docker-compose.yml</span><button class="copybtn">Copy</button></div>
+      <pre><span class="kw">services</span>:
+  <span class="kw">agent</span>:
+    build: ./agent
+    ports:
+      - <span class="str">"9000:9000"</span>
+    env_file: .env
+    environment:
+      - TOOLS_URL=http://tools:7000
+      - REDIS_HOST=redis
+    depends_on: [tools, redis]
+    restart: unless-stopped
+
+  <span class="kw">tools</span>:
+    build: ./tools
+    restart: unless-stopped
+    <span class="cmt"># NOTE: no ports! Explained below - this is the security gem</span>
+
+  <span class="kw">redis</span>:
+    image: redis:7-alpine
+    volumes:
+      - agent_memory:/data
+    restart: unless-stopped
+
+<span class="kw">volumes</span>:
+  agent_memory:</pre>
+    </div>
+    <div class="decode">
+      <div class="d-title">What's new here</div>
+      <dl>
+        <dt>build: ./agent</dt><dd>Each service builds from its own subfolder's Dockerfile. One compose file, two custom images, one ready-made.</dd>
+        <dt>tools: (no ports!)</dt><dd>The security gem. No <code>ports</code> section = no street gate = the outside world <b>cannot reach it at all</b>. Only fellow residents of the private network (the agent) can call it at <code>tools:7000</code>. Try <code>curl localhost:7000</code> from your Mac — connection refused, <i>by design</i>. "Never give internal departments a public entrance." One tiny omission; gold in interviews and in production.</dd>
+        <dt>redis:7-alpine</dt><dd>"alpine" = built on a tiny 5MB Linux. Whole Redis image ≈ 40MB.</dd>
+        <dt>agent_memory volume</dt><dd>Same trick as Chroma: conversation memory survives container death.</dd>
+      </dl>
+    </div>
+    <p>Note what you did <b>not</b> need here: the retry-loop lesson doesn't bite, because the Redis client only connects when first used (lazily), and Redis boots in under a second. <code>restart: unless-stopped</code> is the seatbelt anyway.</p>
+  </div>
+
+  <div class="card wow">
+    <h3>Milestone #3 — The agent in action + memory proof</h3>
+    <p>Split your terminal in two. Left: <code>docker compose logs -f</code>. Right: the curls. You'll watch requests ripple across three containers live.</p>
+    <div class="codeblock">
+      <div class="cb-head"><span>Terminal</span><button class="copybtn">Copy</button></div>
+      <pre>cp .env.example .env         <span class="cmt"># real key inside, same as before</span>
+docker compose up -d --build
+docker compose ps -a
+
+curl -X POST http://localhost:9000/chat \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"session_id": "demo", "message": "What is 23*47, and what time is it right now?"}'</span>
+
+curl -X POST http://localhost:9000/chat \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"session_id": "demo", "message": "Now double that multiplication result"}'</span>
+
+docker compose logs -f</pre>
+    </div>
+    <div class="decode">
+      <div class="d-title">What to watch for</div>
+      <dl>
+        <dt>First curl</dt><dd>A two-tool task on purpose: the agent must call BOTH calculator and clock, then compose one answer. Watch the loop go around twice in the logs.</dd>
+        <dt>Second curl</dt><dd>Same session_id = same Redis key = the agent remembers 1081 from a minute ago and answers 2162. Change session_id to "other" and ask again — no memory. That's isolation per user, for free.</dd>
+        <dt>docker compose logs -f</dt><dd>All three services' diaries interleaved, colour-coded by name. This is how you debug multi-service systems.</dd>
+      </dl>
+    </div>
+    <p><b>The point:</b> three services, one command, real memory, proper isolation. And this exact compose file works unchanged on an EC2 instance — <em>same commands, same result</em>. That bridge from laptop to production is Docker's superpower.</p>
+  </div>
+
+  <div class="card">
+    <h3>✅ Self-check — Port 3</h3>
+    <ul class="check">
+      <li><input type="checkbox" id="c31"><label for="c31">3 containers running (<code>docker compose ps -a</code>)</label></li>
+      <li><input type="checkbox" id="c32"><label for="c32">The agent answered using a tool call</label></li>
+      <li><input type="checkbox" id="c33"><label for="c33">The memory demo worked — my follow-up used prior context</label></li>
+      <li><input type="checkbox" id="c34"><label for="c34">I can explain why <code>curl localhost:7000</code> fails on purpose</label></li>
+      <li><input type="checkbox" id="c35"><label for="c35">I can draw the 3-service architecture from memory on paper</label></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= PORT 4 : CHEATSHEET ================= -->
+<section id="port4">
+  <div class="sec-head">
+    <span class="tag" style="background:var(--crane);color:var(--ink)">PORT 4</span>
+    <h2>Cheatsheet, Golden Rules &amp; Debugging</h2>
+  </div>
+  <p class="sec-goal">This is the section to keep open on a second screen while you work. Search the cheatsheet, follow the debug tree when something breaks, and re-read the golden rules before any interview.</p>
+
+  <div class="card">
+    <h3>📋 The cheatsheet — search it</h3>
+    <div class="searchwrap">
+      <input type="text" id="cmdsearch" placeholder="Filter commands…  try: volume, logs, compose" aria-label="Filter commands">
+      <span class="hitcount" id="hitcount"></span>
+    </div>
+    <table id="cheattable">
+      <tr><th>Command</th><th>What it does</th><th>Tiffin translation</th></tr>
+      <tr><td><code>docker build -t name:tag .</code></td><td>Build an image from the Dockerfile here</td><td>Pack the master box from the recipe</td></tr>
+      <tr><td><code>docker run -d -p 8000:8000 img</code></td><td>Start a container, background, map ports</td><td>Deliver the tiffin, set the gate</td></tr>
+      <tr><td><code>docker ps</code> / <code>docker ps -a</code></td><td>Running containers / ALL incl. dead ones</td><td>Today's deliveries / the full register</td></tr>
+      <tr><td><code>docker logs -f name</code></td><td>Stream a container's output live</td><td>The box's diary</td></tr>
+      <tr><td><code>docker exec -it name bash</code></td><td>Open a shell inside a running container</td><td>Step inside the box</td></tr>
+      <tr><td><code>docker images</code></td><td>List all images on your machine</td><td>The shelf of master tiffins</td></tr>
+      <tr><td><code>docker rm -f name</code></td><td>Force-remove a container, even if running</td><td>Recall the delivery immediately</td></tr>
+      <tr><td><code>docker compose up -d --build</code></td><td>Rebuild if needed + start all services</td><td>Serve the thali (fresh)</td></tr>
+      <tr><td><code>docker compose ps -a</code></td><td>This project's containers, incl. exited</td><td>Which dishes made it, which didn't</td></tr>
+      <tr><td><code>docker compose exec app CMD</code></td><td>Run a one-off command in a live service</td><td>Ask the chef mid-service</td></tr>
+      <tr><td><code>docker compose down</code></td><td>Stop + delete containers (volumes safe)</td><td>Clear the thali, keep the steel boxes</td></tr>
+      <tr><td><code>docker compose down -v</code></td><td>…and delete volumes too ⚠️ data gone</td><td>Scrap the steel boxes</td></tr>
+      <tr><td><code>docker compose logs -f</code></td><td>All services' logs together</td><td>CCTV over the whole kitchen</td></tr>
+      <tr><td><code>docker compose up -d --force-recreate</code></td><td>Recreate containers (e.g. after .env edits)</td><td>Fresh boxes, same recipe</td></tr>
+      <tr><td><code>docker volume ls</code></td><td>List volumes on your machine</td><td>Count the steel dabbas in stock</td></tr>
+      <tr><td><code>docker system df</code></td><td>How much disk Docker is eating</td><td>Check the pantry weight</td></tr>
+      <tr><td><code>docker system prune -a</code></td><td>Delete unused images/containers (careful!)</td><td>Diwali deep-clean 🧹</td></tr>
+      <tr><td><code>docker run --platform linux/amd64</code></td><td>The Mac ARM fix</td><td>Dubbing for another audience</td></tr>
+      <tr><td><code>docker history image</code></td><td>Show every layer + the command that made it</td><td>Read the recipe backwards (and find leaked secrets)</td></tr>
+      <tr><td><code>lsof -i :8000</code></td><td>Find which process is holding a port</td><td>Who's blocking the gate?</td></tr>
+    </table>
+  </div>
+
+  <div class="card trap">
+    <h3>The golden rules — read these before any interview</h3>
+    <ol>
+      <li><b>The image is a photograph, not a mirror.</b> Edited a file? Rebuild: <code>docker compose up -d --build</code>.</li>
+      <li><b><code>ps</code> hides the dead.</b> Service missing? <code>ps -a</code>, then <code>logs &lt;service&gt;</code>.</li>
+      <li><b>Started ≠ ready.</b> <code>depends_on</code> waits for the container, not the service inside. Retry in code or add a healthcheck.</li>
+      <li><b>Internal ports for neighbours, published ports for visitors.</b> Container→container uses the internal port.</li>
+      <li><b>Secrets are PINs.</b> .env + env_file at runtime; never ENV in a Dockerfile, never commit .env.</li>
+      <li><b>.env changed? Recreate.</b> Env vars load at container start: <code>--force-recreate</code>.</li>
+      <li><b>No <code>ports:</code> = no public entrance.</b> Internal services should stay internal.</li>
+      <li><b>Rarely-changing layers on top.</b> That's the whole caching game.</li>
+      <li><b>See <code>quote&gt;</code> in zsh?</b> You pasted a # comment. Ctrl+C, re-run without it.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h3>🧭 The debug decision tree — follow it top to bottom</h3>
+    <p>When something breaks, don't guess. Walk this:</p>
+    <div class="tree">Something is broken.
+│
+├─ Does <span class="h">docker ps</span> show my container?
+│   ├─ <span class="n">NO</span> → run <span class="h">docker ps -a</span> (or <span class="h">compose ps -a</span>)
+│   │     ├─ Status "Exited" → <span class="h">docker logs &lt;name&gt;</span>  ← the answer is in here
+│   │     │     ├─ "Connection refused"   → started ≠ ready, or wrong port/host
+│   │     │     ├─ "KeyError / missing key" → .env not loaded → <span class="h">--force-recreate</span>
+│   │     │     └─ Python traceback        → your code, not Docker. Fix, then <span class="h">--build</span>
+│   │     └─ Not listed at all → the build failed. Scroll up in the build output.
+│   └─ <span class="y">YES</span> → keep going ↓
+│
+├─ Can I reach it from my Mac (<span class="h">curl localhost:PORT</span>)?
+│   ├─ <span class="n">NO</span> → check three things, in order:
+│   │     1. Is there a <span class="h">-p</span> / <span class="h">ports:</span> line at all?   (no ports = private, by design)
+│   │     2. Is the LEFT number the one I'm curling?  (host:container)
+│   │     3. Does the app bind to <span class="h">0.0.0.0</span>, not 127.0.0.1?
+│   └─ <span class="y">YES</span> → keep going ↓
+│
+├─ Can container A reach container B?
+│   ├─ <span class="n">NO</span> → am I using the SERVICE NAME as host (not localhost)?
+│   │        am I using the INTERNAL port (not the published one)?
+│   │        are both services in the same compose file?
+│   └─ <span class="y">YES</span> → keep going ↓
+│
+└─ Is my code change showing up?
+    ├─ <span class="n">NO</span> → you rebuilt? <span class="h">docker compose up -d --build</span>
+    │        edited .env? <span class="h">docker compose up -d --force-recreate</span>
+    └─ <span class="y">YES</span> → it's a logic bug now. Congratulations, that's your job. 🙂</div>
+  </div>
+
+  <div class="grid2">
+    <div class="card trap">
+      <h3>Top Mac errors and their fixes</h3>
+      <ol>
+        <li><b>"Cannot connect to the Docker daemon"</b> → Docker Desktop isn't open. Launch it, wait for the whale.</li>
+        <li><b>"port is already allocated"</b> → find the culprit with <code>lsof -i :8000</code>, or map another port: <code>-p 8080:8000</code>.</li>
+        <li><b>App container missing from <code>ps</code></b> → it crashed: <code>ps -a</code> then <code>logs app</code>.</li>
+        <li><b>Platform warning (arm64/amd64)</b> → add <code>--platform linux/amd64</code>.</li>
+        <li><b>Build very slow / disk full</b> → <code>docker system df</code>, then <code>docker system prune</code>.</li>
+        <li><b>Edits not showing up</b> → rebuild: <code>up -d --build</code>.</li>
+        <li><b>Stuck at <code>quote&gt;</code></b> → Ctrl+C, re-run without the trailing comment.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3>🏋️ Practice challenges — do at least two</h3>
+      <ol>
+        <li><b>Warm-up</b> — Push the QuickBite ETA image to Docker Hub (<code>docker tag</code> + <code>docker push</code>).</li>
+        <li><b>Medium</b> — Replace ScalerGPT's retry loop with a compose <code>healthcheck</code> on chroma + <code>depends_on: condition: service_healthy</code>. Write two lines on which approach you'd pick and why.</li>
+        <li><b>Hard</b> — Add a <i>weather</i> tool to DeskBuddy by updating ONLY the tools service — no agent rebuild. This proves you understood microservices.</li>
+        <li><b>Boss level</b> — Multi-stage builds on all three projects; cut image sizes by 40%. Record before/after from <code>docker images</code>.</li>
+        <li><b>Bonus</b> — Break something on purpose (wrong port, missing .env, edit without rebuild), then fix it using only the debug tree above. This is the fastest way to make the knowledge stick.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ================= REVISION ================= -->
+<section id="revise">
+  <div class="sec-head">
+    <span class="tag" style="background:var(--ink)">REVISE</span>
+    <h2>Self-test — 30 flashcards</h2>
+  </div>
+  <p class="sec-goal">Click a card to reveal the answer. Try to say your answer out loud <i>before</i> you click — recall is what builds memory, re-reading isn't. Anything you get wrong, go back to that Port.</p>
+
+  <div class="flip">
+    <button class="fc"><span class="q">What is the difference between an image and a container?</span><span class="a">An image is a sealed, read-only package built from a Dockerfile — the master tiffin. A container is a running instance of that image — one delivered tiffin. One image can produce many containers.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">You edited app.py and restarted the container. Nothing changed. Why?</span><span class="a">The container runs the image, and the image is a photograph taken at build time. Your edit isn't in it. Rebuild: <code>docker compose up -d --build</code> (or <code>docker build</code> + <code>rm -f</code> + <code>run</code>).</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">In <code>-p 8080:8000</code>, which number is the container's?</span><span class="a">The right one. Format is <b>host:container</b>. Your Mac listens on 8080 and forwards to 8000 inside the container.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">Why must the CMD use <code>--host 0.0.0.0</code>?</span><span class="a">127.0.0.1 inside a container means "only accept traffic that originated inside this container." Port mapping then silently delivers nothing. 0.0.0.0 means "accept from any interface," which lets the mapped port work.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">Why does requirements.txt get copied before the rest of the code?</span><span class="a">Layer caching. Docker rebuilds a layer and everything below it when its inputs change. Dependencies change rarely, code changes constantly — so put the pip install above <code>COPY . .</code> and you skip the slow install on most rebuilds.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">What does EXPOSE actually do?</span><span class="a">Almost nothing at runtime — it's documentation/metadata saying "this app listens here." Actually publishing the port is <code>-p</code> or the compose <code>ports:</code> key.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">Difference between RUN and CMD?</span><span class="a">RUN executes at <b>build</b> time and its result is baked into a layer. CMD executes at <b>container start</b> and is the default process. A Dockerfile can have many RUNs and one effective CMD.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">Your container isn't in <code>docker ps</code>. What are the next two commands?</span><span class="a"><code>docker ps -a</code> to see it as Exited, then <code>docker logs &lt;name&gt;</code> to read why it died. <code>ps</code> hides the dead.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">What is a volume, and what does it survive?</span><span class="a">Docker-managed storage that lives outside the container's writable layer. It survives <code>stop</code>, <code>rm</code>, and <code>compose down</code>. It does NOT survive <code>compose down -v</code> or an explicit <code>docker volume rm</code>.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">Where do you put an API key, and where must you never put it?</span><span class="a">Put it in a <code>.env</code> file loaded at runtime via <code>env_file:</code>. Never <code>ENV KEY=...</code> in a Dockerfile — <code>docker history</code> exposes it — and never commit .env to git.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">The app says "connection refused" to chroma even though <code>depends_on</code> is set. Why?</span><span class="a"><code>depends_on</code> only waits for the container to <b>start</b>, not for the service inside to be <b>ready</b>. Fix with a retry loop in code, or a compose <code>healthcheck</code> + <code>condition: service_healthy</code>.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">Chroma is published as <code>"8001:8000"</code>. Which port does the app container use?</span><span class="a">8000 — the internal one. Containers on the same compose network talk flat-to-flat. 8001 is the street gate, useful only from your Mac.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">How does one container find another by name?</span><span class="a">Compose creates a private network and registers each service name in its DNS. <code>http://tools:7000</code> resolves to the tools container. No IPs, ever.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">A service in compose has no <code>ports:</code> key. Is that a bug?</span><span class="a">No — it's a security feature. Without published ports the service is unreachable from outside the Docker network. Only sibling containers can call it. Internal services should look exactly like this.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">What's the difference between <code>docker stop</code> and <code>docker rm</code>?</span><span class="a"><code>stop</code> halts a running container but keeps it (restartable, logs intact). <code>rm</code> deletes the container object. Neither touches the image.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">What does <code>docker compose down</code> delete, and what does it keep?</span><span class="a">Deletes containers and the network. Keeps images and named volumes. Add <code>-v</code> and the volumes go too.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">You edited .env but the container still uses the old value. Fix?</span><span class="a">Environment variables are read at container start. <code>docker compose up -d --force-recreate</code> to build fresh containers with the new values.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">What is .dockerignore for, and name three things that belong in it?</span><span class="a">It excludes files from the build context that <code>COPY . .</code> would otherwise pull in. Typical entries: <code>venv/</code>, <code>.git/</code>, <code>__pycache__/</code>, <code>.env</code>, notebooks, large raw data.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">VM vs container in one sentence?</span><span class="a">A VM virtualises the whole machine and ships an entire OS (bungalow); a container shares the host kernel and isolates only the process and its filesystem (flat). Minutes vs milliseconds to start.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">Why <code>chromadb-client</code> instead of <code>chromadb</code> in requirements?</span><span class="a">The full package includes the database engine itself — heavy. The thin client only talks to a Chroma running elsewhere (its own container). Smaller app image, cleaner separation.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">What are the three steps of RAG?</span><span class="a">Retrieve the most relevant chunks from a vector store, augment the prompt by pasting them in, generate the answer with the LLM constrained to that context.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">Why does the agent need Redis rather than a Python dict?</span><span class="a">A dict lives in the container's memory and dies with it. Containers restart constantly. Redis + a volume keeps conversation history across crashes, restarts, and redeploys — and lets you scale to multiple agent replicas.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">Describe the agent loop in one breath.</span><span class="a">Send conversation + tool menu to the LLM; if it returns no tool call, you're done; otherwise execute the requested tool, append the result to the conversation, and loop again — capped at N iterations so it can't spin forever.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">Why cap the agent loop at 5 iterations?</span><span class="a">A confused model can call tools forever, burning tokens and money. The cap is a safety fuse — the same reasoning as a timeout or a circuit breaker.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">What does <code>restart: unless-stopped</code> buy you?</span><span class="a">Docker restarts the container automatically after a crash or a host reboot, but respects a deliberate <code>docker stop</code>. Cheap resilience for free.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">Two containers, same compose file. One says <code>localhost:8000</code> to reach the other. What happens?</span><span class="a">It fails. Inside a container, <code>localhost</code> is that container itself. You must use the other service's name as the hostname.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">What does <code>docker exec -it name bash</code> give you, and when do you use it?</span><span class="a">A shell inside a running container. Use it to inspect files, check env vars, or confirm what actually got copied in — the fastest way to answer "is my file even in there?"</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">Your Mac says "port is already allocated". Two ways out?</span><span class="a">Find and stop whatever holds it (<code>lsof -i :8000</code>), or publish on a different host port: <code>-p 8080:8000</code>. The container side doesn't need to change.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">Why does an M-series Mac sometimes need <code>--platform linux/amd64</code>?</span><span class="a">Apple Silicon is ARM64; many published images are built for AMD64 only. The flag runs the image under emulation — slower, but it works when no ARM variant exists.</span><span class="hint">click to reveal</span></button>
+    <button class="fc"><span class="q">One sentence: why does Docker matter for ML and AI work specifically?</span><span class="a">Because ML/AI stacks are dependency nightmares (CUDA, sklearn, torch, vector DBs) and multi-service by nature — Docker makes the whole stack reproducible and identical from laptop to EC2, which is the difference between a notebook and a product.</span><span class="hint">click to reveal</span></button>
+  </div>
+
+  <div class="card iq" style="margin-top:24px">
+    <h3>Interview questions you can now answer</h3>
+    <p>These come up in real ML/AI engineering interviews. If you can answer eight of these cleanly, this session did its job.</p>
+    <ol>
+      <li><b>Explain the Docker build cache and how you'd optimise a slow Dockerfile.</b> Talk about layers, ordering, <code>COPY requirements.txt</code> first, <code>--no-cache-dir</code>, and multi-stage builds.</li>
+      <li><b>How do you handle secrets in a containerised app?</b> Runtime injection via env vars / secret managers, never <code>ENV</code> in the Dockerfile, <code>.env</code> in both ignore files, and <code>docker history</code> as the attack you're preventing.</li>
+      <li><b>Your service depends on a database that takes 20s to boot. How do you handle startup ordering?</b> depends_on isn't enough; use healthchecks with <code>condition: service_healthy</code>, or application-level retry with backoff. Mention that retry-in-code is more portable across orchestrators.</li>
+      <li><b>How do containers discover each other?</b> Compose/Kubernetes DNS by service name, internal ports, and why hardcoding IPs is wrong.</li>
+      <li><b>Container vs VM — when would you still choose a VM?</b> Different kernel required, strong hardware-level isolation for untrusted workloads, or legacy OS dependencies.</li>
+      <li><b>How do you persist state in a stateless system?</b> Volumes and external stores; containers are cattle, not pets.</li>
+      <li><b>How would you make this compose stack production-ready?</b> Healthchecks, resource limits, non-root user, pinned image digests, logging driver, secrets manager, and moving to an orchestrator.</li>
+      <li><b>What's in your image that shouldn't be?</b> Build tools, .git, credentials, test data, dev dependencies — and how multi-stage builds and .dockerignore fix it.</li>
+      <li><b>How do you debug a container that exits immediately?</b> <code>ps -a</code> → <code>logs</code> → check the CMD → run it interactively with an overridden entrypoint.</li>
+      <li><b>Why doesn't your internal service publish a port?</b> Attack surface. Only the edge service is reachable; everything else is on the private network.</li>
+    </ol>
+  </div>
+
+  <div class="card gloss">
+    <h3>📚 Glossary — the vocabulary you're now expected to use</h3>
+    <dl>
+      <dt>Image</dt><dd>A read-only, layered package of your app plus everything it needs to run.</dd>
+      <dt>Container</dt><dd>A running instance of an image, isolated from the host and from other containers.</dd>
+      <dt>Layer</dt><dd>The filesystem diff produced by one Dockerfile instruction. Cached and reused across builds.</dd>
+      <dt>Build context</dt><dd>The folder you pass to <code>docker build</code> (the lonely <code>.</code>). Everything in it, minus .dockerignore, is sent to the Docker engine.</dd>
+      <dt>Registry / Docker Hub</dt><dd>The remote store where images are pushed and pulled from.</dd>
+      <dt>Tag</dt><dd>The human-readable <code>name:version</code> label on an image.</dd>
+      <dt>Daemon</dt><dd>The background engine that actually does the work. Docker Desktop starts it; the whale icon means it's alive.</dd>
+      <dt>Port publishing</dt><dd>Mapping a host port to a container port so the outside world can reach in (<code>-p host:container</code>).</dd>
+      <dt>Volume</dt><dd>Docker-managed storage that outlives containers. For anything you can't afford to lose.</dd>
+      <dt>Bind mount</dt><dd>Mapping a host folder straight into a container. Great for live-reload in development, avoided in production.</dd>
+      <dt>Compose</dt><dd>A tool that reads one YAML file and runs a whole multi-container application.</dd>
+      <dt>Service</dt><dd>One entry in a compose file — and also the DNS name other containers use to reach it.</dd>
+      <dt>Healthcheck</dt><dd>A command Docker runs periodically to decide whether a container is actually ready, not just started.</dd>
+      <dt>Multi-stage build</dt><dd>Using one image to build and a second, smaller one to run — the standard way to shrink production images.</dd>
+      <dt>Orchestrator</dt><dd>The system that runs containers across many machines (Kubernetes, ECS). Compose is the single-machine version of the same idea.</dd>
+    </dl>
+  </div>
+
+  <div class="card">
+    <h3>🎬 The one line to remember</h3>
+    <p style="font-size:1.3rem;font-family:'Space Grotesk',sans-serif;font-weight:600;color:var(--cargo)">"Writing code is half the job. Making it run anywhere in the world — that's engineering. Docker is the box that carries your work to the world."</p>
+    <p><b>Where to go next:</b> Kubernetes — for when you have 10,000 boxes to manage instead of three. Everything you learned here (images, ports, volumes, service names, readiness) maps directly onto it. You've already done the hard part. 🐳</p>
+  </div>
+</section>
+
+</main>
+
+<div class="pill" role="status" aria-live="polite">
+  <span>Self-checks: <b id="ccount">0</b>/<span id="ctotal">0</span></span>
+  <button id="printbtn">Save as PDF</button>
+</div>
+
+<footer>
+  Made with 🐳 for <b>Future with Shivank</b> · Dockerize Everything — Student Revision Guide · Tiffin analogy inspired by the Mumbai Dabbawalas' 130 years of Six Sigma
+</footer>
+
+<script>
+document.querySelectorAll('.copybtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const pre = btn.closest('.codeblock').querySelector('pre');
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      const old = btn.textContent;
+      btn.textContent = 'Copied ✓';
+      setTimeout(() => btn.textContent = old, 1500);
+    });
+  });
+});
+
+const boxes = document.querySelectorAll('.check input');
+const ccount = document.getElementById('ccount');
+document.getElementById('ctotal').textContent = boxes.length;
+function tally(){
+  ccount.textContent = document.querySelectorAll('.check input:checked').length;
+}
+boxes.forEach(cb => {
+  cb.addEventListener('change', () => {
+    cb.closest('li').classList.toggle('done', cb.checked);
+    tally();
+  });
+});
+tally();
+
+document.querySelectorAll('.fc').forEach(card => {
+  card.addEventListener('click', () => card.classList.toggle('open'));
+});
+
+const search = document.getElementById('cmdsearch');
+const rows = Array.from(document.querySelectorAll('#cheattable tr')).slice(1);
+const hits = document.getElementById('hitcount');
+search.addEventListener('input', () => {
+  const q = search.value.toLowerCase().trim();
+  let shown = 0;
+  rows.forEach(r => {
+    const match = !q || r.innerText.toLowerCase().includes(q);
+    r.style.display = match ? '' : 'none';
+    if (match) shown++;
+  });
+  hits.textContent = q ? shown + ' / ' + rows.length : '';
+});
+
+document.getElementById('printbtn').addEventListener('click', () => window.print());
+
+const bar = document.getElementById('progressbar');
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  bar.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
+}, {passive:true});
+</script>
+</body>
+</html>

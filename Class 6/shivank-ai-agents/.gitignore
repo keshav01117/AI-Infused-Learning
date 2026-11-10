@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+stock_summary.txt
+.ipynb_checkpoints/
